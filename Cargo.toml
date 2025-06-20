@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["core"]
+members = [ "adapter-sqlite","core"]
 
 [workspace.package]
 authors = ["Jeremie Drouet <jeremie.drouet@gmail.com>"]

@@ -1,0 +1,9 @@
+[package]
+name = "maitryk-adapter-sqlite"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+sqlx = { version = "0.8", default-features = false, features = ["sqlite", "macros", "migrate"] }
