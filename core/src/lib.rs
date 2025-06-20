@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+pub mod intake;
+
 #[derive(Clone, Debug)]
 pub enum TagValueArray {
     Text(Box<str>),
@@ -25,8 +27,4 @@ pub struct Metric {
 pub enum MetricValue {
     Count(u64),
     Gauge(f64),
-}
-
-pub trait Intake {
-    fn ingest(&self, values: &[Metric]) -> impl Future<Output = std::io::Result<()>> + Send;
 }
