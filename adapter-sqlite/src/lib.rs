@@ -1,4 +1,8 @@
-#[derive(Clone, Debug)]
+mod intake;
+
+static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
+
+#[derive(Clone, Debug, Default)]
 pub struct SqliteConfig {
     pub url: Option<String>,
 }
@@ -30,5 +34,11 @@ pub struct Sqlite(sqlx::SqlitePool);
 impl AsRef<sqlx::SqlitePool> for Sqlite {
     fn as_ref(&self) -> &sqlx::SqlitePool {
         &self.0
+    }
+}
+
+impl Sqlite {
+    pub async fn prepare(&self) -> Result<(), sqlx::migrate::MigrateError> {
+        MIGRATOR.run(self.as_ref()).await
     }
 }

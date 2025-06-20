@@ -6,4 +6,15 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-sqlx = { version = "0.8", default-features = false, features = ["sqlite", "macros", "migrate"] }
+anyhow = { workspace = true }
+maitryk = { workspace = true }
+sqlx = { version = "0.8", default-features = false, features = [
+    "json",
+    "macros",
+    "migrate",
+    "sqlite",
+] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+sqlx = { version = "0.8", features = ["runtime-tokio"] }
