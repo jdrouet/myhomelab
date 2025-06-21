@@ -62,23 +62,31 @@ fn build_value_attribute(
     };
 }
 
-fn build_tag_filter<'a>(
+fn build_timerange_filter(qb: &mut sqlx::QueryBuilder<'_, sqlx::Sqlite>, timerange: &TimeRange) {
+    qb.push(" and timestamp >= ").push_bind(timerange.start);
+    if let Some(end) = timerange.end {
+        qb.push(" and timestamp < ").push_bind(end);
+    }
+}
+
+fn build_tags_filter<'a>(
     qb: &mut sqlx::QueryBuilder<'a, sqlx::Sqlite>,
-    name: &'a str,
-    value: &'a TagValue,
+    tags: impl Iterator<Item = (&'a Box<str>, &'a TagValue)>,
 ) {
-    let path = format!("$.{name}");
-    qb.push(" and json_extract(tags,")
-        .push_bind(path)
-        .push(") = ");
-    match value {
-        TagValue::Text(text_value) => {
-            qb.push_bind(text_value);
+    for (name, value) in tags {
+        let path = format!("$.{name}");
+        qb.push(" and json_extract(tags,")
+            .push_bind(path)
+            .push(") = ");
+        match value {
+            TagValue::Text(text_value) => {
+                qb.push_bind(text_value);
+            }
+            TagValue::Integer(int_value) => {
+                qb.push_bind(int_value);
+            }
+            _ => {}
         }
-        TagValue::Integer(int_value) => {
-            qb.push_bind(int_value);
-        }
-        _ => {}
     }
 }
 
@@ -94,13 +102,8 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     qb.push(" from gauge_metrics");
     qb.push(" where name = ")
         .push_bind(query.header.name.as_ref());
-    qb.push(" and timestamp >= ").push_bind(timerange.start);
-    if let Some(end) = timerange.end {
-        qb.push(" and timestamp < ").push_bind(end);
-    }
-    for (name, value) in query.header.tags.iter() {
-        build_tag_filter(&mut qb, name, value);
-    }
+    build_timerange_filter(&mut qb, timerange);
+    build_tags_filter(&mut qb, query.header.tags.iter());
     qb.push("), counter_extractions as (");
     qb.push("select name");
     build_tag_attribute(&mut qb, &query.group_by);
@@ -108,13 +111,8 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     qb.push(" from counter_metrics");
     qb.push(" where name = ")
         .push_bind(query.header.name.as_ref());
-    qb.push(" and timestamp >= ").push_bind(timerange.start);
-    if let Some(end) = timerange.end {
-        qb.push(" and timestamp < ").push_bind(end);
-    }
-    for (name, value) in query.header.tags.iter() {
-        build_tag_filter(&mut qb, name, value);
-    }
+    build_timerange_filter(&mut qb, timerange);
+    build_tags_filter(&mut qb, query.header.tags.iter());
     qb.push("), extractions as (");
     qb.push(" select name, tags, value from gauge_extractions");
     qb.push(" union all select name, tags, value from counter_extractions");
