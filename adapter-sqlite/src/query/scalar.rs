@@ -7,15 +7,15 @@ use maitryk::{
 };
 use sqlx::{FromRow, Row, types::Json};
 
-struct Wrapper(ScalarQueryResponse);
+struct Wrapper<V>(V);
 
-impl Wrapper {
-    fn from_many(list: Vec<Self>) -> Vec<ScalarQueryResponse> {
+impl<V> Wrapper<V> {
+    fn from_many(list: Vec<Self>) -> Vec<V> {
         list.into_iter().map(|Wrapper(inner)| inner).collect()
     }
 }
 
-impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper {
+impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarQueryResponse> {
     fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
         Ok(Wrapper(ScalarQueryResponse {
             header: MetricHeader {
@@ -120,7 +120,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     build_value_attribute(&mut qb, &query.aggregator);
     qb.push(" from extractions");
     qb.push(" group by name, tags");
-    let values: Vec<Wrapper> = qb
+    let values: Vec<Wrapper<ScalarQueryResponse>> = qb
         .build_query_as()
         .fetch_all(executor)
         .await
