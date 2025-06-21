@@ -1,4 +1,5 @@
 mod intake;
+mod query;
 
 static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
 

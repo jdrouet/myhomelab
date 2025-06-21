@@ -6,7 +6,7 @@ pub struct CounterValue(pub u64);
 #[serde(transparent)]
 pub struct GaugeValue(pub f64);
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(tag = "type", content = "value")]
 pub enum MetricValue {
     Counter(CounterValue),

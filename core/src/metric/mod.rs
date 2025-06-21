@@ -62,3 +62,31 @@ pub struct MetricRef<'a, V> {
     pub timestamp: i64,
     pub value: &'a V,
 }
+
+#[cfg(feature = "macros")]
+#[macro_export]
+macro_rules! metrics {
+    (
+        $name:expr,
+        $val_ty:ident,
+        $( $tag_key:literal => $tag_val:expr ),+,
+        [ $( ($timestamp:expr, $value:expr) ),+ $(,)? ]
+    ) => {{
+        {
+            let mut header = MetricHeader::new($name);
+            $(
+                header = header.with_tag($tag_key, $tag_val);
+            )+
+
+            vec![
+                $(
+                    Metric {
+                        header: header.clone(),
+                        timestamp: $timestamp,
+                        value: MetricValue::$val_ty($value),
+                    }
+                ),+
+            ]
+        }
+    }};
+}
