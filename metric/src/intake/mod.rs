@@ -1,5 +1,7 @@
+use myhomelab_prelude::Healthcheck;
+
 use crate::entity::Metric;
 
-pub trait Intake {
+pub trait Intake: Healthcheck {
     fn ingest(&self, values: &[Metric]) -> impl Future<Output = anyhow::Result<()>> + Send;
 }

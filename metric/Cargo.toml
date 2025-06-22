@@ -8,4 +8,5 @@ macros = []
 
 [dependencies]
 anyhow = { workspace = true }
+myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

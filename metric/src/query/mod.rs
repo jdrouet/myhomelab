@@ -1,8 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
+use myhomelab_prelude::Healthcheck;
+
 use crate::entity::MetricHeader;
 
-pub trait QueryExecutor {
+pub trait QueryExecutor: Healthcheck {
     fn execute(
         &self,
         requests: &[Request],

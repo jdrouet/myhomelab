@@ -9,6 +9,7 @@ license.workspace = true
 anyhow = { workspace = true }
 itertools = { version = "0.14" }
 myhomelab-metric = { workspace = true }
+myhomelab-prelude = { workspace = true }
 sqlx = { version = "0.8", default-features = false, features = [
     "json",
     "macros",

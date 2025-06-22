@@ -821,6 +821,7 @@ dependencies = [
  "anyhow",
  "itertools",
  "myhomelab-metric",
+ "myhomelab-prelude",
  "sqlx",
  "tokio",
 ]
@@ -841,7 +842,15 @@ name = "myhomelab-metric"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "myhomelab-prelude",
  "serde",
+]
+
+[[package]]
+name = "myhomelab-prelude"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
 ]
 
 [[package]]

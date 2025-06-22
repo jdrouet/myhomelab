@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["adapter-sqlite", "http-server", "metric"]
+members = ["adapter-sqlite", "http-server", "metric", "prelude"]
 
 [workspace.package]
 authors = ["Jeremie Drouet <jeremie.drouet@gmail.com>"]
@@ -10,6 +10,7 @@ license = "MIT"
 anyhow = { version = "1.0" }
 myhomelab-http-server = { path = "./http-server" }
 myhomelab-metric = { path = "./metric" }
+myhomelab-prelude = { path = "./prelude" }
 serde = { version = "1.0" }
 tokio = { version = "1.45" }
 tracing = { version = "0.1" }
