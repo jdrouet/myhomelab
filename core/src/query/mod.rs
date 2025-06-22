@@ -48,9 +48,9 @@ impl Request {
         }
     }
 
-    pub fn timeseries() -> Self {
+    pub fn timeseries(period: u32) -> Self {
         Self {
-            kind: RequestKind::Timeseries,
+            kind: RequestKind::Timeseries { period },
             queries: HashMap::default(),
         }
     }
@@ -64,7 +64,7 @@ impl Request {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub enum RequestKind {
     Scalar,
-    Timeseries,
+    Timeseries { period: u32 },
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
@@ -123,11 +123,17 @@ pub struct Response {
 #[derive(Debug)]
 pub enum QueryResponse {
     Scalar(Vec<ScalarQueryResponse>),
-    Timeseries,
+    Timeseries(Vec<TimeseriesQueryResponse>),
 }
 
 #[derive(Debug)]
 pub struct ScalarQueryResponse {
     pub header: MetricHeader,
     pub value: f64,
+}
+
+#[derive(Debug)]
+pub struct TimeseriesQueryResponse {
+    pub header: MetricHeader,
+    pub values: Vec<(i64, f64)>,
 }

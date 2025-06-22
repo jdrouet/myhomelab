@@ -23,7 +23,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 ) -> anyhow::Result<QueryResponse> {
     let mut qb = sqlx::QueryBuilder::<'_, sqlx::Sqlite>::new("with gauge_extractions as (");
     qb.push("select name");
-    super::shared::build_tags_attribute(&mut qb, query.group_by.iter());
+    super::shared::build_tags_attribute(&mut qb, &query);
     qb.push(", value");
     qb.push(" from gauge_metrics");
     qb.push(" where name = ")
@@ -32,7 +32,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     super::shared::build_tags_filter(&mut qb, query.header.tags.iter());
     qb.push("), counter_extractions as (");
     qb.push("select name");
-    super::shared::build_tags_attribute(&mut qb, query.group_by.iter());
+    super::shared::build_tags_attribute(&mut qb, &query);
     qb.push(", value");
     qb.push(" from counter_metrics");
     qb.push(" where name = ")
@@ -58,7 +58,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 #[cfg(test)]
 pub(crate) mod tests {
     use maitryk::{
-        metric::MetricHeader,
+        metric::{MetricHeader, tag::TagValue},
         query::{Query, QueryExecutor, QueryResponse, Request, RequestKind, TimeRange},
     };
 
@@ -143,6 +143,10 @@ pub(crate) mod tests {
                 &[Request::scalar()
                     .with_query("reboot-all", Query::sum(MetricHeader::new("system.reboot")))
                     .with_query(
+                        "reboot-macbook",
+                        Query::sum(MetricHeader::new("system.reboot").with_tag("host", "macbook")),
+                    )
+                    .with_query(
                         "reboot-raspberry",
                         Query::sum(
                             MetricHeader::new("system.reboot").with_tag("host", "raspberry"),
@@ -154,12 +158,21 @@ pub(crate) mod tests {
 
         assert_eq!(res.len(), 1);
         assert_eq!(res[0].kind, RequestKind::Scalar);
-        assert_eq!(res[0].queries.len(), 2);
+        assert_eq!(res[0].queries.len(), 3);
         let qres = &res[0].queries["reboot-all"];
         let QueryResponse::Scalar(entries) = qres else {
             panic!("should be a scalar response");
         };
         assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].value, 2.0);
+
+        let qres = &res[0].queries["reboot-macbook"];
+        let QueryResponse::Scalar(entries) = qres else {
+            panic!("should be a scalar response");
+        };
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].header.name.as_ref(), "system.reboot");
+        assert_eq!(entries[0].header.tags["host"], TagValue::from("macbook"));
         assert_eq!(entries[0].value, 2.0);
 
         let qres = &res[0].queries["reboot-raspberry"];

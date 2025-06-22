@@ -3,7 +3,7 @@ use std::collections::HashMap;
 pub mod tag;
 pub mod value;
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub struct MetricHeader {
     pub name: Box<str>,
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]

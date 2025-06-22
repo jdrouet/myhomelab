@@ -1,5 +1,6 @@
+use itertools::Itertools;
 use maitryk::metric::tag::TagValue;
-use maitryk::query::TimeRange;
+use maitryk::query::{Query, TimeRange};
 
 pub(super) struct Wrapper<V>(pub(super) V);
 
@@ -11,19 +12,28 @@ impl<V> Wrapper<V> {
 
 pub(super) fn build_tags_attribute<'a>(
     qb: &mut sqlx::QueryBuilder<'a, sqlx::Sqlite>,
-    tags: impl Iterator<Item = &'a Box<str>>,
+    query: &'a Query,
 ) {
     qb.push(", json_object(");
-    let mut sep = qb.separated(",");
-    for name in tags {
-        let path = format!("'$.{name}'");
-        sep.push_bind(name)
+    for (index, name) in query
+        .header
+        .tags
+        .keys()
+        .chain(query.group_by.iter())
+        .unique()
+        .enumerate()
+    {
+        if index > 0 {
+            qb.push(",");
+        }
+        let path = format!("$.{name}");
+        qb.push_bind(name)
             .push(",")
             .push("json_extract(tags,")
             .push_bind(path)
             .push(")");
     }
-    sep.push_unseparated(") as tags");
+    qb.push(") as tags");
 }
 
 pub(super) fn build_value_attribute(

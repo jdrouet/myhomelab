@@ -1,11 +1,11 @@
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
 pub enum TagValueArray {
     Text(Box<str>),
     Integer(i64),
 }
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
 pub enum TagValue {
     Text(Box<str>),

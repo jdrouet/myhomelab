@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use maitryk::query::{QueryResponse, RequestKind, Response, TimeRange};
+use maitryk::query::{RequestKind, Response, TimeRange};
 
 mod scalar;
 mod shared;
+mod timeseries;
 
 impl maitryk::query::QueryExecutor for crate::Sqlite {
     async fn execute(
@@ -13,9 +14,9 @@ impl maitryk::query::QueryExecutor for crate::Sqlite {
     ) -> anyhow::Result<Vec<Response>> {
         let mut res = Vec::with_capacity(requests.len());
         for req in requests {
+            let mut queries = HashMap::with_capacity(req.queries.len());
             match req.kind {
                 RequestKind::Scalar => {
-                    let mut queries = HashMap::with_capacity(req.queries.len());
                     for (name, query) in req.queries.iter() {
                         match scalar::fetch(self.as_ref(), query, &timerange).await {
                             Ok(response) => {
@@ -24,22 +25,22 @@ impl maitryk::query::QueryExecutor for crate::Sqlite {
                             Err(err) => eprintln!("something went wrong: {err:?}"),
                         }
                     }
-                    res.push(Response {
-                        kind: req.kind,
-                        queries,
-                    });
                 }
-                RequestKind::Timeseries => {
-                    let mut queries = HashMap::with_capacity(req.queries.len());
-                    for (name, _query) in req.queries.iter() {
-                        queries.insert(name.clone(), QueryResponse::Timeseries);
+                RequestKind::Timeseries { period } => {
+                    for (name, query) in req.queries.iter() {
+                        match timeseries::fetch(self.as_ref(), query, &timerange, period).await {
+                            Ok(response) => {
+                                queries.insert(name.clone(), response);
+                            }
+                            Err(err) => eprintln!("something went wrong: {err:?}"),
+                        }
                     }
-                    res.push(Response {
-                        kind: req.kind,
-                        queries,
-                    });
                 }
             }
+            res.push(Response {
+                kind: req.kind,
+                queries,
+            });
         }
         Ok(res)
     }
@@ -54,9 +55,6 @@ pub(crate) mod tests {
     };
 
     pub(crate) async fn prepare_pool() -> anyhow::Result<crate::Sqlite> {
-        // let config = crate::SqliteConfig {
-        //     url: Some("./storage.db".into()),
-        // };
         let config = crate::SqliteConfig::default();
         let sqlite = config.build().await?;
         sqlite.prepare().await?;
