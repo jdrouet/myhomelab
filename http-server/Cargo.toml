@@ -1,0 +1,13 @@
+[package]
+name = "myhomelab-http-server"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+axum = { version = "0.8", default-features = false, features = ["tokio", "json", "http1", "query", "matched-path"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3" }
