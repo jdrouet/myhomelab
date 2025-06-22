@@ -1,9 +1,7 @@
 use super::shared::Wrapper;
 use anyhow::Context;
-use maitryk::{
-    metric::MetricHeader,
-    query::{Query, QueryResponse, ScalarQueryResponse, TimeRange},
-};
+use maitryk::metric::MetricHeader;
+use maitryk::query::{Query, QueryResponse, ScalarQueryResponse, TimeRange};
 use sqlx::{FromRow, Row, types::Json};
 
 impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarQueryResponse> {
