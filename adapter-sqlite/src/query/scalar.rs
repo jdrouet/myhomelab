@@ -1,17 +1,10 @@
+use super::shared::Wrapper;
 use anyhow::Context;
 use maitryk::{
-    metric::{MetricHeader, tag::TagValue},
+    metric::MetricHeader,
     query::{Query, QueryResponse, ScalarQueryResponse, TimeRange},
 };
 use sqlx::{FromRow, Row, types::Json};
-
-struct Wrapper<V>(V);
-
-impl<V> Wrapper<V> {
-    fn from_many(list: Vec<Self>) -> Vec<V> {
-        list.into_iter().map(|Wrapper(inner)| inner).collect()
-    }
-}
 
 impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarQueryResponse> {
     fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
@@ -25,63 +18,6 @@ impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarQueryResponse> {
     }
 }
 
-fn build_tags_attribute<'a>(
-    qb: &mut sqlx::QueryBuilder<'a, sqlx::Sqlite>,
-    tags: impl Iterator<Item = &'a Box<str>>,
-) {
-    qb.push(", json_object(");
-    let mut sep = qb.separated(",");
-    for name in tags {
-        let path = format!("'$.{name}'");
-        sep.push_bind(name)
-            .push(",")
-            .push("json_extract(tags,")
-            .push_bind(path)
-            .push(")");
-    }
-    sep.push_unseparated(") as tags");
-}
-
-fn build_value_attribute(
-    qb: &mut sqlx::QueryBuilder<'_, sqlx::Sqlite>,
-    aggr: &maitryk::query::Aggregator,
-) {
-    match aggr {
-        maitryk::query::Aggregator::Average => qb.push(", avg(value) as value"),
-        maitryk::query::Aggregator::Max => qb.push(", max(value) as value"),
-        maitryk::query::Aggregator::Min => qb.push(", min(value) as value"),
-        maitryk::query::Aggregator::Sum => qb.push(", sum(value) as value"),
-    };
-}
-
-fn build_timerange_filter(qb: &mut sqlx::QueryBuilder<'_, sqlx::Sqlite>, timerange: &TimeRange) {
-    qb.push(" and timestamp >= ").push_bind(timerange.start);
-    if let Some(end) = timerange.end {
-        qb.push(" and timestamp < ").push_bind(end);
-    }
-}
-
-fn build_tags_filter<'a>(
-    qb: &mut sqlx::QueryBuilder<'a, sqlx::Sqlite>,
-    tags: impl Iterator<Item = (&'a Box<str>, &'a TagValue)>,
-) {
-    for (name, value) in tags {
-        let path = format!("$.{name}");
-        qb.push(" and json_extract(tags,")
-            .push_bind(path)
-            .push(") = ");
-        match value {
-            TagValue::Text(text_value) => {
-                qb.push_bind(text_value);
-            }
-            TagValue::Integer(int_value) => {
-                qb.push_bind(int_value);
-            }
-            _ => {}
-        }
-    }
-}
-
 pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     executor: E,
     query: &Query,
@@ -89,27 +25,27 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 ) -> anyhow::Result<QueryResponse> {
     let mut qb = sqlx::QueryBuilder::<'_, sqlx::Sqlite>::new("with gauge_extractions as (");
     qb.push("select name");
-    build_tags_attribute(&mut qb, query.group_by.iter());
+    super::shared::build_tags_attribute(&mut qb, query.group_by.iter());
     qb.push(", value");
     qb.push(" from gauge_metrics");
     qb.push(" where name = ")
         .push_bind(query.header.name.as_ref());
-    build_timerange_filter(&mut qb, timerange);
-    build_tags_filter(&mut qb, query.header.tags.iter());
+    super::shared::build_timerange_filter(&mut qb, timerange);
+    super::shared::build_tags_filter(&mut qb, query.header.tags.iter());
     qb.push("), counter_extractions as (");
     qb.push("select name");
-    build_tags_attribute(&mut qb, query.group_by.iter());
+    super::shared::build_tags_attribute(&mut qb, query.group_by.iter());
     qb.push(", value");
     qb.push(" from counter_metrics");
     qb.push(" where name = ")
         .push_bind(query.header.name.as_ref());
-    build_timerange_filter(&mut qb, timerange);
-    build_tags_filter(&mut qb, query.header.tags.iter());
+    super::shared::build_timerange_filter(&mut qb, timerange);
+    super::shared::build_tags_filter(&mut qb, query.header.tags.iter());
     qb.push("), extractions as (");
     qb.push(" select name, tags, value from gauge_extractions");
     qb.push(" union all select name, tags, value from counter_extractions");
     qb.push(") select name, tags");
-    build_value_attribute(&mut qb, &query.aggregator);
+    super::shared::build_value_attribute(&mut qb, &query.aggregator);
     qb.push(" from extractions");
     qb.push(" group by name, tags");
     let values: Vec<Wrapper<ScalarQueryResponse>> = qb

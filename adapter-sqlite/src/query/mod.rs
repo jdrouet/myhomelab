@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use maitryk::query::{QueryResponse, RequestKind, Response, TimeRange};
 
 mod scalar;
+mod shared;
 
 impl maitryk::query::QueryExecutor for crate::Sqlite {
     async fn execute(
