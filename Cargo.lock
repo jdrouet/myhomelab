@@ -827,11 +827,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "myhomelab-http-server"
+name = "myhomelab-inbound-http"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "myhomelab-metric",
+ "myhomelab-prelude",
  "tokio",
  "tracing",
  "tracing-subscriber",
