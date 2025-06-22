@@ -1,3 +1,3 @@
+pub mod entity;
 pub mod intake;
-pub mod metric;
 pub mod query;

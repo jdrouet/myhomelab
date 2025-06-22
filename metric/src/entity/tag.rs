@@ -33,7 +33,7 @@ impl From<i64> for TagValue {
 
 #[cfg(test)]
 mod tests {
-    use crate::metric::tag::TagValue;
+    use crate::entity::tag::TagValue;
 
     #[test]
     fn should_compile() {

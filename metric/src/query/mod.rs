@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::metric::MetricHeader;
+use crate::entity::MetricHeader;
 
 pub trait QueryExecutor {
     fn execute(

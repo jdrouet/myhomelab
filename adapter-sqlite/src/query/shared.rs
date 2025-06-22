@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use myhomelab_metric::metric::tag::TagValue;
+use myhomelab_metric::entity::tag::TagValue;
 use myhomelab_metric::query::{Query, TimeRange};
 
 pub(super) struct Wrapper<V>(pub(super) V);

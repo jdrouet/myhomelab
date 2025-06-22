@@ -1,6 +1,6 @@
 use super::shared::Wrapper;
 use anyhow::Context;
-use myhomelab_metric::metric::MetricHeader;
+use myhomelab_metric::entity::MetricHeader;
 use myhomelab_metric::query::{Query, QueryResponse, ScalarQueryResponse, TimeRange};
 use sqlx::{FromRow, Row, types::Json};
 
@@ -58,7 +58,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 #[cfg(test)]
 pub(crate) mod tests {
     use myhomelab_metric::{
-        metric::{MetricHeader, tag::TagValue},
+        entity::{MetricHeader, tag::TagValue},
         query::{Query, QueryExecutor, QueryResponse, Request, RequestKind, TimeRange},
     };
 

@@ -49,8 +49,8 @@ impl QueryExecutor for crate::Sqlite {
 #[cfg(test)]
 pub(crate) mod tests {
     use myhomelab_metric::{
+        entity::{Metric, MetricHeader, value::MetricValue},
         intake::Intake,
-        metric::{Metric, MetricHeader, value::MetricValue},
         metrics,
     };
 
