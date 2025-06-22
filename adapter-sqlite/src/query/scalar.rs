@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use anyhow::Context;
 use maitryk::{
     metric::{MetricHeader, tag::TagValue},
@@ -27,27 +25,21 @@ impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarQueryResponse> {
     }
 }
 
-fn build_tag_attribute<'a>(
+fn build_tags_attribute<'a>(
     qb: &mut sqlx::QueryBuilder<'a, sqlx::Sqlite>,
-    group_by: &'a HashSet<Box<str>>,
+    tags: impl Iterator<Item = &'a Box<str>>,
 ) {
-    if group_by.is_empty() {
-        qb.push(", '{}' as tags");
-    } else {
-        qb.push("json_object(");
-        for (index, name) in group_by.iter().enumerate() {
-            if index > 0 {
-                qb.push(",");
-            }
-            let path = format!("'$.{name}'");
-            qb.push_bind(name)
-                .push(",")
-                .push("json_extract(tags,")
-                .push_bind(path)
-                .push(")");
-        }
-        qb.push(") as tags");
+    qb.push(", json_object(");
+    let mut sep = qb.separated(",");
+    for name in tags {
+        let path = format!("'$.{name}'");
+        sep.push_bind(name)
+            .push(",")
+            .push("json_extract(tags,")
+            .push_bind(path)
+            .push(")");
     }
+    sep.push_unseparated(") as tags");
 }
 
 fn build_value_attribute(
@@ -97,7 +89,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 ) -> anyhow::Result<QueryResponse> {
     let mut qb = sqlx::QueryBuilder::<'_, sqlx::Sqlite>::new("with gauge_extractions as (");
     qb.push("select name");
-    build_tag_attribute(&mut qb, &query.group_by);
+    build_tags_attribute(&mut qb, query.group_by.iter());
     qb.push(", value");
     qb.push(" from gauge_metrics");
     qb.push(" where name = ")
@@ -106,7 +98,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     build_tags_filter(&mut qb, query.header.tags.iter());
     qb.push("), counter_extractions as (");
     qb.push("select name");
-    build_tag_attribute(&mut qb, &query.group_by);
+    build_tags_attribute(&mut qb, query.group_by.iter());
     qb.push(", value");
     qb.push(" from counter_metrics");
     qb.push(" where name = ")
