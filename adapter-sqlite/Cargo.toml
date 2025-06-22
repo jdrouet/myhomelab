@@ -14,8 +14,10 @@ sqlx = { version = "0.8", default-features = false, features = [
     "json",
     "macros",
     "migrate",
+    "runtime-tokio",
     "sqlite",
 ] }
+tracing = { workspace = true }
 
 [dev-dependencies]
 myhomelab-metric = { workspace = true, features = ["macros"] }

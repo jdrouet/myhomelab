@@ -45,6 +45,7 @@ impl Sqlite {
 }
 
 impl myhomelab_prelude::Healthcheck for Sqlite {
+    #[tracing::instrument(skip_all, level = "DEBUG", ret)]
     async fn healthcheck(&self) -> anyhow::Result<()> {
         sqlx::query("select 1").execute(self.as_ref()).await?;
         Ok(())

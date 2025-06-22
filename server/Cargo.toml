@@ -1,0 +1,15 @@
+[package]
+name = "myhomelab-server"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+myhomelab-adapter-sqlite = { workspace = true }
+myhomelab-inbound-http = { workspace = true }
+myhomelab-prelude = { workspace = true }
+myhomelab-metric = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tracing-subscriber = { version = "0.3" }

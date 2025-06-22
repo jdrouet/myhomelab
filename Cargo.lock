@@ -824,6 +824,7 @@ dependencies = [
  "myhomelab-prelude",
  "sqlx",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -836,7 +837,6 @@ dependencies = [
  "myhomelab-prelude",
  "tokio",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -853,6 +853,19 @@ name = "myhomelab-prelude"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+]
+
+[[package]]
+name = "myhomelab-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "myhomelab-adapter-sqlite",
+ "myhomelab-inbound-http",
+ "myhomelab-metric",
+ "myhomelab-prelude",
+ "tokio",
+ "tracing-subscriber",
 ]
 
 [[package]]
