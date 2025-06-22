@@ -1,6 +1,6 @@
 use itertools::Itertools;
-use maitryk::metric::tag::TagValue;
-use maitryk::query::{Query, TimeRange};
+use myhomelab_metric::metric::tag::TagValue;
+use myhomelab_metric::query::{Query, TimeRange};
 
 pub(super) struct Wrapper<V>(pub(super) V);
 
@@ -38,13 +38,13 @@ pub(super) fn build_tags_attribute<'a>(
 
 pub(super) fn build_value_attribute(
     qb: &mut sqlx::QueryBuilder<'_, sqlx::Sqlite>,
-    aggr: &maitryk::query::Aggregator,
+    aggr: &myhomelab_metric::query::Aggregator,
 ) {
     match aggr {
-        maitryk::query::Aggregator::Average => qb.push(", avg(value) as value"),
-        maitryk::query::Aggregator::Max => qb.push(", max(value) as value"),
-        maitryk::query::Aggregator::Min => qb.push(", min(value) as value"),
-        maitryk::query::Aggregator::Sum => qb.push(", sum(value) as value"),
+        myhomelab_metric::query::Aggregator::Average => qb.push(", avg(value) as value"),
+        myhomelab_metric::query::Aggregator::Max => qb.push(", max(value) as value"),
+        myhomelab_metric::query::Aggregator::Min => qb.push(", min(value) as value"),
+        myhomelab_metric::query::Aggregator::Sum => qb.push(", sum(value) as value"),
     };
 }
 

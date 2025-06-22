@@ -1,6 +1,6 @@
 use anyhow::Context;
-use maitryk::metric::value::{CounterValue, GaugeValue, MetricValue};
-use maitryk::metric::{Metric, MetricRef};
+use myhomelab_metric::metric::value::{CounterValue, GaugeValue, MetricValue};
+use myhomelab_metric::metric::{Metric, MetricRef};
 
 async fn ingest_counters<'a, E>(
     executor: E,
@@ -56,7 +56,7 @@ where
     Ok(())
 }
 
-impl maitryk::intake::Intake for crate::Sqlite {
+impl myhomelab_metric::intake::Intake for crate::Sqlite {
     async fn ingest(&self, values: &[Metric]) -> anyhow::Result<()> {
         if values.is_empty() {
             return Ok(());
@@ -95,9 +95,9 @@ impl maitryk::intake::Intake for crate::Sqlite {
 
 #[cfg(test)]
 mod tests {
-    use maitryk::intake::Intake;
-    use maitryk::metric::value::MetricValue;
-    use maitryk::metric::{Metric, MetricHeader};
+    use myhomelab_metric::intake::Intake;
+    use myhomelab_metric::metric::value::MetricValue;
+    use myhomelab_metric::metric::{Metric, MetricHeader};
 
     #[tokio::test]
     async fn should_ingest_only_counters() {

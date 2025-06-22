@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["adapter-sqlite", "core"]
+members = ["adapter-sqlite", "metric"]
 
 [workspace.package]
 authors = ["Jeremie Drouet <jeremie.drouet@gmail.com>"]
@@ -8,6 +8,6 @@ license = "MIT"
 
 [workspace.dependencies]
 anyhow = { version = "1.0" }
-maitryk = { path = "./core" }
+myhomelab-metric = { path = "./metric" }
 serde = { version = "1.0" }
 tokio = { version = "1.45" }

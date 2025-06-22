@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use maitryk::query::{RequestKind, Response, TimeRange};
+use myhomelab_metric::query::{QueryExecutor, Request, RequestKind, Response, TimeRange};
 
 mod scalar;
 mod shared;
 mod timeseries;
 
-impl maitryk::query::QueryExecutor for crate::Sqlite {
+impl QueryExecutor for crate::Sqlite {
     async fn execute(
         &self,
-        requests: &[maitryk::query::Request],
+        requests: &[Request],
         timerange: TimeRange,
     ) -> anyhow::Result<Vec<Response>> {
         let mut res = Vec::with_capacity(requests.len());
@@ -48,7 +48,7 @@ impl maitryk::query::QueryExecutor for crate::Sqlite {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use maitryk::{
+    use myhomelab_metric::{
         intake::Intake,
         metric::{Metric, MetricHeader, value::MetricValue},
         metrics,

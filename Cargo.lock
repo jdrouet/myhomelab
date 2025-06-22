@@ -628,25 +628,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 
 [[package]]
-name = "maitryk"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde",
-]
-
-[[package]]
-name = "maitryk-adapter-sqlite"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "itertools",
- "maitryk",
- "sqlx",
- "tokio",
-]
-
-[[package]]
 name = "md-5"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -680,6 +661,25 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "myhomelab-adapter-sqlite"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "itertools",
+ "myhomelab-metric",
+ "sqlx",
+ "tokio",
+]
+
+[[package]]
+name = "myhomelab-metric"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
 ]
 
 [[package]]

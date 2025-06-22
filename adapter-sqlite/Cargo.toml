@@ -1,5 +1,5 @@
 [package]
-name = "maitryk-adapter-sqlite"
+name = "myhomelab-adapter-sqlite"
 version = "0.1.0"
 edition = "2024"
 authors.workspace = true
@@ -8,7 +8,7 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 itertools = { version = "0.14" }
-maitryk = { workspace = true }
+myhomelab-metric = { workspace = true }
 sqlx = { version = "0.8", default-features = false, features = [
     "json",
     "macros",
@@ -17,6 +17,6 @@ sqlx = { version = "0.8", default-features = false, features = [
 ] }
 
 [dev-dependencies]
-maitryk = { workspace = true, features = ["macros"] }
+myhomelab-metric = { workspace = true, features = ["macros"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 sqlx = { version = "0.8", features = ["runtime-tokio"] }

@@ -1,7 +1,7 @@
 use super::shared::Wrapper;
 use anyhow::Context;
-use maitryk::metric::MetricHeader;
-use maitryk::query::{Query, QueryResponse, ScalarQueryResponse, TimeRange};
+use myhomelab_metric::metric::MetricHeader;
+use myhomelab_metric::query::{Query, QueryResponse, ScalarQueryResponse, TimeRange};
 use sqlx::{FromRow, Row, types::Json};
 
 impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarQueryResponse> {
@@ -57,7 +57,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use maitryk::{
+    use myhomelab_metric::{
         metric::{MetricHeader, tag::TagValue},
         query::{Query, QueryExecutor, QueryResponse, Request, RequestKind, TimeRange},
     };
