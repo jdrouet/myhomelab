@@ -23,6 +23,7 @@ async fn main() -> anyhow::Result<()> {
 
     let sqlite_config = SqliteConfig::from_env()?;
     let sqlite = sqlite_config.build().await?;
+    sqlite.prepare().await?;
 
     let app_state = AppState { sqlite };
 

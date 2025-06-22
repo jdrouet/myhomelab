@@ -10,5 +10,6 @@ anyhow = { workspace = true }
 axum = { version = "0.8", default-features = false, features = ["tokio", "json", "http1", "query", "matched-path"] }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
+serde = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

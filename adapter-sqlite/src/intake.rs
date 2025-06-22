@@ -59,6 +59,7 @@ where
 impl myhomelab_metric::intake::Intake for crate::Sqlite {
     async fn ingest(&self, values: &[Metric]) -> anyhow::Result<()> {
         if values.is_empty() {
+            tracing::debug!("empty list of metrics, skipping");
             return Ok(());
         }
 

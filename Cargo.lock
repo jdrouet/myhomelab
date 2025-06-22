@@ -835,6 +835,7 @@ dependencies = [
  "axum",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "serde",
  "tokio",
  "tracing",
 ]
