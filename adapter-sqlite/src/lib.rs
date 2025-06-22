@@ -8,6 +8,14 @@ pub struct SqliteConfig {
     pub url: Option<String>,
 }
 
+impl myhomelab_prelude::FromEnv for SqliteConfig {
+    fn from_env() -> anyhow::Result<Self> {
+        Ok(Self {
+            url: std::env::var("MYHOMELAB_SQLITE_PATH").ok(),
+        })
+    }
+}
+
 impl SqliteConfig {
     pub async fn build(&self) -> sqlx::Result<Sqlite> {
         match self.url.as_deref() {

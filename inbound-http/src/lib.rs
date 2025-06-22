@@ -1,5 +1,8 @@
 mod router;
 
+const DEFAULT_HOST: std::net::IpAddr = std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST);
+const DEFAULT_PORT: u16 = 3000;
+
 #[derive(Clone, Debug)]
 pub struct HttpServerConfig {
     pub host: std::net::IpAddr,
@@ -9,9 +12,18 @@ pub struct HttpServerConfig {
 impl Default for HttpServerConfig {
     fn default() -> Self {
         Self {
-            host: std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST),
-            port: 3000,
+            host: DEFAULT_HOST,
+            port: DEFAULT_PORT,
         }
+    }
+}
+
+impl myhomelab_prelude::FromEnv for HttpServerConfig {
+    fn from_env() -> anyhow::Result<Self> {
+        Ok(Self {
+            host: myhomelab_prelude::parse_from_env("MYHOMELAB_HTTP_HOST")?.unwrap_or(DEFAULT_HOST),
+            port: myhomelab_prelude::parse_from_env("MYHOMELAB_HTTP_PORT")?.unwrap_or(DEFAULT_PORT),
+        })
     }
 }
 
