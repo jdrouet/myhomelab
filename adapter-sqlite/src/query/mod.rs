@@ -52,6 +52,7 @@ pub(crate) mod tests {
         entity::{Metric, MetricHeader, value::MetricValue},
         intake::Intake,
         metrics,
+        query::{Query, QueryExecutor, Request, RequestKind, TimeRange},
     };
 
     pub(crate) async fn prepare_pool() -> anyhow::Result<crate::Sqlite> {
@@ -69,5 +70,48 @@ pub(crate) mod tests {
             .await?;
 
         Ok(sqlite)
+    }
+
+    #[tokio::test]
+    async fn should_fetch_multiple_requests() -> anyhow::Result<()> {
+        let sqlite = crate::query::tests::prepare_pool().await?;
+
+        let res = sqlite
+            .execute(
+                &[
+                    Request::scalar()
+                        .with_query("reboot-all", Query::sum(MetricHeader::new("system.reboot")))
+                        .with_query(
+                            "reboot-macbook",
+                            Query::sum(
+                                MetricHeader::new("system.reboot").with_tag("host", "macbook"),
+                            ),
+                        )
+                        .with_query(
+                            "reboot-raspberry",
+                            Query::sum(
+                                MetricHeader::new("system.reboot").with_tag("host", "raspberry"),
+                            ),
+                        ),
+                    Request::timeseries(3)
+                        .with_query("cpu", Query::max(MetricHeader::new("system.cpu")))
+                        .with_query(
+                            "cpu-raspberry",
+                            Query::min(
+                                MetricHeader::new("system.cpu").with_tag("host", "raspberry"),
+                            ),
+                        ),
+                ],
+                TimeRange::from(0),
+            )
+            .await?;
+
+        assert_eq!(res.len(), 2);
+        assert_eq!(res[0].kind, RequestKind::Scalar);
+        assert_eq!(res[0].queries.len(), 3);
+        assert_eq!(res[1].kind, RequestKind::Timeseries { period: 3 });
+        assert_eq!(res[1].queries.len(), 2);
+
+        Ok(())
     }
 }
