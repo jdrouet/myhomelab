@@ -57,7 +57,7 @@ where
 }
 
 impl myhomelab_metric::intake::Intake for crate::Sqlite {
-    async fn ingest(&self, values: &[Metric]) -> anyhow::Result<()> {
+    async fn ingest(&self, values: Vec<Metric>) -> anyhow::Result<()> {
         if values.is_empty() {
             tracing::debug!("empty list of metrics, skipping");
             return Ok(());
@@ -105,7 +105,7 @@ mod tests {
         let sqlite = crate::SqliteConfig::default().build().await.unwrap();
         sqlite.prepare().await.unwrap();
         sqlite
-            .ingest(&[
+            .ingest(vec![
                 Metric {
                     header: MetricHeader::new("foo"),
                     timestamp: 0,
@@ -136,7 +136,7 @@ mod tests {
         let sqlite = crate::SqliteConfig::default().build().await.unwrap();
         sqlite.prepare().await.unwrap();
         sqlite
-            .ingest(&[
+            .ingest(vec![
                 Metric {
                     header: MetricHeader::new("foo"),
                     timestamp: 0,
@@ -172,7 +172,7 @@ mod tests {
         let sqlite = crate::SqliteConfig::default().build().await.unwrap();
         sqlite.prepare().await.unwrap();
         sqlite
-            .ingest(&[
+            .ingest(vec![
                 Metric {
                     header: MetricHeader::new("foo"),
                     timestamp: 0,

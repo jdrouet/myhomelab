@@ -1,0 +1,10 @@
+[package]
+name = "myhomelab-adapter-http-shared"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+myhomelab-metric = { workspace = true }
+serde = { workspace = true, features = ["derive"] }

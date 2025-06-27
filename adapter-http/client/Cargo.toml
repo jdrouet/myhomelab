@@ -1,0 +1,13 @@
+[package]
+name = "myhomelab-adapter-http-client"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+myhomelab-adapter-http-shared = { workspace = true }
+myhomelab-metric = { workspace = true }
+myhomelab-prelude = { workspace = true }
+reqwest = { version = "0.12", features = ["json"] }

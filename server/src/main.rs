@@ -1,5 +1,5 @@
+use myhomelab_adapter_http_server::{HttpServerConfig, ServerState};
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
-use myhomelab_inbound_http::{HttpServerConfig, ServerState};
 use myhomelab_prelude::FromEnv;
 
 #[derive(Clone, Debug)]

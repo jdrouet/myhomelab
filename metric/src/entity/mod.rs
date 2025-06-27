@@ -1,13 +1,13 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 pub mod tag;
 pub mod value;
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, serde::Deserialize, serde::Serialize)]
 pub struct MetricHeader {
     pub name: Box<str>,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub tags: HashMap<Box<str>, tag::TagValue>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub tags: BTreeMap<Box<str>, tag::TagValue>,
 }
 
 impl MetricHeader {
