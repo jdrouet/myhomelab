@@ -1,3 +1,5 @@
+use tower_http::trace::TraceLayer;
+
 mod router;
 
 const DEFAULT_HOST: std::net::IpAddr = std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST);
@@ -45,7 +47,9 @@ pub struct HttpServer<S: ServerState> {
 impl<S: ServerState> HttpServer<S> {
     #[tracing::instrument(skip_all, fields(address = %self.address))]
     pub async fn run(self) -> anyhow::Result<()> {
-        let app = crate::router::create::<S>().with_state(self.state);
+        let app = crate::router::create::<S>()
+            .layer(TraceLayer::new_for_http())
+            .with_state(self.state);
         tracing::debug!("binding socket");
         let listener = tokio::net::TcpListener::bind(self.address).await?;
         tracing::info!("starting server");
