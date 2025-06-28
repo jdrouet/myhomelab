@@ -1,4 +1,5 @@
-use axum::{extract::State, http::StatusCode};
+use axum::extract::State;
+use axum::http::StatusCode;
 use myhomelab_prelude::Healthcheck;
 
 use crate::ServerState;

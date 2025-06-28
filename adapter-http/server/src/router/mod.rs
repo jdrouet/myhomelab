@@ -1,4 +1,5 @@
-use axum::{Extension, http::StatusCode};
+use axum::Extension;
+use axum::http::StatusCode;
 
 use crate::ServerState;
 

@@ -48,12 +48,10 @@ impl QueryExecutor for crate::Sqlite {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use myhomelab_metric::{
-        entity::MetricHeader,
-        intake::Intake,
-        metrics,
-        query::{Query, QueryExecutor, Request, RequestKind, TimeRange},
-    };
+    use myhomelab_metric::entity::MetricHeader;
+    use myhomelab_metric::intake::Intake;
+    use myhomelab_metric::metrics;
+    use myhomelab_metric::query::{Query, QueryExecutor, Request, RequestKind, TimeRange};
 
     pub(crate) async fn prepare_pool() -> anyhow::Result<crate::Sqlite> {
         let config = crate::SqliteConfig::default();

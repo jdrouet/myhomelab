@@ -1,14 +1,11 @@
-use std::{
-    net::{IpAddr, Ipv4Addr},
-    sync::{Arc, atomic::AtomicU16},
-};
+use std::net::{IpAddr, Ipv4Addr};
+use std::sync::Arc;
+use std::sync::atomic::AtomicU16;
 
 use myhomelab_adapter_http_server::ServerState;
-use myhomelab_metric::{
-    entity::MetricHeader,
-    query::{Query, QueryExecutor, Request},
-};
-use myhomelab_metric::{intake::Intake, query::TimeRange};
+use myhomelab_metric::entity::MetricHeader;
+use myhomelab_metric::intake::Intake;
+use myhomelab_metric::query::{Query, QueryExecutor, Request, TimeRange};
 use myhomelab_metric_mock::MockMetric;
 use myhomelab_prelude::Healthcheck;
 

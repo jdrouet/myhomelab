@@ -1,8 +1,10 @@
-use super::shared::Wrapper;
 use anyhow::Context;
 use myhomelab_metric::entity::MetricHeader;
 use myhomelab_metric::query::{Query, QueryResponse, TimeRange, TimeseriesQueryResponse};
-use sqlx::{FromRow, Row, types::Json};
+use sqlx::types::Json;
+use sqlx::{FromRow, Row};
+
+use super::shared::Wrapper;
 
 impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<TimeseriesQueryResponse> {
     fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
@@ -73,9 +75,9 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use myhomelab_metric::{
-        entity::MetricHeader,
-        query::{Query, QueryExecutor, QueryResponse, Request, RequestKind, TimeRange},
+    use myhomelab_metric::entity::MetricHeader;
+    use myhomelab_metric::query::{
+        Query, QueryExecutor, QueryResponse, Request, RequestKind, TimeRange,
     };
 
     #[tokio::test]

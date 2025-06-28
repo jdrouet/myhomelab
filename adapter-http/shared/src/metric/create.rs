@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use myhomelab_metric::entity::{Metric, MetricHeader, value::MetricValue};
+use myhomelab_metric::entity::value::MetricValue;
+use myhomelab_metric::entity::{Metric, MetricHeader};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Metrics<V> {
