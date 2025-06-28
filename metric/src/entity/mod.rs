@@ -73,17 +73,17 @@ macro_rules! metrics {
         [ $( ($timestamp:expr, $value:expr) ),+ $(,)? ]
     ) => {{
         {
-            let mut header = MetricHeader::new($name);
+            let mut header = myhomelab_metric::entity::MetricHeader::new($name);
             $(
                 header = header.with_tag($tag_key, $tag_val);
             )+
 
             vec![
                 $(
-                    Metric {
+                    myhomelab_metric::entity::Metric {
                         header: header.clone(),
                         timestamp: $timestamp,
-                        value: MetricValue::$val_ty($value),
+                        value: myhomelab_metric::entity::value::MetricValue::$val_ty($value),
                     }
                 ),+
             ]

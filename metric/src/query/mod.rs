@@ -7,14 +7,15 @@ use crate::entity::MetricHeader;
 pub trait QueryExecutor: Healthcheck {
     fn execute(
         &self,
-        requests: &[Request],
+        requests: Vec<Request>,
         timerange: TimeRange,
     ) -> impl Future<Output = anyhow::Result<Vec<Response>>> + Send;
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
 pub struct TimeRange {
     pub start: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub end: Option<i64>,
 }
 
@@ -39,6 +40,7 @@ impl From<(i64, i64)> for TimeRange {
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Request {
     pub kind: RequestKind,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub queries: HashMap<Box<str>, Query>,
 }
 
@@ -82,6 +84,7 @@ pub enum Aggregator {
 pub struct Query {
     pub header: MetricHeader,
     pub aggregator: Aggregator,
+    #[serde(default, skip_serializing_if = "HashSet::is_empty")]
     pub group_by: HashSet<Box<str>>,
 }
 
@@ -116,26 +119,29 @@ impl Query {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Response {
     pub kind: RequestKind,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub queries: HashMap<Box<str>, QueryResponse>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(tag = "type", content = "values")]
 pub enum QueryResponse {
     Scalar(Vec<ScalarQueryResponse>),
     Timeseries(Vec<TimeseriesQueryResponse>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct ScalarQueryResponse {
     pub header: MetricHeader,
     pub value: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct TimeseriesQueryResponse {
     pub header: MetricHeader,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub values: Vec<(i64, f64)>,
 }

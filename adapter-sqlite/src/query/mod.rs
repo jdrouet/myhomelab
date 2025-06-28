@@ -9,7 +9,7 @@ mod timeseries;
 impl QueryExecutor for crate::Sqlite {
     async fn execute(
         &self,
-        requests: &[Request],
+        requests: Vec<Request>,
         timerange: TimeRange,
     ) -> anyhow::Result<Vec<Response>> {
         let mut res = Vec::with_capacity(requests.len());
@@ -49,7 +49,7 @@ impl QueryExecutor for crate::Sqlite {
 #[cfg(test)]
 pub(crate) mod tests {
     use myhomelab_metric::{
-        entity::{Metric, MetricHeader, value::MetricValue},
+        entity::MetricHeader,
         intake::Intake,
         metrics,
         query::{Query, QueryExecutor, Request, RequestKind, TimeRange},
@@ -78,7 +78,7 @@ pub(crate) mod tests {
 
         let res = sqlite
             .execute(
-                &[
+                vec![
                     Request::scalar()
                         .with_query("reboot-all", Query::sum(MetricHeader::new("system.reboot")))
                         .with_query(

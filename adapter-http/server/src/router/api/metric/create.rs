@@ -2,9 +2,7 @@ use axum::{Json, extract::State, http::StatusCode};
 use myhomelab_adapter_http_shared::metric::create::Payload;
 use myhomelab_metric::intake::Intake;
 
-use crate::ServerState;
-
-pub(super) async fn handle<S: ServerState>(
+pub(super) async fn handle<S: crate::ServerState>(
     State(state): State<S>,
     Json(payload): Json<Payload>,
 ) -> StatusCode {

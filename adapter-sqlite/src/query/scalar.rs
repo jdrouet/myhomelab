@@ -68,9 +68,11 @@ pub(crate) mod tests {
 
         let res = sqlite
             .execute(
-                &[Request::scalar()
-                    .with_query("max-cpu", Query::max(MetricHeader::new("system.cpu")))
-                    .with_query("min-cpu", Query::min(MetricHeader::new("system.cpu")))],
+                vec![
+                    Request::scalar()
+                        .with_query("max-cpu", Query::max(MetricHeader::new("system.cpu")))
+                        .with_query("min-cpu", Query::min(MetricHeader::new("system.cpu"))),
+                ],
                 TimeRange::from(0),
             )
             .await?;
@@ -101,15 +103,17 @@ pub(crate) mod tests {
 
         let res = sqlite
             .execute(
-                &[Request::scalar()
-                    .with_query(
-                        "max-cpu-fr",
-                        Query::max(MetricHeader::new("system.cpu").with_tag("location", "FR")),
-                    )
-                    .with_query(
-                        "max-cpu-es",
-                        Query::min(MetricHeader::new("system.cpu").with_tag("location", "ES")),
-                    )],
+                vec![
+                    Request::scalar()
+                        .with_query(
+                            "max-cpu-fr",
+                            Query::max(MetricHeader::new("system.cpu").with_tag("location", "FR")),
+                        )
+                        .with_query(
+                            "max-cpu-es",
+                            Query::min(MetricHeader::new("system.cpu").with_tag("location", "ES")),
+                        ),
+                ],
                 TimeRange::from(0),
             )
             .await?;
@@ -140,18 +144,22 @@ pub(crate) mod tests {
 
         let res = sqlite
             .execute(
-                &[Request::scalar()
-                    .with_query("reboot-all", Query::sum(MetricHeader::new("system.reboot")))
-                    .with_query(
-                        "reboot-macbook",
-                        Query::sum(MetricHeader::new("system.reboot").with_tag("host", "macbook")),
-                    )
-                    .with_query(
-                        "reboot-raspberry",
-                        Query::sum(
-                            MetricHeader::new("system.reboot").with_tag("host", "raspberry"),
+                vec![
+                    Request::scalar()
+                        .with_query("reboot-all", Query::sum(MetricHeader::new("system.reboot")))
+                        .with_query(
+                            "reboot-macbook",
+                            Query::sum(
+                                MetricHeader::new("system.reboot").with_tag("host", "macbook"),
+                            ),
+                        )
+                        .with_query(
+                            "reboot-raspberry",
+                            Query::sum(
+                                MetricHeader::new("system.reboot").with_tag("host", "raspberry"),
+                            ),
                         ),
-                    )],
+                ],
                 TimeRange::from(0),
             )
             .await?;

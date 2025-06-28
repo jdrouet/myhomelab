@@ -1,5 +1,5 @@
 [package]
-name = "myhomelab-adapter-http-client"
+name = "myhomelab-metric-mock"
 version = "0.1.0"
 edition = "2024"
 authors.workspace = true
@@ -7,8 +7,6 @@ license.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-myhomelab-adapter-http-shared = { workspace = true }
+mockall = { version = "0.13" }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
-serde_qs = { workspace = true, features = ["tracing"] }
-reqwest = { version = "0.12", features = ["json"] }

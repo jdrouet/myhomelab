@@ -84,12 +84,16 @@ pub(crate) mod tests {
 
         let res = sqlite
             .execute(
-                &[Request::timeseries(3)
-                    .with_query("cpu", Query::max(MetricHeader::new("system.cpu")))
-                    .with_query(
-                        "cpu-raspberry",
-                        Query::min(MetricHeader::new("system.cpu").with_tag("host", "raspberry")),
-                    )],
+                vec![
+                    Request::timeseries(3)
+                        .with_query("cpu", Query::max(MetricHeader::new("system.cpu")))
+                        .with_query(
+                            "cpu-raspberry",
+                            Query::min(
+                                MetricHeader::new("system.cpu").with_tag("host", "raspberry"),
+                            ),
+                        ),
+                ],
                 TimeRange::from(0),
             )
             .await?;
