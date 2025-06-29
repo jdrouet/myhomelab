@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use myhomelab_agent_prelude::reader::Reader;
 use myhomelab_metric::entity::Metric;
+use tokio_util::sync::CancellationToken;
 
 #[derive(Debug)]
 pub struct ManagerConfig {
@@ -20,6 +21,7 @@ impl Default for ManagerConfig {
 
 #[derive(Debug)]
 pub struct ManagerBuilder<I, S, R> {
+    cancel: CancellationToken,
     intake: I,
     tasks: Vec<tokio::task::JoinHandle<anyhow::Result<()>>>,
     sender: S,
@@ -32,8 +34,9 @@ where
     S: myhomelab_agent_prelude::mpsc::Sender,
     R: myhomelab_agent_prelude::mpsc::Receiver,
 {
-    pub fn new(intake: I, sender: S, receiver: R) -> Self {
+    pub fn new(cancel: CancellationToken, intake: I, sender: S, receiver: R) -> Self {
         Self {
+            cancel,
             intake,
             sender,
             receiver,
@@ -47,13 +50,16 @@ where
     }
 
     pub fn add_reader<E: Reader>(&mut self, reader: E) {
+        let cancel = self.cancel.child_token();
         let sender = self.sender.clone();
-        self.tasks
-            .push(tokio::task::spawn(async move { reader.run(sender).await }));
+        self.tasks.push(tokio::task::spawn(async move {
+            reader.run(cancel, sender).await
+        }));
     }
 
     pub fn build(self, config: &ManagerConfig) -> Manager<I, R> {
         Manager {
+            cancel: self.cancel,
             buffer: Vec::with_capacity(config.buffer_max_size),
             buffer_max_size: config.buffer_max_size,
             intake: self.intake,
@@ -71,12 +77,14 @@ pub struct Manager<I, R> {
     intake: I,
     interval: tokio::time::Interval,
     receiver: R,
+    cancel: CancellationToken,
     #[allow(unused)]
     tasks: Vec<tokio::task::JoinHandle<anyhow::Result<()>>>,
 }
 
 impl<I: myhomelab_metric::intake::Intake> Manager<I, tokio::sync::mpsc::UnboundedReceiver<Metric>> {
     pub fn unbounded_builder(
+        cancel: CancellationToken,
         intake: I,
     ) -> ManagerBuilder<
         I,
@@ -84,7 +92,7 @@ impl<I: myhomelab_metric::intake::Intake> Manager<I, tokio::sync::mpsc::Unbounde
         tokio::sync::mpsc::UnboundedReceiver<Metric>,
     > {
         let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
-        ManagerBuilder::new(intake, sender, receiver)
+        ManagerBuilder::new(cancel, intake, sender, receiver)
     }
 }
 
@@ -109,7 +117,7 @@ where
     #[tracing::instrument(skip_all)]
     pub async fn run(mut self) -> anyhow::Result<()> {
         tracing::info!("starting manager");
-        loop {
+        while !(self.cancel.is_cancelled() && self.receiver.is_empty()) {
             tokio::select! {
                 maybe_metric = self.receiver.pull() => {
                     match maybe_metric {
@@ -131,8 +139,18 @@ where
                         self.flush().await?;
                     }
                 }
+                _ = self.cancel.cancelled() => {
+                    tracing::debug!("cancelled");
+                }
             }
         }
+        tracing::debug!("stopping tasks");
+        while let Some(task) = self.tasks.pop() {
+            if let Err(err) = task.await {
+                tracing::error!(message = "reader failed", cause = %err);
+            }
+        }
+        tracing::info!("stopped manager");
         Ok(())
     }
 }

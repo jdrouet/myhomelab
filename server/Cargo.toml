@@ -13,5 +13,6 @@ myhomelab-agent-core = { workspace = true }
 myhomelab-agent-reader-system = { workspace = true }
 myhomelab-prelude = { workspace = true }
 myhomelab-metric = { workspace = true }
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal"] }
+tokio-util = { workspace = true }
 tracing-subscriber = { version = "0.3" }

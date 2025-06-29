@@ -20,6 +20,7 @@ myhomelab-prelude = { workspace = true }
 serde = { workspace = true }
 serde_qs = { workspace = true, features = ["axum", "tracing"] }
 tokio = { workspace = true }
+tokio-util = { workspace = true }
 tower-http = { version = "0.6", features = ["trace"] }
 tracing = { workspace = true }
 

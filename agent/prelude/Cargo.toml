@@ -11,4 +11,5 @@ derive_more = { workspace = true, features = ["from"] }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 tokio = { workspace = true }
-tokio-stream = { version = "0.1" }
+tokio-stream = { workspace = true }
+tokio-util = { workspace = true }

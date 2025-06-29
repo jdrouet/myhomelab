@@ -8,6 +8,7 @@ use myhomelab_metric::intake::Intake;
 use myhomelab_metric::query::{Query, QueryExecutor, Request, TimeRange};
 use myhomelab_metric_mock::MockMetric;
 use myhomelab_prelude::Healthcheck;
+use tokio_util::sync::CancellationToken;
 
 static PORT_ITERATOR: AtomicU16 = AtomicU16::new(5000);
 
@@ -48,7 +49,7 @@ async fn should_handle_healthcheck() {
     };
     state.metric.expect_healthcheck().returning(|| Ok(()));
     let state = MockServerState(Arc::new(state));
-    let server = server_config.build(state.clone());
+    let server = server_config.build(CancellationToken::new(), state.clone());
     let _handle = tokio::spawn(async { server.run().await });
     let client_config = myhomelab_adapter_http_client::AdapterHttpClientConfig {
         base_url: format!("http://localhost:{port}"),
@@ -72,7 +73,7 @@ async fn should_ingest_metrics() {
         Ok(())
     });
     let state = MockServerState(Arc::new(state));
-    let server = server_config.build(state.clone());
+    let server = server_config.build(CancellationToken::new(), state.clone());
     let _handle = tokio::spawn(async { server.run().await });
     let client_config = myhomelab_adapter_http_client::AdapterHttpClientConfig {
         base_url: format!("http://localhost:{port}"),
@@ -104,7 +105,7 @@ async fn should_query_batch_metrics() {
             Ok(Vec::new())
         });
     let state = MockServerState(Arc::new(state));
-    let server = server_config.build(state.clone());
+    let server = server_config.build(CancellationToken::new(), state.clone());
     let _handle = tokio::spawn(async { server.run().await });
     let client_config = myhomelab_adapter_http_client::AdapterHttpClientConfig {
         base_url: format!("http://localhost:{port}"),
@@ -154,7 +155,7 @@ async fn should_query_single_metrics() {
             Ok(Vec::new())
         });
     let state = MockServerState(Arc::new(state));
-    let server = server_config.build(state.clone());
+    let server = server_config.build(CancellationToken::new(), state.clone());
     let _handle = tokio::spawn(async { server.run().await });
     let client_config = myhomelab_adapter_http_client::AdapterHttpClientConfig {
         base_url: format!("http://localhost:{port}"),

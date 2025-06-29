@@ -19,16 +19,25 @@ impl Sender for tokio::sync::mpsc::UnboundedSender<Metric> {
 
 pub trait Receiver {
     fn pull(&mut self) -> impl Future<Output = Option<Metric>> + Send;
+    fn is_empty(&self) -> bool;
 }
 
 impl Receiver for tokio::sync::mpsc::Receiver<Metric> {
     async fn pull(&mut self) -> Option<Metric> {
         self.recv().await
     }
+
+    fn is_empty(&self) -> bool {
+        tokio::sync::mpsc::Receiver::is_empty(self)
+    }
 }
 
 impl Receiver for tokio::sync::mpsc::UnboundedReceiver<Metric> {
     async fn pull(&mut self) -> Option<Metric> {
         self.recv().await
+    }
+
+    fn is_empty(&self) -> bool {
+        tokio::sync::mpsc::UnboundedReceiver::is_empty(self)
     }
 }

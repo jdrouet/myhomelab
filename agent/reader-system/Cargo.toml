@@ -13,3 +13,5 @@ myhomelab-agent-prelude = { workspace = true }
 sysinfo = { version = "0.35" }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
+tokio-util = { workspace = true }
+tracing = { workspace = true }

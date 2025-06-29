@@ -1,3 +1,4 @@
+use tokio_util::sync::CancellationToken;
 use tower_http::trace::TraceLayer;
 
 mod router;
@@ -30,9 +31,10 @@ impl myhomelab_prelude::FromEnv for HttpServerConfig {
 }
 
 impl HttpServerConfig {
-    pub fn build<S: ServerState>(&self, state: S) -> HttpServer<S> {
+    pub fn build<S: ServerState>(&self, cancel: CancellationToken, state: S) -> HttpServer<S> {
         HttpServer {
             address: std::net::SocketAddr::from((self.host, self.port)),
+            cancel,
             state,
         }
     }
@@ -41,19 +43,27 @@ impl HttpServerConfig {
 #[derive(Debug)]
 pub struct HttpServer<S: ServerState> {
     address: std::net::SocketAddr,
+    cancel: CancellationToken,
     state: S,
 }
 
 impl<S: ServerState> HttpServer<S> {
     #[tracing::instrument(skip_all, fields(address = %self.address))]
     pub async fn run(self) -> anyhow::Result<()> {
+        let Self {
+            address,
+            cancel,
+            state,
+        } = self;
         let app = crate::router::create::<S>()
             .layer(TraceLayer::new_for_http())
-            .with_state(self.state);
+            .with_state(state);
         tracing::debug!("binding socket");
-        let listener = tokio::net::TcpListener::bind(self.address).await?;
+        let listener = tokio::net::TcpListener::bind(address).await?;
         tracing::info!("starting server");
-        axum::serve(listener, app).await?;
+        axum::serve(listener, app)
+            .with_graceful_shutdown(cancel.cancelled_owned())
+            .await?;
         Ok(())
     }
 }

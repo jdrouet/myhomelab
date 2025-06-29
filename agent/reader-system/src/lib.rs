@@ -2,6 +2,7 @@ use myhomelab_agent_prelude::mpsc::Sender;
 use myhomelab_metric::entity::{Metric, MetricHeader, value::MetricValue};
 use myhomelab_prelude::current_timestamp;
 use sysinfo::System;
+use tokio_util::sync::CancellationToken;
 
 const DEFAULT_INTERVAL: u64 = 10;
 
@@ -116,22 +117,32 @@ impl ReaderSystem {
             .await?;
         Ok(())
     }
-
-    async fn try_run<S: Sender>(&mut self, sender: &S) -> anyhow::Result<()> {
-        let host = System::host_name().unwrap_or_else(|| "unknown".into());
-        loop {
-            self.interval.tick().await;
-            self.system.refresh_all();
-            let now = current_timestamp();
-            self.collect_cpu(&host, now, sender).await?;
-            self.collect_memory(&host, now, sender).await?;
-        }
-    }
 }
 
 impl myhomelab_agent_prelude::reader::Reader for ReaderSystem {
-    async fn run<S: Sender + Send>(mut self, sender: S) -> anyhow::Result<()> {
-        // TODO send event when failed
-        self.try_run(&sender).await
+    #[tracing::instrument(skip_all)]
+    async fn run<S: Sender + Send>(
+        mut self,
+        token: CancellationToken,
+        sender: S,
+    ) -> anyhow::Result<()> {
+        tracing::info!("starting reader");
+        let host = System::host_name().unwrap_or_else(|| "unknown".into());
+        while !token.is_cancelled() {
+            tokio::select! {
+                _ = token.cancelled() => {
+                    tracing::debug!("cancelled reader");
+                }
+                _ = self.interval.tick() => {
+                    tracing::debug!("collecting metrics");
+                    self.system.refresh_all();
+                    let now = current_timestamp();
+                    self.collect_cpu(&host, now, &sender).await?;
+                    self.collect_memory(&host, now, &sender).await?;
+                }
+            }
+        }
+        tracing::info!("stopped reader");
+        Ok(())
     }
 }
