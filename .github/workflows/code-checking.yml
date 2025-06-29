@@ -1,0 +1,45 @@
+name: common
+
+on:
+  merge_group:
+    types: [checks_requested]
+  workflow_call:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.ref }}-code-check
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-code-check-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo check --all-features --tests --workspace
+      - run: cargo clippy --all-targets --all-features --tests --workspace
+
+  format:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.ref }}-code-format
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - run: cargo fmt --all --check
