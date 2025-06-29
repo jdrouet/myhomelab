@@ -25,7 +25,7 @@ pub(super) async fn handle_single<S: crate::ServerState>(
 ) -> Result<Json<Vec<Response>>, StatusCode> {
     let params = BatchQueryParams::from(params);
     let executor = state.metric_query_executor();
-    match executor.execute(params.requests.into(), params.range).await {
+    match executor.execute(params.requests, params.range).await {
         Ok(list) => Ok(Json(list)),
         Err(err) => {
             tracing::error!(message = "unable to query metrics", cause = ?err);

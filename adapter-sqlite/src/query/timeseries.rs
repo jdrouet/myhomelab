@@ -15,7 +15,7 @@ impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<TimeseriesQueryRespons
                 name: row.try_get(0)?,
                 tags: row.try_get(1).map(|Json(value)| value)?,
             },
-            values: timestamps.0.into_iter().zip(values.0.into_iter()).collect(),
+            values: timestamps.0.into_iter().zip(values.0).collect(),
         }))
     }
 }
@@ -28,7 +28,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 ) -> anyhow::Result<QueryResponse> {
     let mut qb = sqlx::QueryBuilder::<'_, sqlx::Sqlite>::new("with gauge_extractions as (");
     qb.push("select name");
-    super::shared::build_tags_attribute(&mut qb, &query);
+    super::shared::build_tags_attribute(&mut qb, query);
     qb.push(", timestamp");
     qb.push(", timestamp / ")
         .push_bind(period)
@@ -42,7 +42,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     super::shared::build_tags_filter(&mut qb, query.header.tags.iter());
     qb.push("), counter_extractions as (");
     qb.push("select name");
-    super::shared::build_tags_attribute(&mut qb, &query);
+    super::shared::build_tags_attribute(&mut qb, query);
     qb.push(", timestamp");
     qb.push(", timestamp / ")
         .push_bind(period)

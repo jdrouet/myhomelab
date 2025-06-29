@@ -59,12 +59,10 @@ pub(crate) mod tests {
         sqlite.prepare().await?;
 
         sqlite
-            .ingest(vec![
-                metrics!("system.cpu", gauge, "host" => "raspberry", "location" => "FR", [(1, 80.0), (2, 90.0), (3, 50.0), (4, 20.0)]),
+            .ingest([metrics!("system.cpu", gauge, "host" => "raspberry", "location" => "FR", [(1, 80.0), (2, 90.0), (3, 50.0), (4, 20.0)]),
                 metrics!("system.cpu", gauge, "host" => "raspberry", "location" => "ES", [(1, 10.0), (2, 30.0), (3, 40.0), (4, 30.0)]),
                 metrics!("system.cpu", gauge, "host" => "macbook", "location" => "FR", [(1, 1.0), (2, 2.0), (3, 3.0), (4, 2.0)]),
-                metrics!("system.reboot", counter, "host" => "macbook", "location" => "FR", [(2, 1), (5, 1)]),
-            ].concat())
+                metrics!("system.reboot", counter, "host" => "macbook", "location" => "FR", [(2, 1), (5, 1)])].concat())
             .await?;
 
         Ok(sqlite)

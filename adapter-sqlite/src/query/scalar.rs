@@ -25,7 +25,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 ) -> anyhow::Result<QueryResponse> {
     let mut qb = sqlx::QueryBuilder::<'_, sqlx::Sqlite>::new("with gauge_extractions as (");
     qb.push("select name");
-    super::shared::build_tags_attribute(&mut qb, &query);
+    super::shared::build_tags_attribute(&mut qb, query);
     qb.push(", value");
     qb.push(" from gauge_metrics");
     qb.push(" where name = ")
@@ -34,7 +34,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     super::shared::build_tags_filter(&mut qb, query.header.tags.iter());
     qb.push("), counter_extractions as (");
     qb.push("select name");
-    super::shared::build_tags_attribute(&mut qb, &query);
+    super::shared::build_tags_attribute(&mut qb, query);
     qb.push(", value");
     qb.push(" from counter_metrics");
     qb.push(" where name = ")

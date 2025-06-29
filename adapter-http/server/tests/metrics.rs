@@ -79,10 +79,8 @@ async fn should_ingest_metrics() {
         base_url: format!("http://localhost:{port}"),
     };
     let client = client_config.build().unwrap();
-    client.ingest(vec![
-        myhomelab_metric::metrics!("system.memory.total", gauge, "host" => "rpi", [(0, 1024.0), (1, 1024.0), (2, 1024.0), (3, 1024.0), (4, 1024.0)]),
-        myhomelab_metric::metrics!("system.memory.used", gauge, "host" => "rpi", [(0, 256.0), (1, 312.0), (2, 420.0), (3, 320.0), (4, 430.0)]),
-    ].concat()).await.unwrap();
+    client.ingest([myhomelab_metric::metrics!("system.memory.total", gauge, "host" => "rpi", [(0, 1024.0), (1, 1024.0), (2, 1024.0), (3, 1024.0), (4, 1024.0)]),
+        myhomelab_metric::metrics!("system.memory.used", gauge, "host" => "rpi", [(0, 256.0), (1, 312.0), (2, 420.0), (3, 320.0), (4, 430.0)])].concat()).await.unwrap();
 }
 
 #[tokio::test]

@@ -53,7 +53,7 @@ impl ReaderSystem {
         timestamp: u64,
         sender: &S,
     ) -> anyhow::Result<()> {
-        for (index, cpu) in self.system.cpus().into_iter().enumerate() {
+        for (index, cpu) in self.system.cpus().iter().enumerate() {
             sender
                 .push(Metric {
                     header: MetricHeader::new("system.cpu.frequency")
