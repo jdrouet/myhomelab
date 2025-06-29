@@ -18,7 +18,7 @@ where
     counter_builder.push_values(values.into_iter(), |mut acc, item| {
         acc.push_bind(item.header.name.as_ref())
             .push_bind(sqlx::types::Json(&item.header.tags))
-            .push_bind(item.timestamp)
+            .push_bind(item.timestamp as i64)
             .push_bind(item.value.0 as i64);
     });
     counter_builder
@@ -45,7 +45,7 @@ where
     gauge_builder.push_values(values.into_iter(), |mut acc, item| {
         acc.push_bind(item.header.name.as_ref())
             .push_bind(sqlx::types::Json(&item.header.tags))
-            .push_bind(item.timestamp)
+            .push_bind(item.timestamp as i64)
             .push_bind(item.value.0);
     });
     gauge_builder

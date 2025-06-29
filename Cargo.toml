@@ -5,6 +5,9 @@ members = [
     "adapter-http/server",
     "adapter-http/shared",
     "adapter-sqlite",
+    "agent/core",
+    "agent/prelude",
+    "agent/reader-system",
     "metric",
     "metric-mock",
     "prelude",
@@ -17,14 +20,19 @@ license = "MIT"
 
 [workspace.dependencies]
 anyhow = { version = "1.0" }
+derive_more = { version = "2.0", default-features = false }
 myhomelab-adapter-sqlite = { path = "./adapter-sqlite" }
 myhomelab-adapter-http-client = { path = "./adapter-http/client" }
 myhomelab-adapter-http-server = { path = "./adapter-http/server" }
 myhomelab-adapter-http-shared = { path = "./adapter-http/shared" }
+myhomelab-agent-core = { path = "./agent/core" }
+myhomelab-agent-prelude = { path = "./agent/prelude" }
+myhomelab-agent-reader-system = { path = "./agent/reader-system" }
 myhomelab-metric = { path = "./metric" }
 myhomelab-metric-mock = { path = "./metric-mock" }
 myhomelab-prelude = { path = "./prelude" }
 serde = { version = "1.0" }
 serde_qs = { version = "1.0.0-rc.3" }
 tokio = { version = "1.45" }
+tokio-stream = { version = "0.1" }
 tracing = { version = "0.1" }

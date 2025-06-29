@@ -1,0 +1,15 @@
+[package]
+name = "myhomelab-agent-reader-system"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+myhomelab-metric = { workspace = true }
+myhomelab-prelude = { workspace = true }
+myhomelab-agent-prelude = { workspace = true }
+sysinfo = { version = "0.35" }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }

@@ -25,6 +25,12 @@ impl From<String> for TagValue {
     }
 }
 
+impl From<usize> for TagValue {
+    fn from(value: usize) -> Self {
+        Self::Integer(value as i64)
+    }
+}
+
 impl From<i64> for TagValue {
     fn from(value: i64) -> Self {
         Self::Integer(value)

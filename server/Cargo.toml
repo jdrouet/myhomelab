@@ -9,6 +9,8 @@ license.workspace = true
 anyhow = { workspace = true }
 myhomelab-adapter-sqlite = { workspace = true }
 myhomelab-adapter-http-server = { workspace = true }
+myhomelab-agent-core = { workspace = true }
+myhomelab-agent-reader-system = { workspace = true }
 myhomelab-prelude = { workspace = true }
 myhomelab-metric = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

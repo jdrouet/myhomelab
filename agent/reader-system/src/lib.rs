@@ -1,0 +1,137 @@
+use myhomelab_agent_prelude::mpsc::Sender;
+use myhomelab_metric::entity::{Metric, MetricHeader, value::MetricValue};
+use myhomelab_prelude::current_timestamp;
+use sysinfo::System;
+
+const DEFAULT_INTERVAL: u64 = 10;
+
+#[derive(Debug)]
+pub struct ReaderSystemConfig {
+    pub interval: std::time::Duration,
+}
+
+impl Default for ReaderSystemConfig {
+    fn default() -> Self {
+        Self {
+            interval: std::time::Duration::new(DEFAULT_INTERVAL, 0),
+        }
+    }
+}
+
+impl myhomelab_prelude::FromEnv for ReaderSystemConfig {
+    fn from_env() -> anyhow::Result<Self> {
+        let interval: Option<u64> =
+            myhomelab_prelude::parse_from_env("MYHOMELAB_READER_SYSTEM_INTERVAL")?;
+        Ok(Self {
+            interval: std::time::Duration::new(interval.unwrap_or(DEFAULT_INTERVAL), 0),
+        })
+    }
+}
+
+impl ReaderSystemConfig {
+    pub fn build(&self) -> anyhow::Result<ReaderSystem> {
+        let interval = tokio::time::interval(self.interval);
+        Ok(ReaderSystem {
+            interval,
+            system: sysinfo::System::new_all(),
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct ReaderSystem {
+    interval: tokio::time::Interval,
+    system: System,
+}
+
+impl ReaderSystem {
+    async fn collect_cpu<S: Sender>(
+        &self,
+        host: &str,
+        timestamp: u64,
+        sender: &S,
+    ) -> anyhow::Result<()> {
+        for (index, cpu) in self.system.cpus().into_iter().enumerate() {
+            sender
+                .push(Metric {
+                    header: MetricHeader::new("system.cpu.frequency")
+                        .with_tag("host", host)
+                        .with_tag("index", index as i64)
+                        .with_tag("cpu_name", cpu.name())
+                        .with_tag("cpu_brand", cpu.brand())
+                        .with_tag("cpu_vendor_id", cpu.vendor_id()),
+                    timestamp,
+                    value: MetricValue::gauge(cpu.frequency() as f64),
+                })
+                .await?;
+            sender
+                .push(Metric {
+                    header: MetricHeader::new("system.cpu.usage")
+                        .with_tag("host", host)
+                        .with_tag("index", index as i64)
+                        .with_tag("cpu_name", cpu.name())
+                        .with_tag("cpu_brand", cpu.brand())
+                        .with_tag("cpu_vendor_id", cpu.vendor_id()),
+                    timestamp,
+                    value: MetricValue::gauge(cpu.cpu_usage() as f64),
+                })
+                .await?;
+        }
+        Ok(())
+    }
+
+    async fn collect_memory<S: Sender>(
+        &mut self,
+        host: &str,
+        timestamp: u64,
+        sender: &S,
+    ) -> anyhow::Result<()> {
+        sender
+            .push(Metric {
+                header: MetricHeader::new("system.memory.total").with_tag("host", host),
+                timestamp,
+                value: MetricValue::gauge(self.system.total_memory() as f64),
+            })
+            .await?;
+        sender
+            .push(Metric {
+                header: MetricHeader::new("system.memory.used").with_tag("host", host),
+                timestamp,
+                value: MetricValue::gauge(self.system.used_memory() as f64),
+            })
+            .await?;
+        sender
+            .push(Metric {
+                header: MetricHeader::new("system.swap.total").with_tag("host", host),
+                timestamp,
+                value: MetricValue::gauge(self.system.total_swap() as f64),
+            })
+            .await?;
+        sender
+            .push(Metric {
+                header: MetricHeader::new("system.swap.used").with_tag("host", host),
+                timestamp,
+                value: MetricValue::gauge(self.system.used_swap() as f64),
+            })
+            .await?;
+        Ok(())
+    }
+
+    async fn try_run<S: Sender>(&mut self, sender: &S) -> anyhow::Result<()> {
+        let host = System::host_name().unwrap_or_else(|| "unknown".into());
+        loop {
+            self.interval.tick().await;
+            self.system.refresh_all();
+            let now = current_timestamp();
+            self.collect_cpu(&host, now, sender).await?;
+            self.collect_memory(&host, now, sender).await?;
+        }
+    }
+}
+
+impl myhomelab_agent_prelude::reader::Reader for ReaderSystem {
+    async fn run<S: Sender + Send>(mut self, sender: S) -> anyhow::Result<()> {
+        // TODO send event when failed
+        self.try_run(&sender).await
+    }
+}

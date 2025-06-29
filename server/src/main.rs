@@ -1,5 +1,6 @@
 use myhomelab_adapter_http_server::{HttpServerConfig, ServerState};
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
+use myhomelab_agent_core::{Manager, ManagerConfig};
 use myhomelab_prelude::FromEnv;
 
 #[derive(Clone, Debug)]
@@ -25,10 +26,24 @@ async fn main() -> anyhow::Result<()> {
     let sqlite = sqlite_config.build().await?;
     sqlite.prepare().await?;
 
+    let manager_config = ManagerConfig::default();
+    let manager = Manager::unbounded_builder(sqlite.clone())
+        .with_reader(myhomelab_agent_reader_system::ReaderSystemConfig::default().build()?)
+        .build(&manager_config);
+
     let app_state = AppState { sqlite };
 
     let http_server_config = HttpServerConfig::from_env()?;
     let http_server = http_server_config.build(app_state);
 
-    http_server.run().await
+    tokio::select! {
+        res = manager.run() => {
+            res?;
+        },
+        res = http_server.run() => {
+            res?;
+        },
+    };
+
+    Ok(())
 }

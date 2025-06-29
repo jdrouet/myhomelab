@@ -77,20 +77,14 @@ impl Payload {
     }
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
-pub struct Value<V> {
-    pub timestamp: i64,
-    pub value: V,
-}
-
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct MetricValues<V> {
-    pub timestamps: Vec<i64>,
+    pub timestamps: Vec<u64>,
     pub values: Vec<V>,
 }
 
 impl<V> Iterator for MetricValues<V> {
-    type Item = (i64, V);
+    type Item = (u64, V);
 
     fn next(&mut self) -> Option<Self::Item> {
         let ts = self.timestamps.pop()?;

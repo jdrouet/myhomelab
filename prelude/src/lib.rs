@@ -25,3 +25,10 @@ where
         .with_context(|| format!("unable to parse {name:?} value"))
         .map(Some)
 }
+
+pub fn current_timestamp() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("time went backward")
+        .as_secs()
+}

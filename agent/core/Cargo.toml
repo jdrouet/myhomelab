@@ -1,0 +1,16 @@
+[package]
+name = "myhomelab-agent-core"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+derive_more = { workspace = true, features = ["from"] }
+myhomelab-agent-prelude = { workspace = true }
+myhomelab-agent-reader-system = { workspace = true }
+myhomelab-metric = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tracing = { workspace = true }

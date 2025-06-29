@@ -28,7 +28,7 @@ impl MetricHeader {
 pub struct Metric {
     #[serde(flatten)]
     pub header: MetricHeader,
-    pub timestamp: i64,
+    pub timestamp: u64,
     pub value: value::MetricValue,
 }
 
@@ -59,7 +59,7 @@ impl Metric {
 #[derive(Clone, Copy, Debug)]
 pub struct MetricRef<'a, V> {
     pub header: &'a MetricHeader,
-    pub timestamp: i64,
+    pub timestamp: u64,
     pub value: &'a V,
 }
 
