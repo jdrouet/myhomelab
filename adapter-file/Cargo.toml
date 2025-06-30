@@ -1,0 +1,15 @@
+[package]
+name = "myhomelab-adapter-file"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+myhomelab-dashboard = { workspace = true }
+myhomelab-prelude = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = ["fs"] }
+toml = { version = "0.8" }
+uuid = { workspace = true }

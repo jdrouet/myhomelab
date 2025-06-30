@@ -15,6 +15,7 @@ axum = { version = "0.8", default-features = false, features = [
     "matched-path",
 ] }
 myhomelab-adapter-http-shared = { workspace = true }
+myhomelab-dashboard = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 serde = { workspace = true }
@@ -25,6 +26,8 @@ tower-http = { version = "0.6", features = ["trace"] }
 tracing = { workspace = true }
 
 [dev-dependencies]
+myhomelab-adapter-file = { workspace = true }
 myhomelab-adapter-http-client = { workspace = true }
-myhomelab-metric-mock = { workspace = true }
+myhomelab-dashboard = { workspace = true, features = ["mocks"] }
+myhomelab-metric = { workspace = true, features = ["mocks"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

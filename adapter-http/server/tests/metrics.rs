@@ -3,10 +3,11 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicU16;
 
 use myhomelab_adapter_http_server::ServerState;
+use myhomelab_dashboard::repository::MockDashboardRepo;
 use myhomelab_metric::entity::MetricHeader;
 use myhomelab_metric::intake::Intake;
+use myhomelab_metric::mock::MockMetric;
 use myhomelab_metric::query::{Query, QueryExecutor, Request, TimeRange};
-use myhomelab_metric_mock::MockMetric;
 use myhomelab_prelude::Healthcheck;
 use tokio_util::sync::CancellationToken;
 
@@ -14,6 +15,7 @@ static PORT_ITERATOR: AtomicU16 = AtomicU16::new(5000);
 
 #[derive(Default)]
 struct InnerState {
+    dashboard: MockDashboardRepo,
     metric: MockMetric,
 }
 
@@ -28,6 +30,10 @@ impl std::fmt::Debug for InnerState {
 struct MockServerState(Arc<InnerState>);
 
 impl ServerState for MockServerState {
+    fn dashboard_repository(&self) -> &impl myhomelab_dashboard::repository::DashboardRepository {
+        &self.0.dashboard
+    }
+
     fn metric_intake(&self) -> &impl myhomelab_metric::intake::Intake {
         &self.0.metric
     }
@@ -45,6 +51,7 @@ async fn should_handle_healthcheck() {
         port,
     };
     let mut state = InnerState {
+        dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
     };
     state.metric.expect_healthcheck().returning(|| Ok(()));
@@ -66,6 +73,7 @@ async fn should_ingest_metrics() {
         port,
     };
     let mut state = InnerState {
+        dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
     };
     state.metric.expect_ingest().once().returning(|metrics| {
@@ -91,6 +99,7 @@ async fn should_query_batch_metrics() {
         port,
     };
     let mut state = InnerState {
+        dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
     };
     state
@@ -141,6 +150,7 @@ async fn should_query_single_metrics() {
         port,
     };
     let mut state = InnerState {
+        dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
     };
     state

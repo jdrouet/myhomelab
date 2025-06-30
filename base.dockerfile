@@ -8,6 +8,9 @@ RUN cargo init
 COPY Cargo.toml /code/Cargo.toml
 COPY Cargo.lock /code/Cargo.lock
 
+RUN cargo init --lib --name myhomelab-adapter-file adapter-file
+COPY adapter-file/Cargo.toml /code/adapter-file/Cargo.toml
+
 RUN cargo init --lib --name myhomelab-adapter-http-client adapter-http/client
 COPY adapter-http/client/Cargo.toml /code/adapter-http/client/Cargo.toml
 
@@ -29,11 +32,11 @@ COPY agent/prelude/Cargo.toml /code/agent/prelude/Cargo.toml
 RUN cargo init --lib --name myhomelab-agent-reader-system agent/reader-system
 COPY agent/reader-system/Cargo.toml /code/agent/reader-system/Cargo.toml
 
+RUN cargo init --lib --name myhomelab-dashboard dashboard
+COPY dashboard/Cargo.toml /code/dashboard/Cargo.toml
+
 RUN cargo init --lib --name myhomelab-metric metric
 COPY metric/Cargo.toml /code/metric/Cargo.toml
-
-RUN cargo init --lib --name myhomelab-metric-mock metric-mock
-COPY metric-mock/Cargo.toml /code/metric-mock/Cargo.toml
 
 RUN cargo init --lib --name myhomelab-prelude prelude
 COPY prelude/Cargo.toml /code/prelude/Cargo.toml
@@ -56,6 +59,7 @@ WORKDIR /code
 
 COPY Cargo.toml /code/Cargo.toml
 COPY Cargo.lock /code/Cargo.lock
+COPY adapter-file /code/adapter-file
 COPY adapter-http/client /code/adapter-http/client
 COPY adapter-http/server /code/adapter-http/server
 COPY adapter-http/shared /code/adapter-http/shared
@@ -63,8 +67,8 @@ COPY adapter-sqlite /code/adapter-sqlite
 COPY agent/core /code/agent/core
 COPY agent/prelude /code/agent/prelude
 COPY agent/reader-system /code/agent/reader-system
+COPY dashboard /code/dashboard
 COPY metric /code/metric
-COPY metric-mock /code/metric-mock
 COPY prelude /code/prelude
 COPY server /code/server
 COPY --from=vendor /code/.cargo /code/.cargo

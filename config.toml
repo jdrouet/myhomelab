@@ -1,0 +1,11 @@
+[[dashboards]]
+id = "c6fadbea-4e0d-423f-8451-dbbc20dd1fa1"
+title = "Host system"
+description = "Metrics of the host running MyHomeLab"
+
+[[dashboards.cells]]
+title = "CPU usage"
+width = "large"
+height = "medium"
+kind = { mode = "timeseries", period = 300 }              # 5min period
+query = { name = "system.cpu.usage", aggregator = "avg" }

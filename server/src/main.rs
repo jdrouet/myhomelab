@@ -1,3 +1,4 @@
+use myhomelab_adapter_file::{AdapterFile, AdapterFileConfig};
 use myhomelab_adapter_http_server::{HttpServerConfig, ServerState};
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
 use myhomelab_agent_core::{Manager, ManagerConfig};
@@ -6,10 +7,15 @@ use tokio_util::sync::CancellationToken;
 
 #[derive(Clone, Debug)]
 struct AppState {
+    file: AdapterFile,
     sqlite: Sqlite,
 }
 
 impl ServerState for AppState {
+    fn dashboard_repository(&self) -> &impl myhomelab_dashboard::repository::DashboardRepository {
+        &self.file
+    }
+
     fn metric_intake(&self) -> &impl myhomelab_metric::intake::Intake {
         &self.sqlite
     }
@@ -49,6 +55,9 @@ async fn shutdown_signal(cancel: CancellationToken) -> anyhow::Result<()> {
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
+    let file_config = AdapterFileConfig::from_env()?;
+    let file = file_config.build()?;
+
     let sqlite_config = SqliteConfig::from_env()?;
     let sqlite = sqlite_config.build().await?;
     sqlite.prepare().await?;
@@ -60,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
         .with_reader(myhomelab_agent_reader_system::ReaderSystemConfig::default().build()?)
         .build(&manager_config);
 
-    let app_state = AppState { sqlite };
+    let app_state = AppState { file, sqlite };
 
     let http_server_config = HttpServerConfig::from_env()?;
     let http_server = http_server_config.build(cancel_token.child_token(), app_state);

@@ -66,22 +66,26 @@ impl Request {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(tag = "mode", rename_all = "kebab-case")]
 pub enum RequestKind {
     Scalar,
     Timeseries { period: u32 },
 }
 
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, Default, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum Aggregator {
     #[default]
+    #[serde(alias = "avg")]
     Average,
     Max,
     Min,
     Sum,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Query {
+    #[serde(flatten)]
     pub header: MetricHeader,
     pub aggregator: Aggregator,
     #[serde(default, skip_serializing_if = "HashSet::is_empty")]
