@@ -10,6 +10,7 @@ members = [
     "agent/prelude",
     "agent/reader-system",
     "agent/reader-xiaomi/lywsd03mmc-atc",
+    "client/tui",
     "dashboard",
     "metric",
     "prelude",
