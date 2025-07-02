@@ -1,6 +1,8 @@
+use myhomelab_adapter_http_client::AdapterHttpClient;
+use myhomelab_dashboard::repository::DashboardRepository;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::listener::Event;
+use crate::listener::{AsyncEvent, Event};
 
 #[derive(Debug)]
 pub(crate) enum Action {
@@ -11,18 +13,37 @@ pub(crate) enum Action {
 
 #[derive(Debug)]
 pub(crate) struct Worker {
+    client: AdapterHttpClient,
     receiver: UnboundedReceiver<Action>,
     sender: UnboundedSender<Event>,
 }
 
 impl Worker {
-    pub(crate) fn new(receiver: UnboundedReceiver<Action>, sender: UnboundedSender<Event>) -> Self {
-        Self { receiver, sender }
+    pub(crate) fn new(
+        client: AdapterHttpClient,
+        receiver: UnboundedReceiver<Action>,
+        sender: UnboundedSender<Event>,
+    ) -> Self {
+        Self {
+            client,
+            receiver,
+            sender,
+        }
     }
 }
 
 impl Worker {
-    async fn handle_fetch_dashboard_list(&self) {}
+    async fn handle_fetch_dashboard_list(&self) {
+        let _ = self.sender.send(Event::DashboardList(AsyncEvent::Init));
+        let _ = match self.client.list_dashboards().await {
+            Ok(res) => self
+                .sender
+                .send(Event::DashboardList(AsyncEvent::Success(res))),
+            Err(err) => self
+                .sender
+                .send(Event::DashboardList(AsyncEvent::Error(err))),
+        };
+    }
 
     pub(crate) async fn run(mut self) -> anyhow::Result<()> {
         while let Some(action) = self.receiver.recv().await {

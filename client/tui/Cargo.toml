@@ -9,8 +9,13 @@ license.workspace = true
 anyhow = { workspace = true }
 crossterm = { version = "0.29", features = ["event-stream"] }
 myhomelab-prelude = { workspace = true }
+myhomelab-adapter-http-client = { workspace = true }
 myhomelab-adapter-http-shared = { workspace = true }
+myhomelab-dashboard = { workspace = true }
 ratatui = { version = "0.29" }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 tokio-stream = { workspace = true }
 tokio-util = { workspace = true }
+
+[dev-dependencies]
+similar-asserts = { workspace = true }

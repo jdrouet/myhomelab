@@ -1,3 +1,4 @@
+use myhomelab_dashboard::entity::Dashboard;
 use tokio_stream::StreamExt;
 
 pub struct Listener {
@@ -51,4 +52,12 @@ pub enum Event {
     Key(crossterm::event::KeyEvent),
     Shutdown,
     Tick,
+    DashboardList(AsyncEvent<Vec<Dashboard>>),
+}
+
+#[derive(Debug)]
+pub enum AsyncEvent<T> {
+    Init,
+    Success(T),
+    Error(anyhow::Error),
 }

@@ -1,8 +1,12 @@
 use listener::Event;
-use ratatui::{Terminal, prelude::Backend};
+use myhomelab_adapter_http_client::{AdapterHttpClient, AdapterHttpClientConfig};
+use ratatui::Terminal;
+use ratatui::prelude::Backend;
 
-mod hook;
+use crate::prelude::Component;
+
 mod listener;
+mod prelude;
 mod view;
 mod worker;
 
@@ -17,12 +21,16 @@ impl myhomelab_prelude::FromEnv for ApplicationConfig {
 
 impl ApplicationConfig {
     pub fn build(&self) -> anyhow::Result<Application> {
-        Ok(Application {})
+        Ok(Application {
+            client: AdapterHttpClientConfig::new("http://localhost:3000").build()?,
+        })
     }
 }
 
 #[derive(Debug)]
-pub struct Application {}
+pub struct Application {
+    client: AdapterHttpClient,
+}
 
 impl Application {
     pub async fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> anyhow::Result<()> {
@@ -32,15 +40,19 @@ impl Application {
         let mut listener = listener::Listener::new(interval, event_rx);
         let mut router = crate::view::Router::new(action_tx);
 
+        let client = self.client.clone();
         let worker = tokio::task::spawn(async move {
-            crate::worker::Worker::new(action_rx, event_tx).run().await
+            crate::worker::Worker::new(client, action_rx, event_tx)
+                .run()
+                .await
         });
 
         router.draw(terminal)?;
         while let Some(event) = listener.next().await {
-            router.digest(&event);
+            let shutdown = matches!(event, Event::Shutdown);
+            router.digest(event);
             router.draw(terminal)?;
-            if matches!(event, Event::Shutdown) {
+            if shutdown {
                 break;
             }
         }
