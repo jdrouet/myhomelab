@@ -4,8 +4,6 @@ use myhomelab_dashboard::entity::{Dashboard, Size};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::prelude::{Buffer, Rect};
 
-use crate::listener::Event;
-
 mod cell;
 mod line;
 
@@ -34,14 +32,9 @@ impl DashboardView {
 
 impl crate::prelude::Component for DashboardView {
     fn digest(&mut self, ctx: &crate::prelude::Context, event: &crate::listener::Event) {
-        match event {
-            Event::Key(key) if key.code.as_char() == Some('R') => {}
-            other => {
-                self.cells
-                    .iter_mut()
-                    .for_each(|cell| cell.digest(ctx, other));
-            }
-        }
+        self.cells
+            .iter_mut()
+            .for_each(|cell| cell.digest(ctx, event));
     }
 }
 
@@ -53,7 +46,7 @@ impl ratatui::widgets::Widget for &DashboardView {
         let lines = line::DashboardLineIterator::new(&self.cells, Size::Large).collect::<Vec<_>>();
         let vertical = Layout::vertical(lines.iter().map(|_| Constraint::Min(10))).spacing(1);
         let areas = vertical.split(area);
-        for (area, line) in areas.into_iter().zip(lines.into_iter()) {
+        for (area, line) in areas.iter().zip(lines.into_iter()) {
             line.render(*area, buf);
         }
     }

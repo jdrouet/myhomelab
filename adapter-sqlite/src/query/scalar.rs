@@ -1,15 +1,15 @@
 use anyhow::Context;
 use myhomelab_metric::entity::MetricHeader;
-use myhomelab_metric::query::{Query, QueryResponse, ScalarQueryResponse, TimeRange};
+use myhomelab_metric::query::{Query, ScalarResponse, TimeRange};
 use sqlx::types::Json;
 use sqlx::{FromRow, Row};
 
 use super::shared::Wrapper;
 
-impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarQueryResponse> {
+impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarResponse> {
     fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
         let name: String = row.try_get(0)?;
-        Ok(Wrapper(ScalarQueryResponse {
+        Ok(Wrapper(ScalarResponse {
             header: MetricHeader {
                 name: name.into(),
                 tags: row.try_get(1).map(|Json(inner)| inner)?,
@@ -23,7 +23,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     executor: E,
     query: &Query,
     timerange: &TimeRange,
-) -> anyhow::Result<QueryResponse> {
+) -> anyhow::Result<Vec<ScalarResponse>> {
     let mut qb = sqlx::QueryBuilder::<'_, sqlx::Sqlite>::new("with gauge_extractions as (");
     qb.push("select name");
     super::shared::build_tags_attribute(&mut qb, query);
@@ -49,173 +49,102 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     super::shared::build_value_attribute(&mut qb, &query.aggregator);
     qb.push(" from extractions");
     qb.push(" group by name, tags");
-    let values: Vec<Wrapper<ScalarQueryResponse>> = qb
+    let values: Vec<Wrapper<ScalarResponse>> = qb
         .build_query_as()
         .fetch_all(executor)
         .await
         .context("fetching scalar metrics")?;
-    let values = Wrapper::from_many(values);
-    Ok(QueryResponse::Scalar(values))
+    Ok(Wrapper::from_many(values))
 }
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use myhomelab_metric::entity::tag::TagValue;
     use myhomelab_metric::entity::{MetricHeader, MetricTags};
-    use myhomelab_metric::query::{
-        Query, QueryExecutor, QueryResponse, Request, RequestKind, TimeRange,
-    };
+    use myhomelab_metric::query::{Query, TimeRange};
 
     #[tokio::test]
-    async fn should_fetch_simple_scalar() -> anyhow::Result<()> {
-        let sqlite = crate::query::tests::prepare_pool().await?;
+    async fn should_fetch_gauge_max_global() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
 
-        let res = sqlite
-            .execute(
-                vec![
-                    Request::scalar()
-                        .with_query(
-                            "max-cpu",
-                            Query::max(MetricHeader::new("system.cpu", Default::default())),
-                        )
-                        .with_query(
-                            "min-cpu",
-                            Query::min(MetricHeader::new("system.cpu", Default::default())),
-                        ),
-                ],
-                TimeRange::from(0),
-            )
-            .await?;
+        // basic
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::max(MetricHeader::new("system.cpu", Default::default())),
+            &TimeRange::from(0),
+        )
+        .await
+        .unwrap();
 
         assert_eq!(res.len(), 1);
-        assert_eq!(res[0].kind, RequestKind::Scalar);
-        assert_eq!(res[0].queries.len(), 2);
-        let qres = &res[0].queries["max-cpu"];
-        let QueryResponse::Scalar(entries) = qres else {
-            panic!("should be a scalar response");
-        };
-        assert_eq!(entries.len(), 1);
-        assert_eq!(entries[0].value, 90.0);
-
-        let qres = &res[0].queries["min-cpu"];
-        let QueryResponse::Scalar(entries) = qres else {
-            panic!("should be a scalar response");
-        };
-        assert_eq!(entries.len(), 1);
-        assert_eq!(entries[0].value, 1.0);
-
-        Ok(())
+        assert_eq!(res[0].value, 90.0);
     }
 
     #[tokio::test]
-    async fn should_fetch_simple_scalar_with_headers() -> anyhow::Result<()> {
-        let sqlite = crate::query::tests::prepare_pool().await?;
+    async fn should_fetch_gauge_max_with_group_by() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
 
-        let res = sqlite
-            .execute(
-                vec![
-                    Request::scalar()
-                        .with_query(
-                            "max-cpu-fr",
-                            Query::max(MetricHeader::new(
-                                "system.cpu",
-                                MetricTags::default().with_tag("location", "FR"),
-                            )),
-                        )
-                        .with_query(
-                            "max-cpu-es",
-                            Query::min(MetricHeader::new(
-                                "system.cpu",
-                                MetricTags::default().with_tag("location", "ES"),
-                            )),
-                        ),
-                ],
-                TimeRange::from(0),
-            )
-            .await?;
+        // with group by host
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::max(MetricHeader::new("system.cpu", Default::default()))
+                .with_group_by(["host"].into_iter()),
+            &TimeRange::from(0),
+        )
+        .await
+        .unwrap();
 
-        assert_eq!(res.len(), 1);
-        assert_eq!(res[0].kind, RequestKind::Scalar);
-        assert_eq!(res[0].queries.len(), 2);
-        let qres = &res[0].queries["max-cpu-fr"];
-        let QueryResponse::Scalar(entries) = qres else {
-            panic!("should be a scalar response");
-        };
-        assert_eq!(entries.len(), 1);
-        assert_eq!(entries[0].value, 90.0);
-
-        let qres = &res[0].queries["max-cpu-es"];
-        let QueryResponse::Scalar(entries) = qres else {
-            panic!("should be a scalar response");
-        };
-        assert_eq!(entries.len(), 1);
-        assert_eq!(entries[0].value, 10.0);
-
-        Ok(())
+        assert_eq!(res.len(), 2);
     }
 
     #[tokio::test]
-    async fn should_fetch_counters_sum() -> anyhow::Result<()> {
-        let sqlite = crate::query::tests::prepare_pool().await?;
+    async fn should_fetch_gauge_min_with_header() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
 
-        let res = sqlite
-            .execute(
-                vec![
-                    Request::scalar()
-                        .with_query(
-                            "reboot-all",
-                            Query::sum(MetricHeader::new("system.reboot", MetricTags::default())),
-                        )
-                        .with_query(
-                            "reboot-macbook",
-                            Query::sum(MetricHeader::new(
-                                "system.reboot",
-                                MetricTags::default().with_tag("host", "macbook"),
-                            )),
-                        )
-                        .with_query(
-                            "reboot-raspberry",
-                            Query::sum(MetricHeader::new(
-                                "system.reboot",
-                                MetricTags::default().with_tag("host", "raspberry"),
-                            )),
-                        ),
-                ],
-                TimeRange::from(0),
-            )
-            .await?;
+        // basic
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::max(MetricHeader::new(
+                "system.cpu",
+                MetricTags::default().with_tag("host", "macbook"),
+            )),
+            &TimeRange::from(0),
+        )
+        .await
+        .unwrap();
 
         assert_eq!(res.len(), 1);
-        assert_eq!(res[0].kind, RequestKind::Scalar);
-        assert_eq!(res[0].queries.len(), 3);
-        let qres = &res[0].queries["reboot-all"];
-        let QueryResponse::Scalar(entries) = qres else {
-            panic!("should be a scalar response");
-        };
-        assert_eq!(entries.len(), 1);
-        assert_eq!(entries[0].value, 2.0);
+        assert_eq!(res[0].value, 3.0);
+    }
 
-        let qres = &res[0].queries["reboot-macbook"];
-        let QueryResponse::Scalar(entries) = qres else {
-            panic!("should be a scalar response");
-        };
-        assert_eq!(entries.len(), 1);
-        assert_eq!(entries[0].header.name.as_ref(), "system.reboot");
-        assert_eq!(
-            entries[0].header.tag("host").unwrap(),
-            &TagValue::from("macbook")
-        );
-        assert_eq!(entries[0].value, 2.0);
+    #[tokio::test]
+    async fn should_fetch_counters() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
 
-        let qres = &res[0].queries["reboot-raspberry"];
-        let QueryResponse::Scalar(entries) = qres else {
-            panic!("should be a scalar response");
-        };
-        assert!(
-            entries.is_empty(),
-            "there's no reboot entry for the raspberry host"
-        );
+        // basic
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::sum(MetricHeader::new("system.reboot", MetricTags::default())),
+            &TimeRange::from(0),
+        )
+        .await
+        .unwrap();
 
-        Ok(())
+        assert_eq!(res.len(), 1);
+        assert_eq!(res[0].value, 2.0);
+    }
+
+    #[tokio::test]
+    async fn scalar_should_return_none_for_missing_metric() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::sum(MetricHeader::new("nonexistent.metric", Default::default())),
+            &TimeRange::from(0),
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(res.len(), 0);
     }
 }

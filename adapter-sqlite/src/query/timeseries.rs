@@ -1,17 +1,17 @@
 use anyhow::Context;
 use myhomelab_metric::entity::MetricHeader;
-use myhomelab_metric::query::{Query, QueryResponse, TimeRange, TimeseriesQueryResponse};
+use myhomelab_metric::query::{Query, TimeRange, TimeseriesResponse};
 use sqlx::types::Json;
 use sqlx::{FromRow, Row};
 
 use super::shared::Wrapper;
 
-impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<TimeseriesQueryResponse> {
+impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<TimeseriesResponse> {
     fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
         let name: String = row.try_get(0)?;
         let timestamps: Json<Vec<i64>> = row.try_get(2)?;
         let values: Json<Vec<f64>> = row.try_get(3)?;
-        Ok(Wrapper(TimeseriesQueryResponse {
+        Ok(Wrapper(TimeseriesResponse {
             header: MetricHeader {
                 name: name.into(),
                 tags: row.try_get(1).map(|Json(value)| value)?,
@@ -26,7 +26,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     query: &Query,
     timerange: &TimeRange,
     period: u32,
-) -> anyhow::Result<QueryResponse> {
+) -> anyhow::Result<Vec<TimeseriesResponse>> {
     let mut qb = sqlx::QueryBuilder::<'_, sqlx::Sqlite>::new("with gauge_extractions as (");
     qb.push("select name");
     super::shared::build_tags_attribute(&mut qb, query);
@@ -65,69 +65,117 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     qb.push(") select name, tags, json_group_array(timestamp), json_group_array(value)");
     qb.push(" from aggregated_extractions");
     qb.push(" group by name, tags");
-    let values: Vec<Wrapper<TimeseriesQueryResponse>> = qb
+    let values: Vec<Wrapper<TimeseriesResponse>> = qb
         .build_query_as()
         .fetch_all(executor)
         .await
         .context("fetching timeseries metrics")?;
-    let values = Wrapper::from_many(values);
-    Ok(QueryResponse::Timeseries(values))
+    Ok(Wrapper::from_many(values))
 }
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use myhomelab_metric::entity::tag::TagValue;
     use myhomelab_metric::entity::{MetricHeader, MetricTags};
-    use myhomelab_metric::query::{
-        Query, QueryExecutor, QueryResponse, Request, RequestKind, TimeRange,
-    };
+    use myhomelab_metric::query::{Query, TimeRange};
 
     #[tokio::test]
-    async fn should_fetch() -> anyhow::Result<()> {
-        let sqlite = crate::query::tests::prepare_pool().await?;
+    async fn should_fetch_gauge_max_global() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
 
-        let res = sqlite
-            .execute(
-                vec![
-                    Request::timeseries(3)
-                        .with_query(
-                            "cpu",
-                            Query::max(MetricHeader::new("system.cpu", Default::default())),
-                        )
-                        .with_query(
-                            "cpu-raspberry",
-                            Query::min(MetricHeader::new(
-                                "system.cpu",
-                                MetricTags::default().with_tag("host", "raspberry"),
-                            )),
-                        ),
-                ],
-                TimeRange::from(0),
-            )
-            .await?;
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::max(MetricHeader::new("system.cpu", Default::default())),
+            &TimeRange::from(0),
+            3,
+        )
+        .await
+        .unwrap();
 
         assert_eq!(res.len(), 1);
-        assert_eq!(res[0].kind, RequestKind::Timeseries { period: 3 });
-        assert_eq!(res[0].queries.len(), 2);
-        let qres = &res[0].queries["cpu"];
-        let QueryResponse::Timeseries(entries) = qres else {
-            panic!("should be a timeseries response");
-        };
-        assert_eq!(entries.len(), 1);
-        let entry = &entries[0];
+        let entry = &res[0];
         assert_eq!(entry.header.name.as_ref(), "system.cpu");
-        assert!(entry.header.tags.is_empty());
-        assert_eq!(entry.values, vec![(2, 90.0), (3, 50.0)]);
+        assert!(!entry.values.is_empty());
+    }
 
-        let qres = &res[0].queries["cpu-raspberry"];
-        let QueryResponse::Timeseries(entries) = qres else {
-            panic!("should be a timeseries response");
-        };
-        assert_eq!(entries.len(), 1);
-        let entry = &entries[0];
+    #[tokio::test]
+    async fn should_fetch_gauge_max_with_group_by() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::max(MetricHeader::new("system.cpu", Default::default()))
+                .with_group_by(["host"].into_iter()),
+            &TimeRange::from(0),
+            3,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(res.len(), 2);
+        for entry in &res {
+            assert_eq!(entry.header.name.as_ref(), "system.cpu");
+            assert!(entry.header.tag("host").is_some());
+        }
+    }
+
+    #[tokio::test]
+    async fn should_fetch_gauge_min_with_header() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::min(MetricHeader::new(
+                "system.cpu",
+                MetricTags::default().with_tag("host", "macbook"),
+            )),
+            &TimeRange::from(0),
+            3,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(res.len(), 1);
+        let entry = &res[0];
         assert_eq!(entry.header.name.as_ref(), "system.cpu");
-        assert!(entry.header.tag("host").is_some());
-        assert_eq!(entry.values, vec![(1, 10.0), (4, 20.0)]);
+        assert_eq!(
+            entry.header.tag("host").unwrap(),
+            &TagValue::Text("macbook".into())
+        );
+    }
 
-        Ok(())
+    #[tokio::test]
+    async fn should_fetch_counters() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::sum(MetricHeader::new("system.reboot", MetricTags::default())),
+            &TimeRange::from(0),
+            3,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(res.len(), 1);
+        let entry = &res[0];
+        assert_eq!(entry.header.name.as_ref(), "system.reboot");
+        assert!(!entry.values.is_empty());
+    }
+
+    #[tokio::test]
+    async fn should_return_none_for_missing_metric() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+
+        let res = super::fetch(
+            sqlite.as_ref(),
+            &Query::sum(MetricHeader::new("nonexistent.metric", Default::default())),
+            &TimeRange::from(0),
+            3,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(res.len(), 0);
     }
 }

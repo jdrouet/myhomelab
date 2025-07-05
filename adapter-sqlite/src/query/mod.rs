@@ -9,38 +9,29 @@ mod timeseries;
 impl QueryExecutor for crate::Sqlite {
     async fn execute(
         &self,
-        requests: Vec<Request>,
+        requests: HashMap<Box<str>, Request>,
         timerange: TimeRange,
-    ) -> anyhow::Result<Vec<Response>> {
-        let mut res = Vec::with_capacity(requests.len());
-        for req in requests {
-            let mut queries = HashMap::with_capacity(req.queries.len());
+    ) -> anyhow::Result<HashMap<Box<str>, Response>> {
+        let mut res = HashMap::with_capacity(requests.len());
+        for (name, req) in requests {
             match req.kind {
                 RequestKind::Scalar => {
-                    for (name, query) in req.queries.iter() {
-                        match scalar::fetch(self.as_ref(), query, &timerange).await {
-                            Ok(response) => {
-                                queries.insert(name.clone(), response);
-                            }
-                            Err(err) => eprintln!("something went wrong: {err:?}"),
+                    match scalar::fetch(self.as_ref(), &req.query, &timerange).await {
+                        Ok(response) => {
+                            res.insert(name, Response::Scalar(response));
                         }
+                        Err(err) => eprintln!("something went wrong: {err:?}"),
                     }
                 }
                 RequestKind::Timeseries { period } => {
-                    for (name, query) in req.queries.iter() {
-                        match timeseries::fetch(self.as_ref(), query, &timerange, period).await {
-                            Ok(response) => {
-                                queries.insert(name.clone(), response);
-                            }
-                            Err(err) => eprintln!("something went wrong: {err:?}"),
+                    match timeseries::fetch(self.as_ref(), &req.query, &timerange, period).await {
+                        Ok(response) => {
+                            res.insert(name, Response::Timeseries(response));
                         }
+                        Err(err) => eprintln!("something went wrong: {err:?}"),
                     }
                 }
             }
-            res.push(Response {
-                kind: req.kind,
-                queries,
-            });
         }
         Ok(res)
     }
@@ -48,10 +39,12 @@ impl QueryExecutor for crate::Sqlite {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use std::collections::HashMap;
+
     use myhomelab_metric::entity::{MetricHeader, MetricTags};
     use myhomelab_metric::intake::Intake;
     use myhomelab_metric::metrics;
-    use myhomelab_metric::query::{Query, QueryExecutor, Request, RequestKind, TimeRange};
+    use myhomelab_metric::query::{Query, QueryExecutor, Request, Response, TimeRange};
 
     pub(crate) async fn prepare_pool() -> anyhow::Result<crate::Sqlite> {
         let config = crate::SqliteConfig::default();
@@ -69,54 +62,137 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn should_fetch_multiple_requests() -> anyhow::Result<()> {
-        let sqlite = crate::query::tests::prepare_pool().await?;
+    async fn should_fetch_multiple_requests() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
 
-        let res = sqlite
-            .execute(
-                vec![
-                    Request::scalar()
-                        .with_query(
-                            "reboot-all",
-                            Query::sum(MetricHeader::new("system.reboot", Default::default())),
-                        )
-                        .with_query(
-                            "reboot-macbook",
-                            Query::sum(MetricHeader::new(
-                                "system.reboot",
-                                MetricTags::default().with_tag("host", "macbook"),
-                            )),
-                        )
-                        .with_query(
-                            "reboot-raspberry",
-                            Query::sum(MetricHeader::new(
-                                "system.reboot",
-                                MetricTags::default().with_tag("host", "raspberry"),
-                            )),
-                        ),
-                    Request::timeseries(3)
-                        .with_query(
-                            "cpu",
-                            Query::max(MetricHeader::new("system.cpu", MetricTags::default())),
-                        )
-                        .with_query(
-                            "cpu-raspberry",
-                            Query::min(MetricHeader::new(
-                                "system.cpu",
-                                MetricTags::default().with_tag("host", "raspberry"),
-                            )),
-                        ),
-                ],
-                TimeRange::from(0),
-            )
-            .await?;
+        let mut reqs = HashMap::with_capacity(1);
+        reqs.insert(
+            Box::from("default"),
+            Request::scalar(Query::sum(MetricHeader::new(
+                "system.reboot",
+                Default::default(),
+            ))),
+        );
+        reqs.insert(
+            Box::from("reboot-macbook"),
+            Request::scalar(Query::sum(MetricHeader::new(
+                "system.reboot",
+                MetricTags::default().with_tag("host", "macbook"),
+            ))),
+        );
+        reqs.insert(
+            Box::from("reboot-raspberry"),
+            Request::scalar(Query::sum(MetricHeader::new(
+                "system.reboot",
+                MetricTags::default().with_tag("host", "raspberry"),
+            ))),
+        );
+        reqs.insert(
+            Box::from("cpu-global"),
+            Request::timeseries(
+                3,
+                Query::max(MetricHeader::new("system.cpu", MetricTags::default())),
+            ),
+        );
+        reqs.insert(
+            Box::from("cpu-raspberry"),
+            Request::timeseries(
+                3,
+                Query::max(MetricHeader::new(
+                    "system.cpu",
+                    MetricTags::default().with_tag("host", "raspberry"),
+                )),
+            ),
+        );
 
-        assert_eq!(res.len(), 2);
-        assert_eq!(res[0].kind, RequestKind::Scalar);
-        assert_eq!(res[0].queries.len(), 3);
-        assert_eq!(res[1].kind, RequestKind::Timeseries { period: 3 });
-        assert_eq!(res[1].queries.len(), 2);
+        let res = sqlite.execute(reqs, TimeRange::from(0)).await.unwrap();
 
-        Ok(())
+        assert_eq!(res.len(), 5);
+        assert!(matches!(res["default"], Response::Scalar(_)));
+        assert!(matches!(res["reboot-macbook"], Response::Scalar(_)));
+        assert!(matches!(res["reboot-raspberry"], Response::Scalar(_)));
+        assert!(matches!(res["cpu-global"], Response::Timeseries(_)));
+        assert!(matches!(res["cpu-raspberry"], Response::Timeseries(_)));
+    }
+
+    #[tokio::test]
+    async fn scalar_should_return_none_for_missing_metric() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+
+        let mut reqs = HashMap::with_capacity(1);
+        reqs.insert(
+            Box::from("default"),
+            Request::scalar(Query::sum(MetricHeader::new(
+                "nonexistent.metric",
+                Default::default(),
+            ))),
+        );
+        let res = sqlite.execute(reqs, TimeRange::from(0)).await.unwrap();
+
+        assert_eq!(res.len(), 1);
+        if let Response::Scalar(val) = &res["default"] {
+            assert!(val.is_empty(), "Expected none for missing metric");
+        } else {
+            panic!("Expected Scalar response");
+        }
+    }
+
+    #[tokio::test]
+    async fn scalar_should_filter_by_multiple_tags() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+
+        let tags = MetricTags::default()
+            .with_tag("host", "raspberry")
+            .with_tag("location", "FR");
+
+        let mut reqs = HashMap::with_capacity(1);
+        reqs.insert(
+            Box::from("default"),
+            Request::scalar(Query::sum(MetricHeader::new("system.cpu", tags))),
+        );
+        let res = sqlite.execute(reqs, TimeRange::from(0)).await.unwrap();
+
+        assert_eq!(res.len(), 1);
+        if let Response::Scalar(val) = &res["default"] {
+            assert!(!val.is_empty(), "Expected Some value for filtered tags");
+            // Optionally check the value if you know what it should be
+        } else {
+            panic!("Expected Scalar response");
+        }
+    }
+
+    #[tokio::test]
+    async fn scalar_should_support_different_aggregations() {
+        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+
+        let mut reqs = HashMap::with_capacity(3);
+        reqs.insert(
+            Box::from("sum_req"),
+            Request::scalar(Query::sum(MetricHeader::new(
+                "system.cpu",
+                Default::default(),
+            ))),
+        );
+        reqs.insert(
+            Box::from("max_req"),
+            Request::scalar(Query::max(MetricHeader::new(
+                "system.cpu",
+                Default::default(),
+            ))),
+        );
+        reqs.insert(
+            Box::from("min_req"),
+            Request::scalar(Query::min(MetricHeader::new(
+                "system.cpu",
+                Default::default(),
+            ))),
+        );
+
+        let res = sqlite.execute(reqs, TimeRange::from(0)).await.unwrap();
+
+        assert_eq!(res.len(), 3);
+        assert!(matches!(res["sum_req"], Response::Scalar(_)));
+        assert!(matches!(res["max_req"], Response::Scalar(_)));
+        assert!(matches!(res["min_req"], Response::Scalar(_)));
     }
 }

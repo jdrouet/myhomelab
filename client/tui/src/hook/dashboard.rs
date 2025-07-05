@@ -24,7 +24,7 @@ impl DashboardListRunner {
                 self.update(DashboardListState::Success(list));
             }
             Err(err) => {
-                self.update(DashboardListState::Error(anyhow::Error::from(err)));
+                self.update(DashboardListState::Error(err));
             }
         }
     }

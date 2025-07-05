@@ -77,7 +77,7 @@ impl<'a> ratatui::widgets::Widget for &DashboardLine<'a> {
                 .map(|cell| Constraint::Ratio(column_count(cell.inner().width) as u32, total)),
         )
         .split(area);
-        for (area, cell) in segments.into_iter().zip(self.cells) {
+        for (area, cell) in segments.iter().zip(self.cells) {
             cell.render(*area, buf);
         }
     }

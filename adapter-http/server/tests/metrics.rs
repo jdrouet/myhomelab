@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr};
 use std::sync::Arc;
 use std::sync::atomic::AtomicU16;
@@ -109,7 +110,7 @@ async fn should_query_batch_metrics() {
         .returning(|reqs, range| {
             assert_eq!(reqs.len(), 2);
             assert_eq!(range.start, 0);
-            Ok(Vec::new())
+            Ok(HashMap::new())
         });
     let state = MockServerState(Arc::new(state));
     let server = server_config.build(CancellationToken::new(), state.clone());
@@ -118,34 +119,31 @@ async fn should_query_batch_metrics() {
         base_url: format!("http://localhost:{port}"),
     };
     let client = client_config.build().unwrap();
-    client
-        .execute(
-            vec![
-                Request::scalar().with_query(
-                    "foo",
-                    Query::new(
-                        MetricHeader::new(
-                            "system.memory.total",
-                            MetricTags::default().with_tag("host", "rpi"),
-                        ),
-                        myhomelab_metric::query::Aggregator::Average,
-                    ),
+    let mut reqs = HashMap::with_capacity(1);
+    reqs.insert(
+        Box::from("scalar"),
+        Request::scalar(Query::new(
+            MetricHeader::new(
+                "system.memory.total",
+                MetricTags::default().with_tag("host", "rpi"),
+            ),
+            myhomelab_metric::query::Aggregator::Average,
+        )),
+    );
+    reqs.insert(
+        Box::from("timeseries"),
+        Request::timeseries(
+            10,
+            Query::new(
+                MetricHeader::new(
+                    "system.memory.total",
+                    MetricTags::default().with_tag("host", "rpi"),
                 ),
-                Request::timeseries(10).with_query(
-                    "bar",
-                    Query::new(
-                        MetricHeader::new(
-                            "system.memory.total",
-                            MetricTags::default().with_tag("host", "rpi"),
-                        ),
-                        myhomelab_metric::query::Aggregator::Average,
-                    ),
-                ),
-            ],
-            TimeRange::from(0),
-        )
-        .await
-        .unwrap();
+                myhomelab_metric::query::Aggregator::Average,
+            ),
+        ),
+    );
+    client.execute(reqs, TimeRange::from(0)).await.unwrap();
 }
 
 #[tokio::test]
@@ -166,7 +164,7 @@ async fn should_query_single_metric() {
         .returning(|reqs, range| {
             assert_eq!(reqs.len(), 1);
             assert_eq!(range.start, 0);
-            Ok(Vec::new())
+            Ok(HashMap::new())
         });
     let state = MockServerState(Arc::new(state));
     let server = server_config.build(CancellationToken::new(), state.clone());
@@ -175,22 +173,18 @@ async fn should_query_single_metric() {
         base_url: format!("http://localhost:{port}"),
     };
     let client = client_config.build().unwrap();
-    client
-        .execute(
-            vec![Request::scalar().with_query(
-                "default",
-                Query::new(
-                    MetricHeader::new(
-                        "system.memory.total",
-                        MetricTags::default().with_tag("host", "rpi"),
-                    ),
-                    myhomelab_metric::query::Aggregator::Average,
-                ),
-            )],
-            TimeRange::from(0),
-        )
-        .await
-        .unwrap();
+    let mut reqs = HashMap::with_capacity(1);
+    reqs.insert(
+        Box::from("default"),
+        Request::scalar(Query::new(
+            MetricHeader::new(
+                "system.memory.total",
+                MetricTags::default().with_tag("host", "rpi"),
+            ),
+            myhomelab_metric::query::Aggregator::Average,
+        )),
+    );
+    client.execute(reqs, TimeRange::from(0)).await.unwrap();
 }
 
 #[tokio::test]
@@ -211,7 +205,7 @@ async fn should_query_single_metrics() {
         .returning(|reqs, range| {
             assert_eq!(reqs.len(), 1);
             assert_eq!(range.start, 0);
-            Ok(Vec::new())
+            Ok(HashMap::new())
         });
     let state = MockServerState(Arc::new(state));
     let server = server_config.build(CancellationToken::new(), state.clone());
@@ -220,20 +214,16 @@ async fn should_query_single_metrics() {
         base_url: format!("http://localhost:{port}"),
     };
     let client = client_config.build().unwrap();
-    client
-        .execute(
-            vec![Request::scalar().with_query(
-                "foo",
-                Query::new(
-                    MetricHeader::new(
-                        "system.memory.total",
-                        MetricTags::default().with_tag("host", "rpi"),
-                    ),
-                    myhomelab_metric::query::Aggregator::Average,
-                ),
-            )],
-            TimeRange::from(0),
-        )
-        .await
-        .unwrap();
+    let mut reqs = HashMap::with_capacity(1);
+    reqs.insert(
+        Box::from("default"),
+        Request::scalar(Query::new(
+            MetricHeader::new(
+                "system.memory.total",
+                MetricTags::default().with_tag("host", "rpi"),
+            ),
+            myhomelab_metric::query::Aggregator::Average,
+        )),
+    );
+    client.execute(reqs, TimeRange::from(0)).await.unwrap();
 }

@@ -7,9 +7,9 @@ use crate::entity::MetricHeader;
 pub trait QueryExecutor: Healthcheck {
     fn execute(
         &self,
-        requests: Vec<Request>,
+        requests: HashMap<Box<str>, Request>,
         timerange: TimeRange,
-    ) -> impl Future<Output = anyhow::Result<Vec<Response>>> + Send;
+    ) -> impl Future<Output = anyhow::Result<HashMap<Box<str>, Response>>> + Send;
 }
 
 #[derive(Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
@@ -40,28 +40,22 @@ impl From<(i64, i64)> for TimeRange {
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Request {
     pub kind: RequestKind,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub queries: HashMap<Box<str>, Query>,
+    pub query: Query,
 }
 
 impl Request {
-    pub fn scalar() -> Self {
+    pub fn scalar(query: Query) -> Self {
         Self {
             kind: RequestKind::Scalar,
-            queries: HashMap::default(),
+            query,
         }
     }
 
-    pub fn timeseries(period: u32) -> Self {
+    pub fn timeseries(period: u32, query: Query) -> Self {
         Self {
             kind: RequestKind::Timeseries { period },
-            queries: HashMap::default(),
+            query,
         }
-    }
-
-    pub fn with_query(mut self, name: impl Into<Box<str>>, query: Query) -> Self {
-        self.queries.insert(name.into(), query);
-        self
     }
 }
 
@@ -124,27 +118,19 @@ impl Query {
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
-pub struct Response {
-    pub kind: RequestKind,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub queries: HashMap<Box<str>, QueryResponse>,
+pub enum Response {
+    Scalar(Vec<ScalarResponse>),
+    Timeseries(Vec<TimeseriesResponse>),
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
-#[serde(tag = "type", content = "values")]
-pub enum QueryResponse {
-    Scalar(Vec<ScalarQueryResponse>),
-    Timeseries(Vec<TimeseriesQueryResponse>),
-}
-
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
-pub struct ScalarQueryResponse {
+pub struct ScalarResponse {
     pub header: MetricHeader,
     pub value: f64,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
-pub struct TimeseriesQueryResponse {
+pub struct TimeseriesResponse {
     pub header: MetricHeader,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub values: Vec<(i64, f64)>,

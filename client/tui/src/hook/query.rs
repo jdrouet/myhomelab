@@ -23,7 +23,8 @@ impl QueryRunner {
         use myhomelab_metric::query::QueryExecutor;
 
         self.update(QueryState::Loading);
-        let requests = vec![self.request.clone()];
+        let mut requests = HashMap::with_capacity(1);
+        requests.insert(Box::from("default"), self.request.clone());
         let timerange = TimeRange::from(0);
         match self.client.execute(requests, timerange).await {
             Ok(res) => {
@@ -39,7 +40,7 @@ impl QueryRunner {
 #[derive(Debug)]
 pub(crate) enum QueryState {
     Loading,
-    Success(Vec<Response>),
+    Success(HashMap<Box<str>, Response>),
     #[allow(unused)]
     Error(anyhow::Error),
 }
@@ -56,14 +57,7 @@ impl QueryHook {
     pub(crate) fn new(client: AdapterHttpClient, kind: RequestKind, query: Query) -> Self {
         let channel = Arc::new(Mutex::new(None));
 
-        let request = Request {
-            kind,
-            queries: {
-                let mut map = HashMap::with_capacity(1);
-                map.insert("default".into(), query);
-                map
-            },
-        };
+        let request = Request { kind, query };
 
         let runner = QueryRunner {
             channel: channel.clone(),

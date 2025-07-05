@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::Context;
 
 macro_rules! unwrap_status_error {
@@ -33,9 +35,9 @@ impl myhomelab_metric::intake::Intake for super::AdapterHttpClient {
 impl myhomelab_metric::query::QueryExecutor for super::AdapterHttpClient {
     async fn execute(
         &self,
-        requests: Vec<myhomelab_metric::query::Request>,
+        requests: HashMap<Box<str>, myhomelab_metric::query::Request>,
         range: myhomelab_metric::query::TimeRange,
-    ) -> anyhow::Result<Vec<myhomelab_metric::query::Response>> {
+    ) -> anyhow::Result<HashMap<Box<str>, myhomelab_metric::query::Response>> {
         use myhomelab_adapter_http_shared::metric::query::BatchQueryParams;
 
         let query = BatchQueryParams { range, requests };

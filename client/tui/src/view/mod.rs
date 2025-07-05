@@ -112,7 +112,7 @@ impl ratatui::widgets::Widget for &Router {
         if let Some(board) = self.dashboards.get(self.current) {
             board.render(inner, buf);
         } else {
-            StartingView::default().render(inner, buf);
+            StartingView.render(inner, buf);
         }
     }
 }
