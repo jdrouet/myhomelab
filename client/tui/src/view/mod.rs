@@ -1,9 +1,9 @@
 use dashboard::DashboardView;
 use ratatui::Terminal;
 use ratatui::prelude::Backend;
-use ratatui::style::{Style, Stylize};
+use ratatui::style::Stylize;
 use ratatui::text::Line;
-use ratatui::widgets::{Block, Tabs};
+use ratatui::widgets::Block;
 use starting::StartingView;
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -15,6 +15,7 @@ mod starting;
 #[derive(Debug)]
 pub(crate) struct Router {
     current: usize,
+    loading_dashboard: bool,
     dashboards: Vec<DashboardView>,
     sender: UnboundedSender<Action>,
 }
@@ -25,6 +26,7 @@ impl Router {
         Self {
             current: 0,
             dashboards: Vec::new(),
+            loading_dashboard: true,
             sender: sender.clone(),
         }
     }
@@ -42,6 +44,12 @@ impl crate::prelude::Component for Router {
                     .into_iter()
                     .map(|dashboard| DashboardView::new(dashboard, self.sender.clone()))
                     .collect();
+                self.loading_dashboard = false;
+            }
+            crate::listener::Event::DashboardList(crate::listener::AsyncEvent::Error(_)) => {
+                self.current = 0;
+                self.dashboards = Default::default();
+                self.loading_dashboard = false;
             }
             other => {
                 if let Some(board) = self.dashboards.get_mut(self.current) {
@@ -64,18 +72,23 @@ impl ratatui::widgets::Widget for &Router {
     where
         Self: Sized,
     {
-        let title = Line::from(" MyHomeLab ".bold()).right_aligned();
-        let instructions = Line::from_iter([" Quit ".into(), "<Q> ".blue().bold()]);
+        let title = if self.loading_dashboard {
+            Line::from(" MyHomeLab (loading...) ".bold()).left_aligned()
+        } else if let Some(dash) = self.dashboards.get(self.current) {
+            let title = format!(
+                " MyHomeLab - {} ({}/{}) ",
+                dash.title(),
+                (self.current + 1).min(self.dashboards.len()),
+                self.dashboards.len()
+            );
+            Line::from(title.bold()).left_aligned()
+        } else {
+            Line::from(" MyHomeLab ".bold()).left_aligned()
+        };
+        let instructions = Line::from_iter([" Quit ".into(), "<Q> ".blue().bold()]).centered();
         let block = Block::bordered().title(title).title_bottom(instructions);
         let inner = block.inner(area);
-        let tabs = Tabs::new(self.dashboards.iter().map(|dash| dash.title()))
-            .block(block)
-            .style(Style::default().white())
-            .highlight_style(Style::default().yellow())
-            .select(0)
-            .divider(" ")
-            .padding("", "");
-        tabs.render(area, buf);
+        block.render(area, buf);
 
         if let Some(board) = self.dashboards.get(self.current) {
             board.render(inner, buf);
@@ -97,6 +110,7 @@ mod tests {
         let view = super::Router {
             current: 0,
             dashboards: Vec::default(),
+            loading_dashboard: false,
             sender: action_tx.clone(),
         };
 

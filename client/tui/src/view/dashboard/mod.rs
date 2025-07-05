@@ -38,6 +38,5 @@ impl ratatui::widgets::Widget for &DashboardView {
     where
         Self: Sized,
     {
-        Text::from("DASHBOARD LIST".bold()).render(area, buf);
     }
 }
