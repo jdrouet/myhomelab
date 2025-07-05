@@ -1,59 +1,31 @@
 use dashboard::DashboardView;
-use myhomelab_dashboard::entity::Dashboard;
 use ratatui::Terminal;
 use ratatui::prelude::Backend;
 use ratatui::style::{Style, Stylize};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Tabs};
+use starting::StartingView;
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::prelude::Component;
 use crate::worker::Action;
 
 mod dashboard;
 mod starting;
 
 #[derive(Debug)]
-pub(crate) enum Route {
-    Starting(starting::StartingView),
-    Dashboard(dashboard::DashboardView),
-}
-
-impl Route {
-    pub fn digest(&mut self, event: crate::listener::Event) {
-        match self {
-            Self::Starting(inner) => inner.digest(event),
-            Self::Dashboard(inner) => inner.digest(event),
-        }
-    }
-}
-
-impl ratatui::widgets::Widget for &Route {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
-    where
-        Self: Sized,
-    {
-        match self {
-            Route::Starting(inner) => inner.render(area, buf),
-            Route::Dashboard(inner) => inner.render(area, buf),
-        }
-    }
-}
-
-#[derive(Debug)]
 pub(crate) struct Router {
+    current: usize,
+    dashboards: Vec<DashboardView>,
     sender: UnboundedSender<Action>,
-    route: Route,
-    dashboards: Vec<Dashboard>,
 }
 
 impl Router {
     pub(crate) fn new(sender: UnboundedSender<Action>) -> Self {
         let _ = sender.send(Action::FetchDashboardList);
         Self {
-            sender: sender.clone(),
-            route: Route::Starting(starting::StartingView::new(sender)),
+            current: 0,
             dashboards: Vec::new(),
+            sender: sender.clone(),
         }
     }
 }
@@ -61,11 +33,21 @@ impl Router {
 impl crate::prelude::Component for Router {
     fn digest(&mut self, event: crate::listener::Event) {
         match event {
-            crate::listener::Event::DashboardList(crate::listener::AsyncEvent::Success(list)) => {
-                self.dashboards = list;
-                self.route = Route::Dashboard(DashboardView::new(self.sender.clone()));
+            crate::listener::Event::Key(key) if key.code.as_char() == Some('Q') => {
+                let _ = self.sender.send(Action::Shutdown);
             }
-            other => self.route.digest(other),
+            crate::listener::Event::DashboardList(crate::listener::AsyncEvent::Success(list)) => {
+                self.current = 0;
+                self.dashboards = list
+                    .into_iter()
+                    .map(|dashboard| DashboardView::new(dashboard, self.sender.clone()))
+                    .collect();
+            }
+            other => {
+                if let Some(board) = self.dashboards.get_mut(self.current) {
+                    board.digest(other);
+                }
+            }
         }
     }
 }
@@ -86,7 +68,7 @@ impl ratatui::widgets::Widget for &Router {
         let instructions = Line::from_iter([" Quit ".into(), "<Q> ".blue().bold()]);
         let block = Block::bordered().title(title).title_bottom(instructions);
         let inner = block.inner(area);
-        let tabs = Tabs::new(self.dashboards.iter().map(|dash| dash.title.as_str()))
+        let tabs = Tabs::new(self.dashboards.iter().map(|dash| dash.title()))
             .block(block)
             .style(Style::default().white())
             .highlight_style(Style::default().yellow())
@@ -94,7 +76,12 @@ impl ratatui::widgets::Widget for &Router {
             .divider(" ")
             .padding("", "");
         tabs.render(area, buf);
-        self.route.render(inner, buf);
+
+        if let Some(board) = self.dashboards.get(self.current) {
+            board.render(inner, buf);
+        } else {
+            StartingView::new(self.sender.clone()).render(inner, buf);
+        }
     }
 }
 
@@ -104,15 +91,13 @@ mod tests {
     use ratatui::layout::Rect;
     use ratatui::widgets::Widget;
 
-    use super::starting::StartingView;
-
     #[test]
     fn should_render_with_starting() {
         let (action_tx, _action_rx) = tokio::sync::mpsc::unbounded_channel();
         let view = super::Router {
-            sender: action_tx.clone(),
-            route: super::Route::Starting(StartingView::new(action_tx)),
+            current: 0,
             dashboards: Vec::default(),
+            sender: action_tx.clone(),
         };
 
         let mut buf = Buffer::empty(Rect::new(0, 0, 50, 5));

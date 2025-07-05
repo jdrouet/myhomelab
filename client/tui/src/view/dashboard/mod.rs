@@ -1,3 +1,4 @@
+use myhomelab_dashboard::entity::Dashboard;
 use ratatui::style::Stylize;
 use ratatui::text::Text;
 use tokio::sync::mpsc::UnboundedSender;
@@ -7,12 +8,17 @@ use crate::worker::Action;
 
 #[derive(Debug)]
 pub(crate) struct DashboardView {
+    dashboard: Dashboard,
     sender: UnboundedSender<Action>,
 }
 
 impl DashboardView {
-    pub(crate) fn new(sender: UnboundedSender<Action>) -> Self {
-        Self { sender }
+    pub(crate) fn new(dashboard: Dashboard, sender: UnboundedSender<Action>) -> Self {
+        Self { dashboard, sender }
+    }
+
+    pub(crate) fn title(&self) -> &str {
+        &self.dashboard.title
     }
 }
 
