@@ -11,7 +11,7 @@ pub struct BatchQueryParams {
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct SingleQueryParams {
-    pub kind: RequestKind,
+    pub mode: RequestKind,
     #[serde(flatten)]
     pub query: Query,
     pub range: TimeRange,
@@ -23,7 +23,7 @@ impl From<SingleQueryParams> for BatchQueryParams {
         queries.insert("single".into(), value.query);
         BatchQueryParams {
             requests: vec![Request {
-                kind: value.kind,
+                kind: value.mode,
                 queries,
             }],
             range: value.range,
@@ -41,7 +41,7 @@ impl TryFrom<BatchQueryParams> for SingleQueryParams {
         let req = value.requests.pop().unwrap();
         let query = req.queries.into_values().next().unwrap();
         Ok(Self {
-            kind: req.kind,
+            mode: req.kind,
             query,
             range: value.range,
         })

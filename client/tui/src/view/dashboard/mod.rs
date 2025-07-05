@@ -1,10 +1,10 @@
-use myhomelab_dashboard::entity::{Dashboard, DashboardCell, Size};
+use cell::DashboardLineCell;
+use myhomelab_adapter_http_client::AdapterHttpClient;
+use myhomelab_dashboard::entity::{Dashboard, Size};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::prelude::{Buffer, Rect};
-use tokio::sync::mpsc::UnboundedSender;
 
 use crate::listener::Event;
-use crate::worker::Action;
 
 mod cell;
 mod line;
@@ -12,16 +12,18 @@ mod line;
 #[derive(Debug)]
 pub(crate) struct DashboardView {
     title: String,
-    cells: Vec<DashboardCell>,
-    sender: UnboundedSender<Action>,
+    cells: Vec<DashboardLineCell>,
 }
 
 impl DashboardView {
-    pub(crate) fn new(dashboard: Dashboard, sender: UnboundedSender<Action>) -> Self {
+    pub(crate) fn new(client: AdapterHttpClient, dashboard: Dashboard) -> Self {
         Self {
             title: dashboard.title,
-            cells: dashboard.cells,
-            sender,
+            cells: dashboard
+                .cells
+                .into_iter()
+                .map(|cell| DashboardLineCell::new(client.clone(), cell))
+                .collect(),
         }
     }
 
@@ -31,15 +33,14 @@ impl DashboardView {
 }
 
 impl crate::prelude::Component for DashboardView {
-    fn digest(&mut self, event: crate::listener::Event) {
+    fn digest(&mut self, ctx: &crate::prelude::Context, event: &crate::listener::Event) {
         match event {
-            Event::Key(key) if key.code.as_char() == Some('Q') => {
-                let _ = self.sender.send(Action::Shutdown);
+            Event::Key(key) if key.code.as_char() == Some('R') => {}
+            other => {
+                self.cells
+                    .iter_mut()
+                    .for_each(|cell| cell.digest(ctx, other));
             }
-            Event::Key(key) if key.code.as_char() == Some('R') => {
-                let _ = self.sender.send(Action::FetchDashboardList);
-            }
-            _ => {}
         }
     }
 }

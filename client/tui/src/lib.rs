@@ -5,10 +5,10 @@ use ratatui::prelude::Backend;
 
 use crate::prelude::Component;
 
+mod hook;
 mod listener;
 mod prelude;
 mod view;
-mod worker;
 
 #[derive(Debug)]
 pub struct ApplicationConfig {}
@@ -34,29 +34,21 @@ pub struct Application {
 
 impl Application {
     pub async fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> anyhow::Result<()> {
-        let interval = std::time::Duration::from_millis(500);
-        let (action_tx, action_rx) = tokio::sync::mpsc::unbounded_channel();
+        let interval = std::time::Duration::from_millis(200);
         let (event_tx, event_rx) = tokio::sync::mpsc::unbounded_channel();
+        let context = crate::prelude::Context { sender: event_tx };
         let mut listener = listener::Listener::new(interval, event_rx);
-        let mut router = crate::view::Router::new(action_tx);
-
-        let client = self.client.clone();
-        let worker = tokio::task::spawn(async move {
-            crate::worker::Worker::new(client, action_rx, event_tx)
-                .run()
-                .await
-        });
+        let mut router = crate::view::Router::new(self.client.clone());
 
         router.draw(terminal)?;
         while let Some(event) = listener.next().await {
             let shutdown = matches!(event, Event::Shutdown);
-            router.digest(event);
+            router.digest(&context, &event);
             router.draw(terminal)?;
             if shutdown {
                 break;
             }
         }
-        worker.await??;
         Ok(())
     }
 }

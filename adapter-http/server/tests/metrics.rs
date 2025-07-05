@@ -149,6 +149,51 @@ async fn should_query_batch_metrics() {
 }
 
 #[tokio::test]
+async fn should_query_single_metric() {
+    let port = PORT_ITERATOR.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let server_config = myhomelab_adapter_http_server::HttpServerConfig {
+        host: IpAddr::V4(Ipv4Addr::LOCALHOST),
+        port,
+    };
+    let mut state = InnerState {
+        dashboard: MockDashboardRepo::new(),
+        metric: MockMetric::new(),
+    };
+    state
+        .metric
+        .expect_execute()
+        .once()
+        .returning(|reqs, range| {
+            assert_eq!(reqs.len(), 1);
+            assert_eq!(range.start, 0);
+            Ok(Vec::new())
+        });
+    let state = MockServerState(Arc::new(state));
+    let server = server_config.build(CancellationToken::new(), state.clone());
+    let _handle = tokio::spawn(async { server.run().await });
+    let client_config = myhomelab_adapter_http_client::AdapterHttpClientConfig {
+        base_url: format!("http://localhost:{port}"),
+    };
+    let client = client_config.build().unwrap();
+    client
+        .execute(
+            vec![Request::scalar().with_query(
+                "default",
+                Query::new(
+                    MetricHeader::new(
+                        "system.memory.total",
+                        MetricTags::default().with_tag("host", "rpi"),
+                    ),
+                    myhomelab_metric::query::Aggregator::Average,
+                ),
+            )],
+            TimeRange::from(0),
+        )
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
 async fn should_query_single_metrics() {
     let port = PORT_ITERATOR.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let server_config = myhomelab_adapter_http_server::HttpServerConfig {

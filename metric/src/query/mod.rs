@@ -37,7 +37,7 @@ impl From<(i64, i64)> for TimeRange {
     }
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Request {
     pub kind: RequestKind,
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
@@ -66,7 +66,7 @@ impl Request {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
-#[serde(tag = "mode", rename_all = "kebab-case")]
+#[serde(tag = "name", rename_all = "kebab-case")]
 pub enum RequestKind {
     Scalar,
     Timeseries { period: u32 },

@@ -1,5 +1,4 @@
 use anyhow::Context;
-use myhomelab_adapter_http_shared::metric::query::SingleQueryParams;
 
 macro_rules! unwrap_status_error {
     ($res:expr) => {
@@ -41,24 +40,13 @@ impl myhomelab_metric::query::QueryExecutor for super::AdapterHttpClient {
 
         let query = BatchQueryParams { range, requests };
 
-        let res = match SingleQueryParams::try_from(query) {
-            Ok(single) => {
-                let query = serde_qs::to_string(&single).context("serializing query")?;
-                self.0
-                    .client
-                    .get(format!("{}/api/metrics/query?{query}", self.0.base_url))
-                    .send()
-                    .await?
-            }
-            Err(batch) => {
-                self.0
-                    .client
-                    .post(format!("{}/api/metrics/query", self.0.base_url))
-                    .json(&batch)
-                    .send()
-                    .await?
-            }
-        };
+        let res = self
+            .0
+            .client
+            .post(format!("{}/api/metrics/query", self.0.base_url))
+            .json(&query)
+            .send()
+            .await?;
 
         unwrap_status_error!(res);
         res.json().await.map_err(anyhow::Error::from)

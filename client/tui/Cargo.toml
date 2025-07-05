@@ -12,6 +12,7 @@ myhomelab-prelude = { workspace = true }
 myhomelab-adapter-http-client = { workspace = true }
 myhomelab-adapter-http-shared = { workspace = true }
 myhomelab-dashboard = { workspace = true }
+myhomelab-metric = { workspace = true }
 ratatui = { version = "0.29" }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 tokio-stream = { workspace = true }

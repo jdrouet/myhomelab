@@ -1,4 +1,3 @@
-use myhomelab_dashboard::entity::Dashboard;
 use tokio_stream::StreamExt;
 
 pub struct Listener {
@@ -28,9 +27,9 @@ impl Listener {
                             self.timer.reset();
                             return Some(Event::Key(inner));
                         }
-                        Some(Err(error)) => {
+                        Some(Err(_)) => {
                             self.timer.reset();
-                            return Some(Event::Error(error.into()));
+                            return Some(Event::Error);
                         }
                         _ => {}
                     }
@@ -46,18 +45,10 @@ impl Listener {
     }
 }
 
-#[derive(Debug)]
-pub enum Event {
-    Error(anyhow::Error),
+#[derive(Clone, Debug)]
+pub(crate) enum Event {
+    Error,
     Key(crossterm::event::KeyEvent),
     Shutdown,
     Tick,
-    DashboardList(AsyncEvent<Vec<Dashboard>>),
-}
-
-#[derive(Debug)]
-pub enum AsyncEvent<T> {
-    Init,
-    Success(T),
-    Error(anyhow::Error),
 }
