@@ -18,8 +18,22 @@ impl MetricHeader {
         }
     }
 
-    pub fn with_tag(mut self, name: impl Into<Box<str>>, value: impl Into<tag::TagValue>) -> Self {
+    pub fn maybe_set_tag<V: Into<tag::TagValue>>(
+        &mut self,
+        name: impl Into<Box<str>>,
+        value: Option<V>,
+    ) {
+        if let Some(value) = value {
+            self.tags.insert(name.into(), value.into());
+        }
+    }
+
+    pub fn set_tag(&mut self, name: impl Into<Box<str>>, value: impl Into<tag::TagValue>) {
         self.tags.insert(name.into(), value.into());
+    }
+
+    pub fn with_tag(mut self, name: impl Into<Box<str>>, value: impl Into<tag::TagValue>) -> Self {
+        self.set_tag(name, value);
         self
     }
 }

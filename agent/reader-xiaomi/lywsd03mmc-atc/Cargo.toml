@@ -1,0 +1,19 @@
+[package]
+name = "myhomelab-agent-reader-xiaomi-lywsd03mmc-atc"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+btleplug = { version = "0.11" }
+lru = { version = "0.16" }
+myhomelab-metric = { workspace = true }
+myhomelab-prelude = { workspace = true }
+myhomelab-agent-prelude = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
