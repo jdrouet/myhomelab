@@ -16,6 +16,9 @@ jobs:
       group: ${{ github.ref }}-code-check
       cancel-in-progress: true
     steps:
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y dbus libdbus-1-dev
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
