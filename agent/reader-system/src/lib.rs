@@ -1,6 +1,6 @@
 use myhomelab_agent_prelude::mpsc::Sender;
 use myhomelab_metric::entity::value::MetricValue;
-use myhomelab_metric::entity::{Metric, MetricHeader};
+use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
 use myhomelab_prelude::current_timestamp;
 use sysinfo::System;
 use tokio_util::sync::CancellationToken;
@@ -54,26 +54,22 @@ impl ReaderSystem {
         sender: &S,
     ) -> anyhow::Result<()> {
         for (index, cpu) in self.system.cpus().iter().enumerate() {
+            let tags = MetricTags::default()
+                .with_tag("host", host)
+                .with_tag("index", index as i64)
+                .with_tag("cpu_name", cpu.name())
+                .with_tag("cpu_brand", cpu.brand())
+                .with_tag("cpu_vendor_id", cpu.vendor_id());
             sender
                 .push(Metric {
-                    header: MetricHeader::new("system.cpu.frequency")
-                        .with_tag("host", host)
-                        .with_tag("index", index as i64)
-                        .with_tag("cpu_name", cpu.name())
-                        .with_tag("cpu_brand", cpu.brand())
-                        .with_tag("cpu_vendor_id", cpu.vendor_id()),
+                    header: MetricHeader::new("system.cpu.frequency", tags.clone()),
                     timestamp,
                     value: MetricValue::gauge(cpu.frequency() as f64),
                 })
                 .await?;
             sender
                 .push(Metric {
-                    header: MetricHeader::new("system.cpu.usage")
-                        .with_tag("host", host)
-                        .with_tag("index", index as i64)
-                        .with_tag("cpu_name", cpu.name())
-                        .with_tag("cpu_brand", cpu.brand())
-                        .with_tag("cpu_vendor_id", cpu.vendor_id()),
+                    header: MetricHeader::new("system.cpu.usage", tags),
                     timestamp,
                     value: MetricValue::gauge(cpu.cpu_usage() as f64),
                 })
@@ -88,30 +84,31 @@ impl ReaderSystem {
         timestamp: u64,
         sender: &S,
     ) -> anyhow::Result<()> {
+        let tags = MetricTags::default().with_tag("host", host);
         sender
             .push(Metric {
-                header: MetricHeader::new("system.memory.total").with_tag("host", host),
+                header: MetricHeader::new("system.memory.total", tags.clone()),
                 timestamp,
                 value: MetricValue::gauge(self.system.total_memory() as f64),
             })
             .await?;
         sender
             .push(Metric {
-                header: MetricHeader::new("system.memory.used").with_tag("host", host),
+                header: MetricHeader::new("system.memory.used", tags.clone()),
                 timestamp,
                 value: MetricValue::gauge(self.system.used_memory() as f64),
             })
             .await?;
         sender
             .push(Metric {
-                header: MetricHeader::new("system.swap.total").with_tag("host", host),
+                header: MetricHeader::new("system.swap.total", tags.clone()),
                 timestamp,
                 value: MetricValue::gauge(self.system.total_swap() as f64),
             })
             .await?;
         sender
             .push(Metric {
-                header: MetricHeader::new("system.swap.used").with_tag("host", host),
+                header: MetricHeader::new("system.swap.used", tags.clone()),
                 timestamp,
                 value: MetricValue::gauge(self.system.used_swap() as f64),
             })

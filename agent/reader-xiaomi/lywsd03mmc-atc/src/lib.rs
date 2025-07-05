@@ -6,7 +6,7 @@ use btleplug::{
 };
 use lru::LruCache;
 use myhomelab_agent_prelude::mpsc::Sender;
-use myhomelab_metric::entity::{Metric, MetricHeader, value::MetricValue};
+use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags, value::MetricValue};
 use myhomelab_prelude::current_timestamp;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -59,7 +59,7 @@ impl From<PeripheralProperties> for Device {
 }
 
 impl Device {
-    fn populate(&self, header: &mut MetricHeader) {
+    fn populate(&self, header: &mut MetricTags) {
         header.maybe_set_tag("name", self.name.as_deref());
         header.set_tag("address", self.address.to_string());
     }
@@ -82,14 +82,14 @@ impl ReaderXiaomi {
         values: impl Iterator<Item = (&'static str, f64)>,
     ) {
         let timestamp = current_timestamp();
+        let mut tags = MetricTags::default().with_tag("device", DEVICE);
+        if let Some(device) = self.cache.get(&id) {
+            device.populate(&mut tags);
+        }
         for (name, value) in values {
-            let mut header = MetricHeader::new(name).with_tag("device", DEVICE);
-            if let Some(device) = self.cache.get(&id) {
-                device.populate(&mut header);
-            }
             let _ = sender
                 .push(Metric {
-                    header,
+                    header: MetricHeader::new(name, tags.clone()),
                     timestamp,
                     value: MetricValue::gauge(value),
                 })

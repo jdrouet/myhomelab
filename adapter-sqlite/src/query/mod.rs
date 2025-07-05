@@ -48,7 +48,7 @@ impl QueryExecutor for crate::Sqlite {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use myhomelab_metric::entity::MetricHeader;
+    use myhomelab_metric::entity::{MetricHeader, MetricTags};
     use myhomelab_metric::intake::Intake;
     use myhomelab_metric::metrics;
     use myhomelab_metric::query::{Query, QueryExecutor, Request, RequestKind, TimeRange};
@@ -76,26 +76,35 @@ pub(crate) mod tests {
             .execute(
                 vec![
                     Request::scalar()
-                        .with_query("reboot-all", Query::sum(MetricHeader::new("system.reboot")))
+                        .with_query(
+                            "reboot-all",
+                            Query::sum(MetricHeader::new("system.reboot", Default::default())),
+                        )
                         .with_query(
                             "reboot-macbook",
-                            Query::sum(
-                                MetricHeader::new("system.reboot").with_tag("host", "macbook"),
-                            ),
+                            Query::sum(MetricHeader::new(
+                                "system.reboot",
+                                MetricTags::default().with_tag("host", "macbook"),
+                            )),
                         )
                         .with_query(
                             "reboot-raspberry",
-                            Query::sum(
-                                MetricHeader::new("system.reboot").with_tag("host", "raspberry"),
-                            ),
+                            Query::sum(MetricHeader::new(
+                                "system.reboot",
+                                MetricTags::default().with_tag("host", "raspberry"),
+                            )),
                         ),
                     Request::timeseries(3)
-                        .with_query("cpu", Query::max(MetricHeader::new("system.cpu")))
+                        .with_query(
+                            "cpu",
+                            Query::max(MetricHeader::new("system.cpu", MetricTags::default())),
+                        )
                         .with_query(
                             "cpu-raspberry",
-                            Query::min(
-                                MetricHeader::new("system.cpu").with_tag("host", "raspberry"),
-                            ),
+                            Query::min(MetricHeader::new(
+                                "system.cpu",
+                                MetricTags::default().with_tag("host", "raspberry"),
+                            )),
                         ),
                 ],
                 TimeRange::from(0),

@@ -107,22 +107,22 @@ mod tests {
         sqlite
             .ingest(vec![
                 Metric {
-                    header: MetricHeader::new("foo"),
+                    header: MetricHeader::new("foo", Default::default()),
                     timestamp: 0,
                     value: MetricValue::counter(42),
                 },
                 Metric {
-                    header: MetricHeader::new("foo"),
+                    header: MetricHeader::new("foo", Default::default()),
                     timestamp: 1,
                     value: MetricValue::counter(41),
                 },
                 Metric {
-                    header: MetricHeader::new("foo"),
+                    header: MetricHeader::new("foo", Default::default()),
                     timestamp: 2,
                     value: MetricValue::counter(43),
                 },
                 Metric {
-                    header: MetricHeader::new("foo"),
+                    header: MetricHeader::new("foo", Default::default()),
                     timestamp: 3,
                     value: MetricValue::counter(45),
                 },
@@ -138,27 +138,27 @@ mod tests {
         sqlite
             .ingest(vec![
                 Metric {
-                    header: MetricHeader::new("foo"),
+                    header: MetricHeader::new("foo", Default::default()),
                     timestamp: 0,
                     value: MetricValue::gauge(1.1),
                 },
                 Metric {
-                    header: MetricHeader::new("foo"),
+                    header: MetricHeader::new("foo", Default::default()),
                     timestamp: 1,
                     value: MetricValue::gauge(1.2),
                 },
                 Metric {
-                    header: MetricHeader::new("foo"),
+                    header: MetricHeader::new("foo", Default::default()),
                     timestamp: 2,
                     value: MetricValue::gauge(-2.0),
                 },
                 Metric {
-                    header: MetricHeader::new("foo"),
+                    header: MetricHeader::new("foo", Default::default()),
                     timestamp: 3,
                     value: MetricValue::gauge(4.1),
                 },
                 Metric {
-                    header: MetricHeader::new("bar"),
+                    header: MetricHeader::new("bar", Default::default()),
                     timestamp: 4,
                     value: MetricValue::gauge(6.1),
                 },
@@ -174,12 +174,12 @@ mod tests {
         sqlite
             .ingest(vec![
                 Metric {
-                    header: MetricHeader::new("foo"),
+                    header: MetricHeader::new("foo", Default::default()),
                     timestamp: 0,
                     value: MetricValue::counter(42),
                 },
                 Metric {
-                    header: MetricHeader::new("bar"),
+                    header: MetricHeader::new("bar", Default::default()),
                     timestamp: 1,
                     value: MetricValue::gauge(42.0),
                 },

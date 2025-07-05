@@ -1,40 +1,79 @@
-use std::collections::BTreeMap;
+use std::{borrow::Cow, collections::BTreeMap};
 
 pub mod tag;
 pub mod value;
 
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash, serde::Deserialize, serde::Serialize)]
+#[serde(transparent)]
+pub struct MetricTags(BTreeMap<Cow<'static, str>, tag::TagValue>);
+
+impl MetricTags {
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn set_tag<N, V>(&mut self, name: N, value: V)
+    where
+        N: Into<Cow<'static, str>>,
+        V: Into<tag::TagValue>,
+    {
+        self.0.insert(name.into(), value.into());
+    }
+
+    pub fn maybe_set_tag<N, V>(&mut self, name: N, value: Option<V>)
+    where
+        N: Into<Cow<'static, str>>,
+        V: Into<tag::TagValue>,
+    {
+        if let Some(value) = value {
+            self.0.insert(name.into(), value.into());
+        }
+    }
+
+    pub fn with_tag<N, V>(mut self, name: N, value: V) -> Self
+    where
+        N: Into<Cow<'static, str>>,
+        V: Into<tag::TagValue>,
+    {
+        self.set_tag(name, value);
+        self
+    }
+
+    pub fn maybe_with_tag<N, V>(self, name: N, value: Option<V>) -> Self
+    where
+        N: Into<Cow<'static, str>>,
+        V: Into<tag::TagValue>,
+    {
+        if let Some(value) = value {
+            self.with_tag(name, value)
+        } else {
+            self
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, serde::Deserialize, serde::Serialize)]
 pub struct MetricHeader {
-    pub name: Box<str>,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub tags: BTreeMap<Box<str>, tag::TagValue>,
+    pub name: Cow<'static, str>,
+    #[serde(default, skip_serializing_if = "MetricTags::is_empty")]
+    pub tags: MetricTags,
 }
 
 impl MetricHeader {
-    pub fn new(name: impl Into<Box<str>>) -> Self {
+    pub fn new(name: impl Into<Cow<'static, str>>, tags: MetricTags) -> Self {
         Self {
             name: name.into(),
-            tags: Default::default(),
+            tags,
         }
     }
 
-    pub fn maybe_set_tag<V: Into<tag::TagValue>>(
-        &mut self,
-        name: impl Into<Box<str>>,
-        value: Option<V>,
-    ) {
-        if let Some(value) = value {
-            self.tags.insert(name.into(), value.into());
-        }
+    pub fn tag(&self, name: &str) -> Option<&tag::TagValue> {
+        self.tags.0.get(name)
     }
 
-    pub fn set_tag(&mut self, name: impl Into<Box<str>>, value: impl Into<tag::TagValue>) {
-        self.tags.insert(name.into(), value.into());
-    }
-
-    pub fn with_tag(mut self, name: impl Into<Box<str>>, value: impl Into<tag::TagValue>) -> Self {
-        self.set_tag(name, value);
-        self
+    pub fn iter_tags(&self) -> impl Iterator<Item = (&str, &tag::TagValue)> {
+        self.tags.0.iter().map(|(key, value)| (key.as_ref(), value))
     }
 }
 
@@ -87,10 +126,11 @@ macro_rules! metrics {
         [ $( ($timestamp:expr, $value:expr) ),+ $(,)? ]
     ) => {{
         {
-            let mut header = myhomelab_metric::entity::MetricHeader::new($name);
+            let mut tags = myhomelab_metric::entity::MetricTags::default();
             $(
-                header = header.with_tag($tag_key, $tag_val);
+                tags.set_tag($tag_key, $tag_val);
             )+
+            let mut header = myhomelab_metric::entity::MetricHeader::new($name, tags);
 
             vec![
                 $(

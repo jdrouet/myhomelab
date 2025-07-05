@@ -17,9 +17,9 @@ pub(super) fn build_tags_attribute<'a>(
     qb.push(", json_object(");
     for (index, name) in query
         .header
-        .tags
-        .keys()
-        .chain(query.group_by.iter())
+        .iter_tags()
+        .map(|(key, _)| key)
+        .chain(query.group_by.iter().map(AsRef::as_ref))
         .unique()
         .enumerate()
     {
@@ -60,7 +60,7 @@ pub(super) fn build_timerange_filter(
 
 pub(super) fn build_tags_filter<'a>(
     qb: &mut sqlx::QueryBuilder<'a, sqlx::Sqlite>,
-    tags: impl Iterator<Item = (&'a Box<str>, &'a TagValue)>,
+    tags: impl Iterator<Item = (&'a str, &'a TagValue)>,
 ) {
     for (name, value) in tags {
         let path = format!("$.{name}");

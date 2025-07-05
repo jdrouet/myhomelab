@@ -4,7 +4,7 @@ use std::sync::atomic::AtomicU16;
 
 use myhomelab_adapter_http_server::ServerState;
 use myhomelab_dashboard::repository::MockDashboardRepo;
-use myhomelab_metric::entity::MetricHeader;
+use myhomelab_metric::entity::{MetricHeader, MetricTags};
 use myhomelab_metric::intake::Intake;
 use myhomelab_metric::mock::MockMetric;
 use myhomelab_metric::query::{Query, QueryExecutor, Request, TimeRange};
@@ -124,14 +124,20 @@ async fn should_query_batch_metrics() {
                 Request::scalar().with_query(
                     "foo",
                     Query::new(
-                        MetricHeader::new("system.memory.total").with_tag("host", "rpi"),
+                        MetricHeader::new(
+                            "system.memory.total",
+                            MetricTags::default().with_tag("host", "rpi"),
+                        ),
                         myhomelab_metric::query::Aggregator::Average,
                     ),
                 ),
                 Request::timeseries(10).with_query(
                     "bar",
                     Query::new(
-                        MetricHeader::new("system.memory.total").with_tag("host", "rpi"),
+                        MetricHeader::new(
+                            "system.memory.total",
+                            MetricTags::default().with_tag("host", "rpi"),
+                        ),
                         myhomelab_metric::query::Aggregator::Average,
                     ),
                 ),
@@ -174,7 +180,10 @@ async fn should_query_single_metrics() {
             vec![Request::scalar().with_query(
                 "foo",
                 Query::new(
-                    MetricHeader::new("system.memory.total").with_tag("host", "rpi"),
+                    MetricHeader::new(
+                        "system.memory.total",
+                        MetricTags::default().with_tag("host", "rpi"),
+                    ),
                     myhomelab_metric::query::Aggregator::Average,
                 ),
             )],

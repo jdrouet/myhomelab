@@ -8,9 +8,10 @@ use super::shared::Wrapper;
 
 impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarQueryResponse> {
     fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
+        let name: String = row.try_get(0)?;
         Ok(Wrapper(ScalarQueryResponse {
             header: MetricHeader {
-                name: row.try_get(0)?,
+                name: name.into(),
                 tags: row.try_get(1).map(|Json(inner)| inner)?,
             },
             value: row.try_get(2)?,
@@ -31,7 +32,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     qb.push(" where name = ")
         .push_bind(query.header.name.as_ref());
     super::shared::build_timerange_filter(&mut qb, timerange);
-    super::shared::build_tags_filter(&mut qb, query.header.tags.iter());
+    super::shared::build_tags_filter(&mut qb, query.header.iter_tags());
     qb.push("), counter_extractions as (");
     qb.push("select name");
     super::shared::build_tags_attribute(&mut qb, query);
@@ -40,7 +41,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     qb.push(" where name = ")
         .push_bind(query.header.name.as_ref());
     super::shared::build_timerange_filter(&mut qb, timerange);
-    super::shared::build_tags_filter(&mut qb, query.header.tags.iter());
+    super::shared::build_tags_filter(&mut qb, query.header.iter_tags());
     qb.push("), extractions as (");
     qb.push(" select name, tags, value from gauge_extractions");
     qb.push(" union all select name, tags, value from counter_extractions");
@@ -59,8 +60,8 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use myhomelab_metric::entity::MetricHeader;
     use myhomelab_metric::entity::tag::TagValue;
+    use myhomelab_metric::entity::{MetricHeader, MetricTags};
     use myhomelab_metric::query::{
         Query, QueryExecutor, QueryResponse, Request, RequestKind, TimeRange,
     };
@@ -73,8 +74,14 @@ pub(crate) mod tests {
             .execute(
                 vec![
                     Request::scalar()
-                        .with_query("max-cpu", Query::max(MetricHeader::new("system.cpu")))
-                        .with_query("min-cpu", Query::min(MetricHeader::new("system.cpu"))),
+                        .with_query(
+                            "max-cpu",
+                            Query::max(MetricHeader::new("system.cpu", Default::default())),
+                        )
+                        .with_query(
+                            "min-cpu",
+                            Query::min(MetricHeader::new("system.cpu", Default::default())),
+                        ),
                 ],
                 TimeRange::from(0),
             )
@@ -110,11 +117,17 @@ pub(crate) mod tests {
                     Request::scalar()
                         .with_query(
                             "max-cpu-fr",
-                            Query::max(MetricHeader::new("system.cpu").with_tag("location", "FR")),
+                            Query::max(MetricHeader::new(
+                                "system.cpu",
+                                MetricTags::default().with_tag("location", "FR"),
+                            )),
                         )
                         .with_query(
                             "max-cpu-es",
-                            Query::min(MetricHeader::new("system.cpu").with_tag("location", "ES")),
+                            Query::min(MetricHeader::new(
+                                "system.cpu",
+                                MetricTags::default().with_tag("location", "ES"),
+                            )),
                         ),
                 ],
                 TimeRange::from(0),
@@ -149,18 +162,23 @@ pub(crate) mod tests {
             .execute(
                 vec![
                     Request::scalar()
-                        .with_query("reboot-all", Query::sum(MetricHeader::new("system.reboot")))
+                        .with_query(
+                            "reboot-all",
+                            Query::sum(MetricHeader::new("system.reboot", MetricTags::default())),
+                        )
                         .with_query(
                             "reboot-macbook",
-                            Query::sum(
-                                MetricHeader::new("system.reboot").with_tag("host", "macbook"),
-                            ),
+                            Query::sum(MetricHeader::new(
+                                "system.reboot",
+                                MetricTags::default().with_tag("host", "macbook"),
+                            )),
                         )
                         .with_query(
                             "reboot-raspberry",
-                            Query::sum(
-                                MetricHeader::new("system.reboot").with_tag("host", "raspberry"),
-                            ),
+                            Query::sum(MetricHeader::new(
+                                "system.reboot",
+                                MetricTags::default().with_tag("host", "raspberry"),
+                            )),
                         ),
                 ],
                 TimeRange::from(0),
@@ -183,7 +201,10 @@ pub(crate) mod tests {
         };
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].header.name.as_ref(), "system.reboot");
-        assert_eq!(entries[0].header.tags["host"], TagValue::from("macbook"));
+        assert_eq!(
+            entries[0].header.tag("host").unwrap(),
+            &TagValue::from("macbook")
+        );
         assert_eq!(entries[0].value, 2.0);
 
         let qres = &res[0].queries["reboot-raspberry"];
