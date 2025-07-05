@@ -1,12 +1,13 @@
 use std::num::NonZeroUsize;
 
-use btleplug::{
-    api::{BDAddr, Central, CentralEvent, Manager, Peripheral, PeripheralProperties, ScanFilter},
-    platform::PeripheralId,
+use btleplug::api::{
+    BDAddr, Central, CentralEvent, Manager, Peripheral, PeripheralProperties, ScanFilter,
 };
+use btleplug::platform::PeripheralId;
 use lru::LruCache;
 use myhomelab_agent_prelude::mpsc::Sender;
-use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags, value::MetricValue};
+use myhomelab_metric::entity::value::MetricValue;
+use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
 use myhomelab_prelude::current_timestamp;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
