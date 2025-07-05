@@ -1618,12 +1618,14 @@ dependencies = [
  "myhomelab-adapter-http-client",
  "myhomelab-adapter-http-shared",
  "myhomelab-dashboard",
+ "myhomelab-metric",
  "myhomelab-prelude",
  "ratatui",
  "similar-asserts",
  "tokio",
  "tokio-stream",
  "tokio-util",
+ "uuid",
 ]
 
 [[package]]

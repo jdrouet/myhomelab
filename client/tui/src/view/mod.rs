@@ -38,6 +38,9 @@ impl crate::prelude::Component for Router {
             crate::listener::Event::Key(key) if key.code.as_char() == Some('Q') => {
                 let _ = self.sender.send(Action::Shutdown);
             }
+            crate::listener::Event::DashboardList(crate::listener::AsyncEvent::Init) => {
+                self.loading_dashboard = true;
+            }
             crate::listener::Event::DashboardList(crate::listener::AsyncEvent::Success(list)) => {
                 self.current = 0;
                 self.dashboards = list
@@ -85,7 +88,13 @@ impl ratatui::widgets::Widget for &Router {
         } else {
             Line::from(" MyHomeLab ".bold()).left_aligned()
         };
-        let instructions = Line::from_iter([" Quit ".into(), "<Q> ".blue().bold()]).centered();
+        let instructions = Line::from_iter([
+            " Refresh ".into(),
+            "<R> ".blue().bold(),
+            "- Quit ".into(),
+            "<Q> ".blue().bold(),
+        ])
+        .centered();
         let block = Block::bordered().title(title).title_bottom(instructions);
         let inner = block.inner(area);
         block.render(area, buf);
