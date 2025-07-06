@@ -29,7 +29,7 @@ mod tests {
     #[test]
     fn should_render() {
         let mut buf = Buffer::empty(Rect::new(0, 0, 50, 4));
-        let view = StartingView::default();
+        let view = StartingView;
         view.render(buf.area, &mut buf);
 
         let mut expected = Buffer::with_lines(vec![

@@ -47,7 +47,7 @@ struct Subset {
 
 impl Subset {
     pub fn with(mut self, ts: f64, value: f64) -> Self {
-        self.points.push((ts as f64, value));
+        self.points.push((ts, value));
         self
     }
 }
@@ -154,9 +154,11 @@ impl ratatui::widgets::Widget for &DashboardLineCell {
         if let Some(response) = self.responses.get("default") {
             match response {
                 Response::Timeseries(values) => {
-                    render_timeseries(block, &values, area, buf);
+                    render_timeseries(block, values, area, buf);
                 }
-                _ => {}
+                Response::Scalar(_values) => {
+                    todo!()
+                }
             }
         }
     }
