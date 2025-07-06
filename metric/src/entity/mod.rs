@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::BTreeMap;
+use std::fmt::Write;
 
 pub mod tag;
 pub mod value;
@@ -54,6 +55,18 @@ impl MetricTags {
     }
 }
 
+impl std::fmt::Display for MetricTags {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (index, (name, value)) in self.0.iter().enumerate() {
+            if index > 0 {
+                f.write_str(", ")?;
+            }
+            write!(f, "{name}={value}")?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, serde::Deserialize, serde::Serialize)]
 pub struct MetricHeader {
     pub name: Cow<'static, str>,
@@ -75,6 +88,15 @@ impl MetricHeader {
 
     pub fn iter_tags(&self) -> impl Iterator<Item = (&str, &tag::TagValue)> {
         self.tags.0.iter().map(|(key, value)| (key.as_ref(), value))
+    }
+}
+
+impl std::fmt::Display for MetricHeader {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.name.fmt(f)?;
+        f.write_char('{')?;
+        self.tags.fmt(f)?;
+        f.write_char('}')
     }
 }
 
@@ -144,4 +166,31 @@ macro_rules! metrics {
             ]
         }
     }};
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::entity::{MetricHeader, MetricTags};
+
+    #[test]
+    fn should_format_metric_headers() {
+        assert_eq!(
+            MetricHeader::new("foo", Default::default()).to_string(),
+            "foo{}"
+        );
+        assert_eq!(
+            MetricHeader::new("foo", MetricTags::default().with_tag("hello", "world")).to_string(),
+            "foo{hello=\"world\"}"
+        );
+        assert_eq!(
+            MetricHeader::new(
+                "foo",
+                MetricTags::default()
+                    .with_tag("hello", 42i64)
+                    .with_tag("world", "bar")
+            )
+            .to_string(),
+            "foo{hello=42, world=\"bar\"}"
+        );
+    }
 }
