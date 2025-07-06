@@ -10,8 +10,8 @@ RUN apk add --no-cache dbus-libs bluez-libs
 
 COPY --from=builder /code/target/release/myhomelab-server /usr/bin/myhomelab-server
 
-ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV MYHOMELAB_HTTP_HOST=0.0.0.0
+ENV MYHOMELAB_HTTP_PORT=3000
 ENV MYHOMELAB_DATASET_PATH=/data/config.toml
 ENV MYHOMELAB_SQLITE_PATH=/data/myhomelab.db
 ENV RUST_LOG=info,tower_http=debug
