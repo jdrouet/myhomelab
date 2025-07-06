@@ -29,8 +29,8 @@ pub(super) async fn handle_batch<S: crate::ServerState>(
 //     match executor.execute(params.requests, params.range).await {
 //         Ok(list) => Ok(Json(list)),
 //         Err(err) => {
-//             tracing::error!(message = "unable to query metrics", cause = ?err);
-//             Err(StatusCode::INTERNAL_SERVER_ERROR)
+//             tracing::error!(message = "unable to query metrics", cause =
+// ?err);             Err(StatusCode::INTERNAL_SERVER_ERROR)
 //         }
 //     }
 // }

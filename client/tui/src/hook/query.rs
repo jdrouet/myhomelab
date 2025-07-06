@@ -1,7 +1,5 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 use myhomelab_adapter_http_client::AdapterHttpClient;
 use myhomelab_metric::query::{Query, Request, RequestKind, Response, TimeRange};

@@ -1,8 +1,6 @@
 use myhomelab_dashboard::entity::Size;
-use ratatui::{
-    buffer::Buffer,
-    layout::{Constraint, Layout, Rect},
-};
+use ratatui::buffer::Buffer;
+use ratatui::layout::{Constraint, Layout, Rect};
 
 use super::cell::DashboardLineCell;
 
@@ -111,8 +109,8 @@ impl<'a> ratatui::widgets::Widget for &DashboardLine<'a> {
 //             })
 //             .map(DashboardLineCell::from)
 //             .collect::<Vec<_>>();
-//         let result = super::DashboardLineIterator::new(&available, Size::Large).collect::<Vec<_>>();
-//         assert_eq!(result.len(), 2);
+//         let result = super::DashboardLineIterator::new(&available,
+// Size::Large).collect::<Vec<_>>();         assert_eq!(result.len(), 2);
 //     }
 
 //     #[test]
@@ -132,8 +130,8 @@ impl<'a> ratatui::widgets::Widget for &DashboardLine<'a> {
 //             .map(DashboardLineCell::from)
 //             .collect::<Vec<_>>();
 //         let result =
-//             super::DashboardLineIterator::new(&available, Size::Medium).collect::<Vec<_>>();
-//         assert_eq!(result.len(), 3);
+//             super::DashboardLineIterator::new(&available,
+// Size::Medium).collect::<Vec<_>>();         assert_eq!(result.len(), 3);
 //     }
 
 //     #[test]
@@ -152,8 +150,8 @@ impl<'a> ratatui::widgets::Widget for &DashboardLine<'a> {
 //             })
 //             .map(DashboardLineCell::from)
 //             .collect::<Vec<_>>();
-//         let result = super::DashboardLineIterator::new(&available, Size::Small).collect::<Vec<_>>();
-//         assert_eq!(result.len(), 5);
+//         let result = super::DashboardLineIterator::new(&available,
+// Size::Small).collect::<Vec<_>>();         assert_eq!(result.len(), 5);
 //     }
 
 //     #[test]
@@ -176,8 +174,8 @@ impl<'a> ratatui::widgets::Widget for &DashboardLine<'a> {
 //             })
 //             .map(DashboardLineCell::from)
 //             .collect::<Vec<_>>();
-//         let result = super::DashboardLineIterator::new(&available, Size::Large).collect::<Vec<_>>();
-//         assert_eq!(result.len(), 3);
+//         let result = super::DashboardLineIterator::new(&available,
+// Size::Large).collect::<Vec<_>>();         assert_eq!(result.len(), 3);
 //         assert_eq!(result[0].cells.len(), 2);
 //         assert_eq!(result[1].cells.len(), 2);
 //         assert_eq!(result[2].cells.len(), 1);
@@ -204,7 +202,7 @@ impl<'a> ratatui::widgets::Widget for &DashboardLine<'a> {
 //             .map(DashboardLineCell::from)
 //             .collect::<Vec<_>>();
 //         let result =
-//             super::DashboardLineIterator::new(&available, Size::Medium).collect::<Vec<_>>();
-//         assert_eq!(result.len(), 5);
+//             super::DashboardLineIterator::new(&available,
+// Size::Medium).collect::<Vec<_>>();         assert_eq!(result.len(), 5);
 //     }
 // }

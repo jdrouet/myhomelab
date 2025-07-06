@@ -3,14 +3,12 @@ use std::collections::HashMap;
 use myhomelab_adapter_http_client::AdapterHttpClient;
 use myhomelab_dashboard::entity::DashboardCell;
 use myhomelab_metric::query::{Response, TimeseriesResponse};
-use ratatui::{
-    buffer::Buffer,
-    layout::Rect,
-    style::{Color, Style, Stylize},
-    symbols,
-    text::Line,
-    widgets::{Axis, Block, Chart, Dataset, GraphType},
-};
+use ratatui::buffer::Buffer;
+use ratatui::layout::Rect;
+use ratatui::style::{Color, Style, Stylize};
+use ratatui::symbols;
+use ratatui::text::Line;
+use ratatui::widgets::{Axis, Block, Chart, Dataset, GraphType};
 
 use crate::hook::query::{QueryHook, QueryState};
 
