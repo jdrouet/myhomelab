@@ -10,6 +10,7 @@ members = [
     "agent/prelude",
     "agent/reader-system",
     "agent/reader-xiaomi/lywsd03mmc-atc",
+    "client/tui",
     "dashboard",
     "metric",
     "prelude",
@@ -38,6 +39,7 @@ myhomelab-metric = { path = "./metric" }
 myhomelab-prelude = { path = "./prelude" }
 serde = { version = "1.0" }
 serde_qs = { version = "1.0.0-rc.3" }
+similar-asserts = { version = "1.7" }
 tokio = { version = "1.45" }
 tokio-stream = { version = "0.1" }
 tokio-util = { version = "0.7" }

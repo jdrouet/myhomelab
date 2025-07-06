@@ -5,7 +5,14 @@ description = "Metrics of the host running MyHomeLab"
 
 [[dashboards.cells]]
 title = "CPU usage"
-width = "large"
+width = "medium"
 height = "medium"
-kind = { mode = "timeseries", period = 300 }              # 5min period
+type = { name = "timeseries", period = 300 }              # 5min period
+query = { name = "system.cpu.usage", aggregator = "avg" }
+
+[[dashboards.cells]]
+title = "Memory usage"
+width = "medium"
+height = "medium"
+type = { name = "timeseries", period = 300 }              # 5min period
 query = { name = "system.cpu.usage", aggregator = "avg" }

@@ -6,5 +6,6 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
+myhomelab-dashboard = { workspace = true }
 myhomelab-metric = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

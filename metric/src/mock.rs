@@ -14,8 +14,8 @@ mockall::mock! {
     impl crate::query::QueryExecutor for Metric {
         async fn execute(
             &self,
-            requests: Vec<crate::query::Request>,
+            requests: std::collections::HashMap<Box<str>, crate::query::Request>,
             timerange: crate::query::TimeRange,
-        ) -> anyhow::Result<Vec<crate::query::Response>>;
+        ) -> anyhow::Result<std::collections::HashMap<Box<str>, crate::query::Response>>;
     }
 }

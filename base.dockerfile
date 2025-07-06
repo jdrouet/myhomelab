@@ -32,6 +32,12 @@ COPY agent/prelude/Cargo.toml /code/agent/prelude/Cargo.toml
 RUN cargo init --lib --name myhomelab-agent-reader-system agent/reader-system
 COPY agent/reader-system/Cargo.toml /code/agent/reader-system/Cargo.toml
 
+RUN cargo init --lib --name myhomelab-agent-reader-xiaomi-lywsd03mmc-atc agent/reader-xiaomi/lywsd03mmc-atc
+COPY agent/reader-xiaomi/lywsd03mmc-atc/Cargo.toml /code/agent/reader-xiaomi/lywsd03mmc-atc/Cargo.toml
+
+RUN cargo init --lib --name myhomelab-client-tui client/tui
+COPY client/tui/Cargo.toml /code/client/tui/Cargo.toml
+
 RUN cargo init --lib --name myhomelab-dashboard dashboard
 COPY dashboard/Cargo.toml /code/dashboard/Cargo.toml
 
@@ -53,6 +59,9 @@ RUN --mount=type=cache,target=$CARGO_HOME/git,sharing=locked \
 
 FROM rust:1-bookworm AS base
 
+RUN apt-get update \
+    && apt-get install -y dbus libdbus-1-dev
+
 ENV USER=root
 
 WORKDIR /code
@@ -67,6 +76,8 @@ COPY adapter-sqlite /code/adapter-sqlite
 COPY agent/core /code/agent/core
 COPY agent/prelude /code/agent/prelude
 COPY agent/reader-system /code/agent/reader-system
+COPY agent/reader-xiaomi/lywsd03mmc-atc /code/agent/reader-xiaomi/lywsd03mmc-atc
+COPY client/tui /code/client/tui
 COPY dashboard /code/dashboard
 COPY metric /code/metric
 COPY prelude /code/prelude

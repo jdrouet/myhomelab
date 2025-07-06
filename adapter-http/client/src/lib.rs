@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+mod dashboard;
 mod metric;
 
 #[derive(Debug)]
@@ -8,6 +9,12 @@ pub struct AdapterHttpClientConfig {
 }
 
 impl AdapterHttpClientConfig {
+    pub fn new(base_url: impl Into<String>) -> Self {
+        Self {
+            base_url: base_url.into(),
+        }
+    }
+
     pub fn build(&self) -> anyhow::Result<AdapterHttpClient> {
         Ok(AdapterHttpClient(Arc::new(Inner {
             base_url: Box::from(self.base_url.as_str()),
