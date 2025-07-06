@@ -1613,6 +1613,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "myhomelab-agent-reader-xiaomi-miflora"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "btleplug",
+ "lru 0.16.0",
+ "myhomelab-agent-prelude",
+ "myhomelab-metric",
+ "myhomelab-prelude",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "myhomelab-client-tui"
 version = "0.1.0"
 dependencies = [
@@ -1687,6 +1704,7 @@ dependencies = [
  "myhomelab-agent-core",
  "myhomelab-agent-reader-system",
  "myhomelab-agent-reader-xiaomi-lywsd03mmc-atc",
+ "myhomelab-agent-reader-xiaomi-miflora",
  "myhomelab-dashboard",
  "myhomelab-metric",
  "myhomelab-prelude",

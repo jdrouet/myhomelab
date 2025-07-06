@@ -73,6 +73,11 @@ async fn main() -> anyhow::Result<()> {
             .build()
             .await?,
     );
+    let manager = manager.with_reader(
+        myhomelab_agent_reader_xiaomi_miflora::ReaderConfig::default()
+            .build()
+            .await?,
+    );
     let manager = manager.build(&manager_config);
 
     let app_state = AppState { file, sqlite };

@@ -15,6 +15,7 @@ myhomelab-adapter-http-server = { workspace = true }
 myhomelab-agent-core = { workspace = true }
 myhomelab-agent-reader-system = { workspace = true }
 myhomelab-agent-reader-xiaomi-lywsd03mmc-atc = { workspace = true }
+myhomelab-agent-reader-xiaomi-miflora = { workspace = true }
 myhomelab-dashboard = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
