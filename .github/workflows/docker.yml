@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  builder-base:
+  build:
     runs-on: ubuntu-latest
 
     strategy:
@@ -27,4 +27,6 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           push: false
