@@ -18,7 +18,8 @@ jobs:
     strategy:
       matrix:
         dockerfile:
-          - ./server/Dockerfile
+          - ./server/alpine.Dockerfile
+          - ./server/debian.Dockerfile
 
     steps:
       - uses: actions/checkout@v4

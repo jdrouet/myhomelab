@@ -1,12 +1,14 @@
 # syntax = devthefuture/dockerfile-x
 
-FROM ./base AS server-builder
+FROM ./.docker/alpine AS builder
 
 RUN cargo build --release --package myhomelab-server
 
-FROM debian:bookworm-slim
+FROM alpine:3
 
-COPY --from=server-builder /code/target/release/myhomelab-server /usr/bin/myhomelab-server
+RUN apk add --no-cache dbus-libs bluez-libs
+
+COPY --from=builder /code/target/release/myhomelab-server /usr/bin/myhomelab-server
 
 ENV HOST=0.0.0.0
 ENV PORT=3000
@@ -16,4 +18,4 @@ ENV RUST_LOG=info,tower_http=debug
 
 VOLUME ["/data"]
 
-ENTRYPOINT ["/usr/bin/myhomelab-server"]
+ENTRYPOINT ["/usr/local/bin/myhomelab-server"]
