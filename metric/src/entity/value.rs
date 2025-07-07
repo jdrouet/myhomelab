@@ -34,3 +34,12 @@ impl MetricValue {
         Self::Gauge(GaugeValue(value))
     }
 }
+
+impl std::fmt::Display for MetricValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Counter(CounterValue(inner)) => write!(f, "Counter({inner})"),
+            Self::Gauge(GaugeValue(inner)) => write!(f, "Gauge({inner})"),
+        }
+    }
+}

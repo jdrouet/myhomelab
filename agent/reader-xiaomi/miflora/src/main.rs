@@ -7,7 +7,7 @@ struct ConsoleSender;
 
 impl Sender for ConsoleSender {
     async fn push(&self, item: myhomelab_metric::entity::Metric) -> anyhow::Result<()> {
-        println!("metric: {item:?}");
+        println!("metric: {item}");
         Ok(())
     }
 }
