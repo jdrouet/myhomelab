@@ -8,7 +8,7 @@ use lru::LruCache;
 use myhomelab_agent_prelude::mpsc::Sender;
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
-use myhomelab_prelude::current_timestamp;
+use myhomelab_prelude::{current_timestamp, parse_from_env};
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 
@@ -18,30 +18,38 @@ const DEVICE: &str = "xiaomi-lywsd03mmc-atc";
 const SERVICE_ID: uuid::Uuid = uuid::Uuid::from_u128(488837762788578050050668711589115);
 
 #[derive(Debug, Default)]
-pub struct ReaderXiaomiConfig {}
+pub struct ReaderXiaomiConfig {
+    enabled: bool,
+}
 
 impl myhomelab_prelude::FromEnv for ReaderXiaomiConfig {
     fn from_env() -> anyhow::Result<Self> {
-        Ok(Self {})
+        let enabled = parse_from_env::<bool>("MYHOMELAB_READER_XIAOMI_LYWSD03MMC_ATC_ENABLED")?
+            .unwrap_or(false);
+        Ok(Self { enabled })
     }
 }
 
 impl ReaderXiaomiConfig {
-    pub async fn build(&self) -> anyhow::Result<ReaderXiaomi> {
+    pub async fn build(&self) -> anyhow::Result<Option<ReaderXiaomi>> {
+        if !self.enabled {
+            return Ok(None);
+        }
+
         let cache = LruCache::new(NonZeroUsize::new(10).unwrap());
         let manager = btleplug::platform::Manager::new().await.unwrap();
         // get the first bluetooth adapter
         let adapters = manager.adapters().await?;
         let central = adapters.into_iter().nth(0).unwrap();
 
-        Ok(ReaderXiaomi {
+        Ok(Some(ReaderXiaomi {
             cache,
             manager,
             central,
             filter: ScanFilter {
                 services: vec![SERVICE_ID],
             },
-        })
+        }))
     }
 }
 

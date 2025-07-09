@@ -44,6 +44,13 @@ where
         }
     }
 
+    pub fn maybe_with_reader<E: Reader>(mut self, reader: Option<E>) -> Self {
+        if let Some(reader) = reader {
+            self.add_reader(reader);
+        }
+        self
+    }
+
     pub fn with_reader<E: Reader>(mut self, reader: E) -> Self {
         self.add_reader(reader);
         self

@@ -66,9 +66,9 @@ async fn main() -> anyhow::Result<()> {
 
     let manager_config = ManagerConfig::default();
     let manager = Manager::unbounded_builder(cancel_token.child_token(), sqlite.clone());
-    let manager =
-        manager.with_reader(myhomelab_agent_reader_system::ReaderSystemConfig::default().build()?);
-    let manager = manager.with_reader(
+    let manager = manager
+        .maybe_with_reader(myhomelab_agent_reader_system::ReaderSystemConfig::default().build()?);
+    let manager = manager.maybe_with_reader(
         myhomelab_agent_reader_xiaomi_lywsd03mmc_atc::ReaderXiaomiConfig::default()
             .build()
             .await?,

@@ -9,12 +9,14 @@ const DEFAULT_INTERVAL: u64 = 10;
 
 #[derive(Debug)]
 pub struct ReaderSystemConfig {
+    pub enabled: bool,
     pub interval: std::time::Duration,
 }
 
 impl Default for ReaderSystemConfig {
     fn default() -> Self {
         Self {
+            enabled: true,
             interval: std::time::Duration::new(DEFAULT_INTERVAL, 0),
         }
     }
@@ -22,21 +24,26 @@ impl Default for ReaderSystemConfig {
 
 impl myhomelab_prelude::FromEnv for ReaderSystemConfig {
     fn from_env() -> anyhow::Result<Self> {
+        let enabled = myhomelab_prelude::parse_from_env("MYHOMELAB_READER_SYSTEM_ENABLED")?;
         let interval: Option<u64> =
             myhomelab_prelude::parse_from_env("MYHOMELAB_READER_SYSTEM_INTERVAL")?;
         Ok(Self {
+            enabled: enabled.unwrap_or(true),
             interval: std::time::Duration::new(interval.unwrap_or(DEFAULT_INTERVAL), 0),
         })
     }
 }
 
 impl ReaderSystemConfig {
-    pub fn build(&self) -> anyhow::Result<ReaderSystem> {
-        let interval = tokio::time::interval(self.interval);
-        Ok(ReaderSystem {
-            interval,
+    pub fn build(&self) -> anyhow::Result<Option<ReaderSystem>> {
+        if !self.enabled {
+            return Ok(None);
+        }
+
+        Ok(Some(ReaderSystem {
+            interval: tokio::time::interval(self.interval),
             system: sysinfo::System::new_all(),
-        })
+        }))
     }
 }
 
