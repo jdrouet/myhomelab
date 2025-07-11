@@ -10,7 +10,7 @@ anyhow = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 myhomelab-agent-prelude = { workspace = true }
-sysinfo = { version = "0.35" }
+sysinfo = { version = "0.36" }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
 tokio-util = { workspace = true }
