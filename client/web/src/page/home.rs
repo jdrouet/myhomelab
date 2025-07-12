@@ -10,31 +10,29 @@ impl crate::prelude::Page for HomePage {
         "Home"
     }
 
-    fn render_body<C: crate::prelude::Context>(
+    async fn render_body<C: crate::prelude::Context>(
         &self,
         ctx: &C,
         buf: &mut String,
-    ) -> impl Future<Output = anyhow::Result<()>> + Send {
-        async {
-            let dashboards = ctx.dashboard_repository().list_dashboards().await?;
+    ) -> anyhow::Result<()> {
+        let dashboards = ctx.dashboard_repository().list_dashboards().await?;
 
-            buf.push_str("<main>");
-            if dashboards.is_empty() {
-                buf.push_str("No dashboard found...");
-            } else {
-                for dashboard in dashboards {
-                    let url = format!("/dashboards/{}", dashboard.id);
-                    write!(buf, "<a href={url:?} title={:?}>", dashboard.title)?;
-                    write!(buf, "<h3>{}</h3>", dashboard.title)?;
-                    write!(buf, "<p>{}</p>", dashboard.description)?;
-                    buf.push_str("</a>");
-                }
+        buf.push_str("<main>");
+        if dashboards.is_empty() {
+            buf.push_str("No dashboard found...");
+        } else {
+            for dashboard in dashboards {
+                let url = format!("/dashboards/{}", dashboard.id);
+                write!(buf, "<a href={url:?} title={:?}>", dashboard.title)?;
+                write!(buf, "<h3>{}</h3>", dashboard.title)?;
+                write!(buf, "<p>{}</p>", dashboard.description)?;
+                buf.push_str("</a>");
             }
-
-            buf.push_str("</main>");
-
-            Ok(())
         }
+
+        buf.push_str("</main>");
+
+        Ok(())
     }
 }
 

@@ -34,13 +34,10 @@ impl<'a> crate::prelude::Component for DashboardCell<'a> {
             buf.push_str("<i>No title</i>");
         }
         buf.push_str("</div>");
-        match result.get("default") {
-            Some(Response::Timeseries(data)) => {
-                crate::component::line_chart::LineChart::new(data, timerange)
-                    .render(context, buf)
-                    .await?;
-            }
-            _ => {}
+        if let Some(Response::Timeseries(data)) = result.get("default") {
+            crate::component::line_chart::LineChart::new(data, timerange)
+                .render(context, buf)
+                .await?;
         }
         buf.push_str("</div>");
         Ok(())
@@ -63,19 +60,17 @@ impl crate::prelude::Page for DashboardPage {
         self.dashboard.title.as_str()
     }
 
-    fn render_body<C: crate::prelude::Context>(
+    async fn render_body<C: crate::prelude::Context>(
         &self,
         ctx: &C,
         buf: &mut String,
-    ) -> impl Future<Output = anyhow::Result<()>> + Send {
-        async {
-            buf.push_str("<main>");
-            for cell in self.dashboard.cells.iter() {
-                DashboardCell(cell).render(ctx, buf).await?;
-            }
-            buf.push_str("</main>");
-            Ok(())
+    ) -> anyhow::Result<()> {
+        buf.push_str("<main>");
+        for cell in self.dashboard.cells.iter() {
+            DashboardCell(cell).render(ctx, buf).await?;
         }
+        buf.push_str("</main>");
+        Ok(())
     }
 }
 

@@ -18,7 +18,7 @@ impl<'a> LineChart<'a> {
             .timerange
             .end
             .map(|v| v as u64)
-            .unwrap_or_else(|| current_timestamp());
+            .unwrap_or_else(current_timestamp);
         (min_x, max_x)
     }
 
