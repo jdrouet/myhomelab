@@ -1559,6 +1559,7 @@ dependencies = [
  "myhomelab-agent-prelude",
  "myhomelab-agent-reader-system",
  "myhomelab-metric",
+ "myhomelab-prelude",
  "tokio",
  "tokio-stream",
  "tokio-util",

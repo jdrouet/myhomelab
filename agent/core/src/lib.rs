@@ -7,14 +7,27 @@ use tokio_util::sync::CancellationToken;
 #[derive(Debug)]
 pub struct ManagerConfig {
     pub buffer_max_size: usize,
-    pub interval: Duration,
+    pub flush_interval: Duration,
+}
+
+impl myhomelab_prelude::FromEnv for ManagerConfig {
+    fn from_env() -> anyhow::Result<Self> {
+        let buffer_max_size: Option<usize> =
+            myhomelab_prelude::parse_from_env("MYHOMELAB_READER_BUFFER_MAX_SIZE")?;
+        let flush_interval: Option<u64> =
+            myhomelab_prelude::parse_from_env("MYHOMELAB_READER_FLUSH_INTERVAL")?;
+        Ok(Self {
+            buffer_max_size: buffer_max_size.unwrap_or(200),
+            flush_interval: std::time::Duration::from_secs(flush_interval.unwrap_or(60)),
+        })
+    }
 }
 
 impl Default for ManagerConfig {
     fn default() -> Self {
         Self {
             buffer_max_size: 200,
-            interval: std::time::Duration::from_secs(60),
+            flush_interval: std::time::Duration::from_secs(60),
         }
     }
 }
@@ -70,7 +83,7 @@ where
             buffer: Vec::with_capacity(config.buffer_max_size),
             buffer_max_size: config.buffer_max_size,
             intake: self.intake,
-            interval: tokio::time::interval(config.interval),
+            interval: tokio::time::interval(config.flush_interval),
             receiver: self.receiver,
             tasks: self.tasks,
         }

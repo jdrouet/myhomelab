@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
 
     let cancel_token = CancellationToken::new();
 
-    let manager_config = ManagerConfig::default();
+    let manager_config = ManagerConfig::from_env()?;
     let manager = Manager::unbounded_builder(cancel_token.child_token(), sqlite.clone());
     let manager = manager
         .maybe_with_reader(myhomelab_agent_reader_system::ReaderSystemConfig::default().build()?);

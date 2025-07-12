@@ -11,6 +11,7 @@ derive_more = { workspace = true, features = ["from"] }
 myhomelab-agent-prelude = { workspace = true }
 myhomelab-agent-reader-system = { workspace = true }
 myhomelab-metric = { workspace = true }
+myhomelab-prelude = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
 tracing = { workspace = true }
