@@ -32,6 +32,7 @@ COPY agent/prelude /code/agent/prelude
 COPY agent/reader-system /code/agent/reader-system
 COPY agent/reader-xiaomi/lywsd03mmc-atc /code/agent/reader-xiaomi/lywsd03mmc-atc
 COPY client/tui /code/client/tui
+COPY client/web /code/client/web
 COPY dashboard /code/dashboard
 COPY metric /code/metric
 COPY prelude /code/prelude
