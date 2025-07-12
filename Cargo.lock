@@ -1629,6 +1629,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "myhomelab-client-web"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "myhomelab-metric",
+ "tokio",
+]
+
+[[package]]
 name = "myhomelab-dashboard"
 version = "0.1.0"
 dependencies = [

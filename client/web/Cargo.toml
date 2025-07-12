@@ -1,0 +1,14 @@
+[package]
+name = "myhomelab-client-web"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+myhomelab-metric = { workspace = true }
+
+[dev-dependencies]
+myhomelab-metric = { workspace = true, features = ["mocks"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

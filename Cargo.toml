@@ -11,6 +11,7 @@ members = [
     "agent/reader-system",
     "agent/reader-xiaomi/lywsd03mmc-atc",
     "client/tui",
+    "client/web",
     "dashboard",
     "metric",
     "prelude",
@@ -34,6 +35,7 @@ myhomelab-agent-core = { path = "./agent/core" }
 myhomelab-agent-prelude = { path = "./agent/prelude" }
 myhomelab-agent-reader-system = { path = "./agent/reader-system" }
 myhomelab-agent-reader-xiaomi-lywsd03mmc-atc = { path = "./agent/reader-xiaomi/lywsd03mmc-atc" }
+myhomelab-client-web = { path = "./client/web" }
 myhomelab-dashboard = { path = "./dashboard" }
 myhomelab-metric = { path = "./metric" }
 myhomelab-prelude = { path = "./prelude" }
