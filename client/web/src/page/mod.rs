@@ -1,5 +1,6 @@
 use crate::prelude::{Context, Page};
 
+pub mod dashboard;
 pub mod home;
 
 #[derive(Debug)]

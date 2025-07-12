@@ -3,10 +3,13 @@ use myhomelab_client_web::prelude::Context;
 
 use crate::ServerState;
 
+mod dashboard;
 mod home;
 
 pub(super) fn create<S: ServerState>() -> axum::Router<S> {
-    axum::Router::new().route("/", get(home::handle::<S>))
+    axum::Router::new()
+        .route("/", get(home::handle::<S>))
+        .route("/dashboards/{dashboard_id}", get(dashboard::handle::<S>))
 }
 
 /// Wrapper arround server state for the web client
