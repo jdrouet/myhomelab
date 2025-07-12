@@ -1,5 +1,6 @@
-use myhomelab_dashboard::repository::DashboardRepository;
 use std::fmt::Write;
+
+use myhomelab_dashboard::repository::DashboardRepository;
 
 #[derive(Debug, Default)]
 pub struct HomePage {}
@@ -39,13 +40,14 @@ impl crate::prelude::Page for HomePage {
 
 #[cfg(test)]
 mod tests {
-    use myhomelab_dashboard::{entity::Dashboard, repository::MockDashboardRepo};
+    use myhomelab_dashboard::entity::Dashboard;
+    use myhomelab_dashboard::repository::MockDashboardRepo;
     use myhomelab_metric::mock::MockMetric;
     use uuid::Uuid;
 
-    use crate::{mock::MockContext, page::PageWrapper};
-
     use super::HomePage;
+    use crate::mock::MockContext;
+    use crate::page::PageWrapper;
 
     #[tokio::test]
     async fn should_render_page_with_empty_state() {

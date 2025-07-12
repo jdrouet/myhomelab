@@ -81,13 +81,14 @@ impl crate::prelude::Page for DashboardPage {
 
 #[cfg(test)]
 mod tests {
-    use myhomelab_dashboard::{entity::Dashboard, repository::MockDashboardRepo};
+    use myhomelab_dashboard::entity::Dashboard;
+    use myhomelab_dashboard::repository::MockDashboardRepo;
     use myhomelab_metric::mock::MockMetric;
     use uuid::Uuid;
 
-    use crate::{mock::MockContext, page::PageWrapper};
-
     use super::DashboardPage;
+    use crate::mock::MockContext;
+    use crate::page::PageWrapper;
 
     #[tokio::test]
     async fn should_render_page() {

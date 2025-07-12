@@ -1,7 +1,5 @@
-use std::{
-    collections::{HashMap, HashSet},
-    time::{Duration, SystemTime},
-};
+use std::collections::{HashMap, HashSet};
+use std::time::{Duration, SystemTime};
 
 use myhomelab_prelude::Healthcheck;
 
