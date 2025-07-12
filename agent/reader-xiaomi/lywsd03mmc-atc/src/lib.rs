@@ -17,16 +17,32 @@ mod parse;
 const DEVICE: &str = "xiaomi-lywsd03mmc-atc";
 const SERVICE_ID: uuid::Uuid = uuid::Uuid::from_u128(488837762788578050050668711589115);
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ReaderXiaomiConfig {
     enabled: bool,
+    cache_size: NonZeroUsize,
+}
+
+impl Default for ReaderXiaomiConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            cache_size: NonZeroUsize::new(10).unwrap(),
+        }
+    }
 }
 
 impl myhomelab_prelude::FromEnv for ReaderXiaomiConfig {
     fn from_env() -> anyhow::Result<Self> {
         let enabled = parse_from_env::<bool>("MYHOMELAB_READER_XIAOMI_LYWSD03MMC_ATC_ENABLED")?
             .unwrap_or(false);
-        Ok(Self { enabled })
+        let cache_size =
+            parse_from_env::<NonZeroUsize>("MYHOMELAB_READER_XIAOMI_LYWSD03MMC_ATC_CACHE_SIZE")?
+                .unwrap_or(NonZeroUsize::new(10).unwrap());
+        Ok(Self {
+            enabled,
+            cache_size,
+        })
     }
 }
 
@@ -36,7 +52,7 @@ impl ReaderXiaomiConfig {
             return Ok(None);
         }
 
-        let cache = LruCache::new(NonZeroUsize::new(10).unwrap());
+        let cache = LruCache::new(self.cache_size);
         let manager = btleplug::platform::Manager::new().await.unwrap();
         // get the first bluetooth adapter
         let adapters = manager.adapters().await?;
