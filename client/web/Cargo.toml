@@ -5,6 +5,9 @@ edition = "2024"
 authors.workspace = true
 license.workspace = true
 
+[features]
+mocks = []
+
 [dependencies]
 anyhow = { workspace = true }
 myhomelab-metric = { workspace = true }

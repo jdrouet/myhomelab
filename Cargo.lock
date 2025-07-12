@@ -1515,6 +1515,7 @@ dependencies = [
  "myhomelab-adapter-file",
  "myhomelab-adapter-http-client",
  "myhomelab-adapter-http-shared",
+ "myhomelab-client-web",
  "myhomelab-dashboard",
  "myhomelab-metric",
  "myhomelab-prelude",

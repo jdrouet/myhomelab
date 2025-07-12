@@ -1,5 +1,3 @@
-use myhomelab_metric::query::QueryExecutor;
-
 use crate::prelude::{Context, Page};
 
 #[derive(Debug)]
@@ -12,9 +10,9 @@ impl<P: Page> PageWrapper<P> {
         Self { page }
     }
 
-    pub async fn render<Q>(&self, context: &Context<Q>, buf: &mut String) -> anyhow::Result<()>
+    pub async fn render<C>(&self, context: &C, buf: &mut String) -> anyhow::Result<()>
     where
-        Q: QueryExecutor + Send,
+        C: Context,
     {
         buf.push_str("<!DOCTYPE html>");
         buf.push_str("<html>");
