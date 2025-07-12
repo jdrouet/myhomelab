@@ -1,7 +1,7 @@
 use axum::extract::State;
 use axum::response::Html;
-use myhomelab_client_web::home::HomePage;
 use myhomelab_client_web::page::PageWrapper;
+use myhomelab_client_web::page::home::HomePage;
 
 use super::ServerContext;
 use crate::ServerState;

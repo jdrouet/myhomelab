@@ -1,5 +1,7 @@
 use crate::prelude::{Context, Page};
 
+pub mod home;
+
 #[derive(Debug)]
 pub struct PageWrapper<P: Page> {
     page: P,

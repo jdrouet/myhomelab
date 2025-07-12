@@ -1,4 +1,5 @@
 pub trait Context: Send + Sync {
+    fn dashboard_repository(&self) -> &impl myhomelab_dashboard::repository::DashboardRepository;
     fn metric_query_executor(&self) -> &impl myhomelab_metric::query::QueryExecutor;
 }
 

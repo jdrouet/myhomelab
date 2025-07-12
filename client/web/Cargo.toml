@@ -10,8 +10,11 @@ mocks = []
 
 [dependencies]
 anyhow = { workspace = true }
+myhomelab-dashboard = { workspace = true }
 myhomelab-metric = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]
+myhomelab-dashboard = { workspace = true, features = ["mocks"] }
 myhomelab-metric = { workspace = true, features = ["mocks"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
