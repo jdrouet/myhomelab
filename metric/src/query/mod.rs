@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    time::{Duration, SystemTime},
+};
 
 use myhomelab_prelude::Healthcheck;
 
@@ -17,6 +20,17 @@ pub struct TimeRange {
     pub start: i64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub end: Option<i64>,
+}
+
+impl TimeRange {
+    pub fn last_1day() -> Self {
+        let start = SystemTime::now() - Duration::from_secs(60 * 60 * 24);
+        let start = start
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        Self { start, end: None }
+    }
 }
 
 impl From<i64> for TimeRange {

@@ -23,6 +23,9 @@ impl<P: Page> PageWrapper<P> {
         buf.push_str("<title>");
         buf.push_str(self.page.title());
         buf.push_str("</title>");
+        buf.push_str("<style>");
+        buf.push_str(include_str!("./style.css"));
+        buf.push_str("</style>");
         buf.push_str("</head>");
         buf.push_str("<body>");
         self.page.render_body(context, buf).await?;

@@ -14,5 +14,5 @@ query = { name = "system.cpu.usage", aggregator = "avg" }
 title = "Memory usage"
 width = "medium"
 height = "medium"
-type = { name = "timeseries", period = 300 }              # 5min period
-query = { name = "system.cpu.usage", aggregator = "avg" }
+type = { name = "timeseries", period = 300 }                # 5min period
+query = { name = "system.memory.used", aggregator = "avg" }
