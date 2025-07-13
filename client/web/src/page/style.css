@@ -17,6 +17,10 @@ body {
     background: var(--background-color);
     color: var(--text-color);
 }
+.container {
+    margin: 0 auto;
+    max-width: 1200px;
+}
 .flex-row {
     display: flex;
     flex-direction: row;
@@ -34,8 +38,6 @@ header {
     padding-right: var(--size-md);
 }
 header > div {
-    margin: 0 auto;
-    max-width: 1200px;
     height: 48px;
 }
 header .title {

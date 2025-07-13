@@ -24,7 +24,8 @@ impl crate::prelude::Page for HomePage {
 
         let dashboards = ctx.dashboard_repository().list_dashboards().await?;
 
-        buf.push_str("<main>");
+        buf.push_str("<main class=\"container\">");
+        buf.push_str("<h1>Dashboards</h1>");
         if dashboards.is_empty() {
             buf.push_str("No dashboard found...");
         } else {
@@ -37,6 +38,10 @@ impl crate::prelude::Page for HomePage {
             }
         }
 
+        buf.push_str("</main>");
+
+        buf.push_str("<main class=\"container\">");
+        buf.push_str("<h1>Devices</h1>");
         buf.push_str("</main>");
 
         Ok(())

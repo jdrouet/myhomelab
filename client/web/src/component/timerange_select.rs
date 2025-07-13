@@ -73,6 +73,7 @@ impl crate::prelude::Component for TimeRangeSelect {
             buf,
         );
         buf.push_str("</select>");
+        buf.push_str("<button title=\"Refresh\" type=\"submit\">♻</button>");
         buf.push_str("</form>");
         Ok(())
     }

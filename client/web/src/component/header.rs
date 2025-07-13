@@ -17,7 +17,7 @@ impl crate::prelude::Component for Header {
         buf: &mut String,
     ) -> anyhow::Result<()> {
         buf.push_str("<header>");
-        buf.push_str("<div class=\"align-center flex-row\">");
+        buf.push_str("<div class=\"align-center container flex-row\">");
         buf.push_str("<div class=\"flex-grow\">");
         buf.push_str("<a href=\"/\">MyHomeLab</a>");
         buf.push_str("</div>");

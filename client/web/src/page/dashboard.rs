@@ -39,13 +39,13 @@ impl<'a> crate::prelude::Component for DashboardCell<'a> {
             .execute(requests, self.timerange)
             .await?;
         buf.push_str("<div class=\"cell\">");
-        buf.push_str("<div class=\"cell-title\">");
+        buf.push_str("<h2 class=\"cell-title\">");
         if let Some(ref title) = self.inner.title {
             buf.push_str(title);
         } else {
             buf.push_str("<i>No title</i>");
         }
-        buf.push_str("</div>");
+        buf.push_str("</h2>");
         if let Some(Response::Timeseries(data)) = result.get("default") {
             crate::component::line_chart::LineChart::new(data, self.timerange)
                 .render(context, buf)
@@ -84,7 +84,7 @@ impl crate::prelude::Page for DashboardPage {
         crate::component::header::Header::new(self.timerange)
             .render(ctx, buf)
             .await?;
-        buf.push_str("<main>");
+        buf.push_str("<main class=\"container\">");
         for cell in self.dashboard.cells.iter() {
             DashboardCell::new(cell, self.timerange)
                 .render(ctx, buf)
