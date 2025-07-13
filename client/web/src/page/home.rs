@@ -1,6 +1,9 @@
 use std::fmt::Write;
 
 use myhomelab_dashboard::repository::DashboardRepository;
+use myhomelab_prelude::time::RelativeTimeRange;
+
+use crate::prelude::Component;
 
 #[derive(Debug, Default)]
 pub struct HomePage {}
@@ -15,6 +18,10 @@ impl crate::prelude::Page for HomePage {
         ctx: &C,
         buf: &mut String,
     ) -> anyhow::Result<()> {
+        crate::component::header::Header::new(RelativeTimeRange::LastDay.into())
+            .render(ctx, buf)
+            .await?;
+
         let dashboards = ctx.dashboard_repository().list_dashboards().await?;
 
         buf.push_str("<main>");

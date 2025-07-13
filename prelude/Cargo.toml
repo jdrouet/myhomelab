@@ -7,3 +7,5 @@ license.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
+derive_more = { version = "2.0", features = ["from"] }
+serde = { workspace = true, features = ["derive"] }

@@ -15,7 +15,7 @@ mockall::mock! {
         async fn execute(
             &self,
             requests: std::collections::HashMap<Box<str>, crate::query::Request>,
-            timerange: crate::query::TimeRange,
+            timerange: myhomelab_prelude::time::TimeRange,
         ) -> anyhow::Result<std::collections::HashMap<Box<str>, crate::query::Response>>;
     }
 }

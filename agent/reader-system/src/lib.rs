@@ -1,7 +1,7 @@
 use myhomelab_agent_prelude::mpsc::Sender;
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
-use myhomelab_prelude::current_timestamp;
+use myhomelab_prelude::time::current_timestamp;
 use sysinfo::System;
 use tokio_util::sync::CancellationToken;
 

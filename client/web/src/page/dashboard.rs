@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use myhomelab_dashboard::entity::Dashboard;
-use myhomelab_metric::query::{QueryExecutor, Request, Response, TimeRange};
+use myhomelab_metric::query::{QueryExecutor, Request, Response};
+use myhomelab_prelude::time::TimeRange;
 
 use crate::prelude::Component;
 
@@ -80,6 +81,9 @@ impl crate::prelude::Page for DashboardPage {
         ctx: &C,
         buf: &mut String,
     ) -> anyhow::Result<()> {
+        crate::component::header::Header::new(self.timerange)
+            .render(ctx, buf)
+            .await?;
         buf.push_str("<main>");
         for cell in self.dashboard.cells.iter() {
             DashboardCell::new(cell, self.timerange)
@@ -96,7 +100,7 @@ mod tests {
     use myhomelab_dashboard::entity::Dashboard;
     use myhomelab_dashboard::repository::MockDashboardRepo;
     use myhomelab_metric::mock::MockMetric;
-    use myhomelab_metric::query::TimeRange;
+    use myhomelab_prelude::time::RelativeTimeRange;
     use uuid::Uuid;
 
     use super::DashboardPage;
@@ -111,7 +115,7 @@ mod tests {
             description: "System related metrics".into(),
             cells: Vec::new(),
         };
-        let timerange = TimeRange::last_1day();
+        let timerange = RelativeTimeRange::LastDay.into();
         let dashboard_page = DashboardPage::new(dashboard, timerange);
         let dashboard_repository = MockDashboardRepo::new();
         let query_executor = MockMetric::new();

@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
-use std::time::{Duration, SystemTime};
 
 use myhomelab_prelude::Healthcheck;
+use myhomelab_prelude::time::TimeRange;
 
 use crate::entity::MetricHeader;
 
@@ -11,42 +11,6 @@ pub trait QueryExecutor: Healthcheck {
         requests: HashMap<Box<str>, Request>,
         timerange: TimeRange,
     ) -> impl Future<Output = anyhow::Result<HashMap<Box<str>, Response>>> + Send;
-}
-
-#[derive(Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
-pub struct TimeRange {
-    pub start: i64,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub end: Option<i64>,
-}
-
-impl TimeRange {
-    pub fn last_1day() -> Self {
-        let start = SystemTime::now() - Duration::from_secs(60 * 60 * 24);
-        let start = start
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
-        Self { start, end: None }
-    }
-}
-
-impl From<i64> for TimeRange {
-    fn from(value: i64) -> Self {
-        Self {
-            start: value,
-            end: None,
-        }
-    }
-}
-
-impl From<(i64, i64)> for TimeRange {
-    fn from((start, end): (i64, i64)) -> Self {
-        Self {
-            start,
-            end: Some(end),
-        }
-    }
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]

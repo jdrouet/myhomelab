@@ -2,6 +2,8 @@ use std::str::FromStr;
 
 use anyhow::Context;
 
+pub mod time;
+
 pub trait Healthcheck {
     fn healthcheck(&self) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
@@ -24,11 +26,4 @@ where
         .parse::<V>()
         .with_context(|| format!("unable to parse {name:?} value"))
         .map(Some)
-}
-
-pub fn current_timestamp() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("time went backward")
-        .as_secs()
 }

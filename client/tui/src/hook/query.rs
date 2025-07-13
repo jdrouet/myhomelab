@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use myhomelab_adapter_http_client::AdapterHttpClient;
-use myhomelab_metric::query::{Query, Request, RequestKind, Response, TimeRange};
+use myhomelab_metric::query::{Query, Request, RequestKind, Response};
+use myhomelab_prelude::time::AbsoluteTimeRange;
 
 struct QueryRunner {
     channel: Arc<Mutex<Option<QueryState>>>,
@@ -23,8 +24,8 @@ impl QueryRunner {
         self.update(QueryState::Loading);
         let mut requests = HashMap::with_capacity(1);
         requests.insert(Box::from("default"), self.request.clone());
-        let timerange = TimeRange::from(0);
-        match self.client.execute(requests, timerange).await {
+        let timerange = AbsoluteTimeRange::since(0);
+        match self.client.execute(requests, timerange.into()).await {
             Ok(res) => {
                 self.update(QueryState::Success(res));
             }

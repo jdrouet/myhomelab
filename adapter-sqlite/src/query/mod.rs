@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use myhomelab_metric::query::{QueryExecutor, Request, RequestKind, Response, TimeRange};
+use myhomelab_metric::query::{QueryExecutor, Request, RequestKind, Response};
+use myhomelab_prelude::time::TimeRange;
 
 mod scalar;
 mod shared;
@@ -44,7 +45,8 @@ pub(crate) mod tests {
     use myhomelab_metric::entity::{MetricHeader, MetricTags};
     use myhomelab_metric::intake::Intake;
     use myhomelab_metric::metrics;
-    use myhomelab_metric::query::{Query, QueryExecutor, Request, Response, TimeRange};
+    use myhomelab_metric::query::{Query, QueryExecutor, Request, Response};
+    use myhomelab_prelude::time::AbsoluteTimeRange;
 
     pub(crate) async fn prepare_pool() -> anyhow::Result<crate::Sqlite> {
         let config = crate::SqliteConfig::default();
@@ -105,7 +107,10 @@ pub(crate) mod tests {
             ),
         );
 
-        let res = sqlite.execute(reqs, TimeRange::from(0)).await.unwrap();
+        let res = sqlite
+            .execute(reqs, AbsoluteTimeRange::since(0).into())
+            .await
+            .unwrap();
 
         assert_eq!(res.len(), 5);
         assert!(matches!(res["default"], Response::Scalar(_)));
@@ -127,7 +132,10 @@ pub(crate) mod tests {
                 Default::default(),
             ))),
         );
-        let res = sqlite.execute(reqs, TimeRange::from(0)).await.unwrap();
+        let res = sqlite
+            .execute(reqs, AbsoluteTimeRange::since(0).into())
+            .await
+            .unwrap();
 
         assert_eq!(res.len(), 1);
         if let Response::Scalar(val) = &res["default"] {
@@ -150,7 +158,10 @@ pub(crate) mod tests {
             Box::from("default"),
             Request::scalar(Query::sum(MetricHeader::new("system.cpu", tags))),
         );
-        let res = sqlite.execute(reqs, TimeRange::from(0)).await.unwrap();
+        let res = sqlite
+            .execute(reqs, AbsoluteTimeRange::since(0).into())
+            .await
+            .unwrap();
 
         assert_eq!(res.len(), 1);
         if let Response::Scalar(val) = &res["default"] {
@@ -188,7 +199,10 @@ pub(crate) mod tests {
             ))),
         );
 
-        let res = sqlite.execute(reqs, TimeRange::from(0)).await.unwrap();
+        let res = sqlite
+            .execute(reqs, AbsoluteTimeRange::since(0).into())
+            .await
+            .unwrap();
 
         assert_eq!(res.len(), 3);
         assert!(matches!(res["sum_req"], Response::Scalar(_)));

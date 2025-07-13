@@ -8,8 +8,9 @@ use myhomelab_dashboard::repository::MockDashboardRepo;
 use myhomelab_metric::entity::{MetricHeader, MetricTags};
 use myhomelab_metric::intake::Intake;
 use myhomelab_metric::mock::MockMetric;
-use myhomelab_metric::query::{Query, QueryExecutor, Request, TimeRange};
+use myhomelab_metric::query::{Query, QueryExecutor, Request};
 use myhomelab_prelude::Healthcheck;
+use myhomelab_prelude::time::{AbsoluteTimeRange, TimeRange};
 use tokio_util::sync::CancellationToken;
 
 static PORT_ITERATOR: AtomicU16 = AtomicU16::new(5000);
@@ -109,7 +110,7 @@ async fn should_query_batch_metrics() {
         .once()
         .returning(|reqs, range| {
             assert_eq!(reqs.len(), 2);
-            assert_eq!(range.start, 0);
+            assert_eq!(range, TimeRange::Absolute(AbsoluteTimeRange::since(0)));
             Ok(HashMap::new())
         });
     let state = MockServerState(Arc::new(state));
@@ -143,7 +144,10 @@ async fn should_query_batch_metrics() {
             ),
         ),
     );
-    client.execute(reqs, TimeRange::from(0)).await.unwrap();
+    client
+        .execute(reqs, AbsoluteTimeRange::since(0).into())
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
@@ -163,7 +167,7 @@ async fn should_query_single_metric() {
         .once()
         .returning(|reqs, range| {
             assert_eq!(reqs.len(), 1);
-            assert_eq!(range.start, 0);
+            assert_eq!(range, TimeRange::Absolute(AbsoluteTimeRange::since(0)));
             Ok(HashMap::new())
         });
     let state = MockServerState(Arc::new(state));
@@ -184,7 +188,10 @@ async fn should_query_single_metric() {
             myhomelab_metric::query::Aggregator::Average,
         )),
     );
-    client.execute(reqs, TimeRange::from(0)).await.unwrap();
+    client
+        .execute(reqs, AbsoluteTimeRange::since(0).into())
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
@@ -204,7 +211,7 @@ async fn should_query_single_metrics() {
         .once()
         .returning(|reqs, range| {
             assert_eq!(reqs.len(), 1);
-            assert_eq!(range.start, 0);
+            assert_eq!(range, TimeRange::Absolute(AbsoluteTimeRange::since(0)));
             Ok(HashMap::new())
         });
     let state = MockServerState(Arc::new(state));
@@ -225,5 +232,8 @@ async fn should_query_single_metrics() {
             myhomelab_metric::query::Aggregator::Average,
         )),
     );
-    client.execute(reqs, TimeRange::from(0)).await.unwrap();
+    client
+        .execute(reqs, AbsoluteTimeRange::since(0).into())
+        .await
+        .unwrap();
 }

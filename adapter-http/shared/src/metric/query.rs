@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use myhomelab_metric::query::{Request, TimeRange};
+use myhomelab_metric::query::Request;
+use myhomelab_prelude::time::TimeRange;
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct BatchQueryParams {

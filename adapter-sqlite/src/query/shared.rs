@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use myhomelab_metric::entity::tag::TagValue;
-use myhomelab_metric::query::{Query, TimeRange};
+use myhomelab_metric::query::Query;
+use myhomelab_prelude::time::AbsoluteTimeRange;
 
 pub(super) struct Wrapper<V>(pub(super) V);
 
@@ -50,7 +51,7 @@ pub(super) fn build_value_attribute(
 
 pub(super) fn build_timerange_filter(
     qb: &mut sqlx::QueryBuilder<'_, sqlx::Sqlite>,
-    timerange: &TimeRange,
+    timerange: AbsoluteTimeRange,
 ) {
     qb.push(" and timestamp >= ").push_bind(timerange.start);
     if let Some(end) = timerange.end {

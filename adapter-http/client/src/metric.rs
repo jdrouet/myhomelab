@@ -36,7 +36,7 @@ impl myhomelab_metric::query::QueryExecutor for super::AdapterHttpClient {
     async fn execute(
         &self,
         requests: HashMap<Box<str>, myhomelab_metric::query::Request>,
-        range: myhomelab_metric::query::TimeRange,
+        range: myhomelab_prelude::time::TimeRange,
     ) -> anyhow::Result<HashMap<Box<str>, myhomelab_metric::query::Response>> {
         use myhomelab_adapter_http_shared::metric::query::BatchQueryParams;
 

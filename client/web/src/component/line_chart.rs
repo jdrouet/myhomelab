@@ -1,5 +1,5 @@
-use myhomelab_metric::query::{TimeRange, TimeseriesResponse};
-use myhomelab_prelude::current_timestamp;
+use myhomelab_metric::query::TimeseriesResponse;
+use myhomelab_prelude::time::{TimeRange, current_timestamp};
 use plotters::prelude::*;
 
 pub struct LineChart<'a> {
@@ -13,9 +13,9 @@ impl<'a> LineChart<'a> {
     }
 
     fn range_x(&self) -> (u64, u64) {
-        let min_x = self.timerange.start as u64;
-        let max_x = self
-            .timerange
+        let absolute = self.timerange.into_absolute();
+        let min_x = absolute.start as u64;
+        let max_x = absolute
             .end
             .map(|v| v as u64)
             .unwrap_or_else(current_timestamp);
