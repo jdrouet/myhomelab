@@ -5,7 +5,19 @@ use myhomelab_metric::query::{QueryExecutor, Request, Response, TimeRange};
 
 use crate::prelude::Component;
 
-struct DashboardCell<'a>(&'a myhomelab_dashboard::entity::DashboardCell);
+struct DashboardCell<'a> {
+    inner: &'a myhomelab_dashboard::entity::DashboardCell,
+    timerange: TimeRange,
+}
+
+impl<'a> DashboardCell<'a> {
+    pub fn new(
+        inner: &'a myhomelab_dashboard::entity::DashboardCell,
+        timerange: TimeRange,
+    ) -> Self {
+        Self { inner, timerange }
+    }
+}
 
 impl<'a> crate::prelude::Component for DashboardCell<'a> {
     async fn render<C: crate::prelude::Context>(
@@ -13,29 +25,28 @@ impl<'a> crate::prelude::Component for DashboardCell<'a> {
         context: &C,
         buf: &mut String,
     ) -> anyhow::Result<()> {
-        let timerange = TimeRange::last_1day();
         let mut requests = HashMap::new();
         requests.insert(
             "default".into(),
             Request {
-                kind: self.0.kind,
-                query: self.0.query.clone(),
+                kind: self.inner.kind,
+                query: self.inner.query.clone(),
             },
         );
         let result = context
             .metric_query_executor()
-            .execute(requests, timerange)
+            .execute(requests, self.timerange)
             .await?;
         buf.push_str("<div class=\"cell\">");
         buf.push_str("<div class=\"cell-title\">");
-        if let Some(ref title) = self.0.title {
+        if let Some(ref title) = self.inner.title {
             buf.push_str(title);
         } else {
             buf.push_str("<i>No title</i>");
         }
         buf.push_str("</div>");
         if let Some(Response::Timeseries(data)) = result.get("default") {
-            crate::component::line_chart::LineChart::new(data, timerange)
+            crate::component::line_chart::LineChart::new(data, self.timerange)
                 .render(context, buf)
                 .await?;
         }
@@ -47,11 +58,15 @@ impl<'a> crate::prelude::Component for DashboardCell<'a> {
 #[derive(Debug)]
 pub struct DashboardPage {
     dashboard: Dashboard,
+    timerange: TimeRange,
 }
 
 impl DashboardPage {
-    pub fn new(dashboard: Dashboard) -> Self {
-        Self { dashboard }
+    pub fn new(dashboard: Dashboard, timerange: TimeRange) -> Self {
+        Self {
+            dashboard,
+            timerange,
+        }
     }
 }
 
@@ -67,7 +82,9 @@ impl crate::prelude::Page for DashboardPage {
     ) -> anyhow::Result<()> {
         buf.push_str("<main>");
         for cell in self.dashboard.cells.iter() {
-            DashboardCell(cell).render(ctx, buf).await?;
+            DashboardCell::new(cell, self.timerange)
+                .render(ctx, buf)
+                .await?;
         }
         buf.push_str("</main>");
         Ok(())
@@ -79,6 +96,7 @@ mod tests {
     use myhomelab_dashboard::entity::Dashboard;
     use myhomelab_dashboard::repository::MockDashboardRepo;
     use myhomelab_metric::mock::MockMetric;
+    use myhomelab_metric::query::TimeRange;
     use uuid::Uuid;
 
     use super::DashboardPage;
@@ -93,7 +111,8 @@ mod tests {
             description: "System related metrics".into(),
             cells: Vec::new(),
         };
-        let dashboard_page = DashboardPage::new(dashboard);
+        let timerange = TimeRange::last_1day();
+        let dashboard_page = DashboardPage::new(dashboard, timerange);
         let dashboard_repository = MockDashboardRepo::new();
         let query_executor = MockMetric::new();
         let context = MockContext::new(dashboard_repository, query_executor);

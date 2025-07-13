@@ -3,6 +3,7 @@ use axum::response::Html;
 use myhomelab_client_web::page::PageWrapper;
 use myhomelab_client_web::page::dashboard::DashboardPage;
 use myhomelab_dashboard::repository::DashboardRepository;
+use myhomelab_metric::query::TimeRange;
 use uuid::Uuid;
 
 use super::ServerContext;
@@ -22,7 +23,8 @@ pub(super) async fn handle<S: ServerState>(
         Ok(None) => return Html("Dashboard not found...".into()),
         Err(err) => return Html(err.to_string()),
     };
-    let home = DashboardPage::new(dashboard);
+    let timerange = TimeRange::last_1day();
+    let home = DashboardPage::new(dashboard, timerange);
     let mut buffer = String::with_capacity(1024);
     match PageWrapper::new(home)
         .render(&ServerContext(state), &mut buffer)
