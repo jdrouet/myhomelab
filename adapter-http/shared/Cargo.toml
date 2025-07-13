@@ -8,4 +8,5 @@ license.workspace = true
 [dependencies]
 myhomelab-dashboard = { workspace = true }
 myhomelab-metric = { workspace = true }
+myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
