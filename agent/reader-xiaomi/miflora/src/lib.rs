@@ -21,6 +21,28 @@ const READ_CMD_UUID: uuid::Uuid = uuid::uuid!("00001a00-0000-1000-8000-00805f9b3
 const BATTERY_UUID: uuid::Uuid = uuid::uuid!("00001a02-0000-1000-8000-00805f9b34fb");
 const TIMEOUT: u64 = 60 * 60 * 2; // 2h
 
+#[cfg(target_os = "macos")]
+fn read_address<P: Peripheral>(peripheral: &P) -> String {
+    let tmp = peripheral.id().to_string();
+    tmp.chars()
+        .into_iter()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .take(12)
+        .enumerate()
+        .fold(String::with_capacity(17), |mut acc, (index, c)| {
+            if index > 0 && index % 2 == 0 {
+                acc.push(':');
+            }
+            acc.push(c.to_ascii_uppercase());
+            acc
+        })
+}
+
+#[cfg(not(target_os = "macos"))]
+fn read_address<P: Peripheral>(peripheral: P) -> String {
+    peripheral.address().to_string()
+}
+
 #[derive(Debug, Default)]
 pub struct ReaderConfig {}
 
@@ -95,7 +117,7 @@ impl Reader {
         sender: &S,
     ) -> anyhow::Result<()> {
         let peripheral = self.adapter.peripheral(&id).await?;
-        let address = peripheral.address();
+        let address = read_address(&peripheral);
         let services = peripheral.services();
         if services.iter().find(|s| s.uuid == SERVICE_ID).is_none() {
             peripheral.disconnect().await.ok();
@@ -108,7 +130,6 @@ impl Reader {
             .ok()
             .and_then(|props| props)
             .and_then(|props| props.local_name);
-        let address = address.to_string();
         let now = current_timestamp();
         let tags = MetricTags::default()
             .with_tag("device", DEVICE)
