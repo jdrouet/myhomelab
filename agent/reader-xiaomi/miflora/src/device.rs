@@ -185,7 +185,8 @@ impl<'a, P: Peripheral> MiFloraDevice<'a, P> {
     pub async fn read_battery(&self) -> anyhow::Result<u8> {
         let battery_char = self.characteristic(BATTERY_UUID)?;
         let battery_data = self.peripheral.read(&battery_char).await?;
-        battery_data.first()
+        battery_data
+            .first()
             .copied()
             .ok_or_else(|| anyhow::anyhow!("invalid response payload"))
     }

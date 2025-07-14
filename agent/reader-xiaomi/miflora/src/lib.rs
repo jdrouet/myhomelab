@@ -85,9 +85,11 @@ pub struct Reader {
 
 impl Reader {
     async fn handle_discovered(&mut self, id: PeripheralId) -> anyhow::Result<()> {
-        if self.cache.get(&id).is_some_and(|last_seen| {
-            *last_seen + self.interval > SystemTime::now()
-        }) {
+        if self
+            .cache
+            .get(&id)
+            .is_some_and(|last_seen| *last_seen + self.interval > SystemTime::now())
+        {
             // device already in cache
             return Ok(());
         }
@@ -96,7 +98,8 @@ impl Reader {
             .properties()
             .await
             .ok()
-            .and_then(|props| props.and_then(|inner| inner.local_name)).is_none_or(|name| name != "Flower care")
+            .and_then(|props| props.and_then(|inner| inner.local_name))
+            .is_none_or(|name| name != "Flower care")
         {
             return Ok(());
         }
