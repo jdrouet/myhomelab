@@ -51,7 +51,7 @@ fn read_address<P: Peripheral>(peripheral: &P) -> String {
 }
 
 #[cfg(not(target_os = "macos"))]
-fn read_address<P: Peripheral>(peripheral: P) -> String {
+fn read_address<P: Peripheral>(peripheral: &P) -> String {
     peripheral.address().to_string()
 }
 
