@@ -53,9 +53,10 @@ pub(super) fn build_timerange_filter(
     qb: &mut sqlx::QueryBuilder<'_, sqlx::Sqlite>,
     timerange: AbsoluteTimeRange,
 ) {
-    qb.push(" and timestamp >= ").push_bind(timerange.start);
+    qb.push(" and timestamp >= ")
+        .push_bind(timerange.start as i64);
     if let Some(end) = timerange.end {
-        qb.push(" and timestamp < ").push_bind(end);
+        qb.push(" and timestamp < ").push_bind(end as i64);
     }
 }
 

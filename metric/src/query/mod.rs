@@ -109,5 +109,5 @@ pub struct ScalarResponse {
 pub struct TimeseriesResponse {
     pub header: MetricHeader,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub values: Vec<(i64, f64)>,
+    pub values: Vec<(u64, f64)>,
 }

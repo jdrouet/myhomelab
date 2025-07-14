@@ -14,11 +14,8 @@ impl<'a> LineChart<'a> {
 
     fn range_x(&self) -> (u64, u64) {
         let absolute = self.timerange.into_absolute();
-        let min_x = absolute.start as u64;
-        let max_x = absolute
-            .end
-            .map(|v| v as u64)
-            .unwrap_or_else(current_timestamp);
+        let min_x = absolute.start;
+        let max_x = absolute.end.unwrap_or_else(current_timestamp);
         (min_x, max_x)
     }
 
@@ -55,10 +52,7 @@ impl<'a> crate::prelude::Component for LineChart<'a> {
             .draw()?;
 
         for response in self.data.iter() {
-            chart.draw_series(LineSeries::new(
-                response.values.iter().map(|(x, y)| (*x as u64, *y)),
-                RED,
-            ))?;
+            chart.draw_series(LineSeries::new(response.values.iter().copied(), RED))?;
         }
 
         drawing_area.present()?;

@@ -10,7 +10,7 @@ use super::shared::Wrapper;
 impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<TimeseriesResponse> {
     fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
         let name: String = row.try_get(0)?;
-        let timestamps: Json<Vec<i64>> = row.try_get(2)?;
+        let timestamps: Json<Vec<u64>> = row.try_get(2)?;
         let values: Json<Vec<f64>> = row.try_get(3)?;
         Ok(Wrapper(TimeseriesResponse {
             header: MetricHeader {
