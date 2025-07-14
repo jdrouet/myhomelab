@@ -38,7 +38,6 @@ async fn read_name<P: Peripheral>(peripheral: &P) -> anyhow::Result<Option<Strin
 fn read_address<P: Peripheral>(peripheral: &P) -> String {
     let tmp = peripheral.id().to_string();
     tmp.chars()
-        .into_iter()
         .filter(|c| c.is_ascii_alphanumeric())
         .take(12)
         .enumerate()
@@ -82,7 +81,7 @@ pub struct HistoryData {
 impl HistoryData {
     fn from_data(data: &[u8]) -> Option<Self> {
         let timestamp =
-            u32::from_le_bytes([*data.get(0)?, *data.get(1)?, *data.get(2)?, *data.get(3)?]);
+            u32::from_le_bytes([*data.first()?, *data.get(1)?, *data.get(2)?, *data.get(3)?]);
         let temperature = u16::from_le_bytes([*data.get(4)?, *data.get(5)?]) as f64 / 10.0;
         let light = u32::from_le_bytes([*data.get(6)?, *data.get(7)?, *data.get(8)?, 0x00]);
         let moisture = *data.get(9)?;
@@ -108,7 +107,7 @@ pub struct RealtimeData {
 
 impl RealtimeData {
     fn from_data(data: &[u8]) -> Option<Self> {
-        let temperature = u16::from_le_bytes([*data.get(0)?, *data.get(1)?]) as f64 / 10.0;
+        let temperature = u16::from_le_bytes([*data.first()?, *data.get(1)?]) as f64 / 10.0;
         let light = u32::from_le_bytes([*data.get(3)?, *data.get(4)?, *data.get(5)?, 0x00]); // 24-bit value
         let moisture = *data.get(7)?;
         let conductivity = u16::from_le_bytes([*data.get(8)?, *data.get(9)?]);
@@ -186,8 +185,7 @@ impl<'a, P: Peripheral> MiFloraDevice<'a, P> {
     pub async fn read_battery(&self) -> anyhow::Result<u8> {
         let battery_char = self.characteristic(BATTERY_UUID)?;
         let battery_data = self.peripheral.read(&battery_char).await?;
-        battery_data
-            .get(0)
+        battery_data.first()
             .copied()
             .ok_or_else(|| anyhow::anyhow!("invalid response payload"))
     }
@@ -235,7 +233,7 @@ impl<'a, P: Peripheral> MiFloraDevice<'a, P> {
             .read(&data_char)
             .await
             .context("couldn't read history length")?;
-        let entry_count = count_data.get(0).copied().unwrap_or(0);
+        let entry_count = count_data.first().copied().unwrap_or(0);
         println!("expecting {entry_count} values");
 
         let mut entries = Vec::with_capacity(entry_count as usize);

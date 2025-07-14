@@ -19,16 +19,13 @@ async fn find_miflora(adapter: &Adapter) -> anyhow::Result<Peripheral> {
 
     let mut events = adapter.events().await?;
     while let Some(event) = events.next().await {
-        match event {
-            CentralEvent::DeviceDiscovered(id) => {
-                let peripheral = adapter.peripheral(&id).await?;
-                let props = peripheral.properties().await?;
-                let name = props.and_then(|props| props.local_name);
-                if name.as_deref() == Some("Flower care") {
-                    return Ok(peripheral);
-                }
+        if let CentralEvent::DeviceDiscovered(id) = event {
+            let peripheral = adapter.peripheral(&id).await?;
+            let props = peripheral.properties().await?;
+            let name = props.and_then(|props| props.local_name);
+            if name.as_deref() == Some("Flower care") {
+                return Ok(peripheral);
             }
-            _ => {}
         }
     }
     Err(anyhow::anyhow!("device not found"))
@@ -38,7 +35,7 @@ async fn find_miflora(adapter: &Adapter) -> anyhow::Result<Peripheral> {
 async fn main() -> anyhow::Result<()> {
     let manager = btleplug::platform::Manager::new().await?;
     let adapters = manager.adapters().await?;
-    let adapter = adapters.into_iter().nth(0).unwrap();
+    let adapter = adapters.into_iter().next().unwrap();
     adapter.start_scan(ScanFilter::default()).await?;
 
     let peripheral = find_miflora(&adapter).await?;

@@ -8,7 +8,7 @@ fn render_relative(value: RelativeTimeRange, selected: bool, buf: &mut String) {
         RelativeTimeRange::LastWeek => "last-week",
         RelativeTimeRange::LastMonth => "last-month",
     });
-    buf.push_str("\"");
+    buf.push('"');
     if selected {
         buf.push_str(" selected");
     }
