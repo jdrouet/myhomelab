@@ -19,12 +19,12 @@ pub mod device;
 // MAC address prefix (C4:7C:8D = original)
 
 const DEVICE: &str = "xiaomi-miflora";
-const TIMEOUT: Duration = Duration::from_secs(60 * 60 * 2); // 2h
 
 #[derive(Debug)]
 pub struct ReaderConfig {
     enabled: bool,
     cache_size: NonZeroUsize,
+    interval: Duration,
 }
 
 impl myhomelab_prelude::FromEnv for ReaderConfig {
@@ -32,11 +32,14 @@ impl myhomelab_prelude::FromEnv for ReaderConfig {
         let enabled =
             parse_from_env::<bool>("MYHOMELAB_READER_XIAOMI_MIFLORA_ENABLED")?.unwrap_or(false);
         let cache_size =
-            parse_from_env::<NonZeroUsize>("MYHOMELAB_READER_XIAOMI_LYWSD03MMC_ATC_CACHE_SIZE")?
+            parse_from_env::<NonZeroUsize>("MYHOMELAB_READER_XIAOMI_MIFLORA_CACHE_SIZE")?
                 .unwrap_or(NonZeroUsize::new(20).unwrap());
+        let interval = parse_from_env::<u64>("MYHOMELAB_READER_XIAOMI_MIFLORA_INTERVAL")?
+            .unwrap_or(60 * 60 * 2);
         Ok(Self {
             enabled,
             cache_size,
+            interval: Duration::from_secs(interval),
         })
     }
 }
@@ -65,6 +68,7 @@ impl ReaderConfig {
             manager,
             adapter,
             scan_filter,
+            interval: self.interval,
         }))
     }
 }
@@ -76,15 +80,14 @@ pub struct Reader {
     manager: btleplug::platform::Manager,
     adapter: btleplug::platform::Adapter,
     scan_filter: ScanFilter,
+    interval: Duration,
 }
 
 impl Reader {
     async fn handle_discovered(&mut self, id: PeripheralId) -> anyhow::Result<()> {
-        if self
-            .cache
-            .get(&id)
-            .map_or(false, |last_seen| *last_seen + TIMEOUT > SystemTime::now())
-        {
+        if self.cache.get(&id).map_or(false, |last_seen| {
+            *last_seen + self.interval > SystemTime::now()
+        }) {
             // device already in cache
             return Ok(());
         }

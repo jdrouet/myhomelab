@@ -73,8 +73,8 @@ async fn main() -> anyhow::Result<()> {
             .build()
             .await?,
     );
-    let manager = manager.with_reader(
-        myhomelab_agent_reader_xiaomi_miflora::ReaderConfig::default()
+    let manager = manager.maybe_with_reader(
+        myhomelab_agent_reader_xiaomi_miflora::ReaderConfig::from_env()?
             .build()
             .await?,
     );
