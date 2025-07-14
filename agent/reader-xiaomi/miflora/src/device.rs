@@ -29,6 +29,11 @@ const HISTORY_CHAR_DATA: Uuid = uuid::uuid!("00001a11-0000-1000-8000-00805f9b34f
 const HISTORY_CMD_READ_INIT: [u8; 3] = [0xA0, 0x00, 0x00];
 // const HISTORY_CMD_READ_SUCCESS: [u8; 3] = [0xa2, 0x00, 0x00];
 
+async fn read_name<P: Peripheral>(peripheral: &P) -> anyhow::Result<Option<String>> {
+    let props = peripheral.properties().await?;
+    Ok(props.and_then(|props| props.local_name))
+}
+
 #[cfg(target_os = "macos")]
 fn read_address<P: Peripheral>(peripheral: &P) -> String {
     let tmp = peripheral.id().to_string();
@@ -118,19 +123,16 @@ impl RealtimeData {
 }
 
 #[derive(Debug)]
-pub struct MiFloraDevice<P: Peripheral> {
+pub struct MiFloraDevice<'a, P: Peripheral> {
     address: String,
     name: Option<String>,
-    peripheral: P,
+    peripheral: &'a P,
 }
 
-impl<P: Peripheral> MiFloraDevice<P> {
-    pub async fn new(peripheral: P) -> anyhow::Result<Self> {
-        let address = read_address(&peripheral);
-        let name = peripheral
-            .properties()
-            .await?
-            .and_then(|props| props.local_name);
+impl<'a, P: Peripheral> MiFloraDevice<'a, P> {
+    pub async fn new(peripheral: &'a P) -> anyhow::Result<Self> {
+        let address = read_address(peripheral);
+        let name = read_name(peripheral).await?;
         Ok(Self {
             address,
             name,
@@ -170,10 +172,6 @@ impl<P: Peripheral> MiFloraDevice<P> {
 
     pub fn name(&self) -> Option<&str> {
         self.name.as_deref()
-    }
-
-    pub fn into_peripheral(self) -> P {
-        self.peripheral
     }
 
     pub async fn blink(&self) -> anyhow::Result<()> {

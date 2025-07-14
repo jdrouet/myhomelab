@@ -102,12 +102,11 @@ impl Reader {
         Ok(())
     }
 
-    async fn handle_connected<S: Sender + Send>(
+    async fn try_handle_connected<S: Sender + Send>(
         &mut self,
-        id: PeripheralId,
+        peripheral: &impl btleplug::api::Peripheral,
         sender: &S,
     ) -> anyhow::Result<()> {
-        let peripheral = self.adapter.peripheral(&id).await?;
         let device = MiFloraDevice::new(peripheral).await?;
 
         let now = current_timestamp();
@@ -156,11 +155,20 @@ impl Reader {
             })
             .await;
 
-        device.into_peripheral().disconnect().await.unwrap();
-
-        self.cache.push(id, SystemTime::now());
+        self.cache.push(peripheral.id(), SystemTime::now());
 
         Ok(())
+    }
+
+    async fn handle_connected<S: Sender + Send>(
+        &mut self,
+        id: PeripheralId,
+        sender: &S,
+    ) -> anyhow::Result<()> {
+        let peripheral = self.adapter.peripheral(&id).await?;
+        let res = self.try_handle_connected(&peripheral, sender).await;
+        let _ = peripheral.disconnect().await;
+        res
     }
 
     async fn handle_event<S: Sender + Send>(

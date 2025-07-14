@@ -14,17 +14,18 @@ use tokio_stream::StreamExt;
 //     }
 // }
 
-async fn find_miflora(adapter: &Adapter) -> anyhow::Result<MiFloraDevice<Peripheral>> {
+async fn find_miflora(adapter: &Adapter) -> anyhow::Result<Peripheral> {
+    use btleplug::api::Peripheral as _;
+
     let mut events = adapter.events().await?;
     while let Some(event) = events.next().await {
         match event {
             CentralEvent::DeviceDiscovered(id) => {
                 let peripheral = adapter.peripheral(&id).await?;
-                let Ok(device) = MiFloraDevice::new(peripheral).await else {
-                    continue;
-                };
-                if device.name() == Some("Flower care") {
-                    return Ok(device);
+                let props = peripheral.properties().await?;
+                let name = props.and_then(|props| props.local_name);
+                if name.as_deref() == Some("Flower care") {
+                    return Ok(peripheral);
                 }
             }
             _ => {}
@@ -40,7 +41,8 @@ async fn main() -> anyhow::Result<()> {
     let adapter = adapters.into_iter().nth(0).unwrap();
     adapter.start_scan(ScanFilter::default()).await?;
 
-    let device = find_miflora(&adapter).await?;
+    let peripheral = find_miflora(&adapter).await?;
+    let device = MiFloraDevice::new(&peripheral).await?;
     println!("device found");
     device.connect().await?;
     let battery = device.read_battery().await?;
