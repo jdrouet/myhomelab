@@ -1,23 +1,27 @@
 use std::time::Duration;
 
 use anyhow::Context;
-use btleplug::api::Characteristic;
-use btleplug::api::Peripheral;
-use btleplug::api::WriteType;
+use btleplug::api::{Characteristic, Peripheral, WriteType};
 use uuid::Uuid;
 
 const SERVICE_ID: uuid::Uuid = uuid::uuid!("00001204-0000-1000-8000-00805f9b34fb");
 const READ_DATA_UUID: uuid::Uuid = uuid::uuid!("00001a01-0000-1000-8000-00805f9b34fb");
 const READ_CMD_UUID: uuid::Uuid = uuid::uuid!("00001a00-0000-1000-8000-00805f9b34fb");
 const BATTERY_UUID: uuid::Uuid = uuid::uuid!("00001a02-0000-1000-8000-00805f9b34fb");
-// const HISTORY_CONTROL_UUID: uuid::Uuid = uuid::uuid!("00001a10-0000-1000-8000-00805f9b34fb");
-// const HISTORY_DATA_UUID: uuid::Uuid = uuid::uuid!("00001a11-0000-1000-8000-00805f9b34fb");
-// const DEVICE_TIME_UUID: uuid::Uuid = uuid::uuid!("00001a12-0000-1000-8000-00805f9b34fb");
+// const HISTORY_CONTROL_UUID: uuid::Uuid =
+// uuid::uuid!("00001a10-0000-1000-8000-00805f9b34fb"); const HISTORY_DATA_UUID:
+// uuid::Uuid = uuid::uuid!("00001a11-0000-1000-8000-00805f9b34fb");
+// const DEVICE_TIME_UUID: uuid::Uuid =
+// uuid::uuid!("00001a12-0000-1000-8000-00805f9b34fb");
 
-// const HISTORY_SERVICE_ID: Uuid = uuid::uuid!("00001206-0000-1000-8000-00805f9b34fb");
-// service=00001206-0000-1000-8000-00805f9b34fb uuid=00001a10-0000-1000-8000-00805f9b34fb
-// service=00001206-0000-1000-8000-00805f9b34fb uuid=00001a11-0000-1000-8000-00805f9b34fb
-// service=00001206-0000-1000-8000-00805f9b34fb uuid=00001a12-0000-1000-8000-00805f9b34fb
+// const HISTORY_SERVICE_ID: Uuid =
+// uuid::uuid!("00001206-0000-1000-8000-00805f9b34fb");
+// service=00001206-0000-1000-8000-00805f9b34fb
+// uuid=00001a10-0000-1000-8000-00805f9b34fb
+// service=00001206-0000-1000-8000-00805f9b34fb
+// uuid=00001a11-0000-1000-8000-00805f9b34fb
+// service=00001206-0000-1000-8000-00805f9b34fb
+// uuid=00001a12-0000-1000-8000-00805f9b34fb
 const HISTORY_CHAR_CTRL: Uuid = uuid::uuid!("00001a10-0000-1000-8000-00805f9b34fb");
 const HISTORY_CHAR_DATA: Uuid = uuid::uuid!("00001a11-0000-1000-8000-00805f9b34fb");
 // const HISTORY_CHAR_TIME_ID: u16 = 64;

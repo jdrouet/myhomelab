@@ -1,13 +1,14 @@
 use std::num::NonZeroUsize;
+use std::time::{Duration, SystemTime};
 
-use btleplug::{
-    api::{Central, CentralEvent, Manager, Peripheral, ScanFilter},
-    platform::PeripheralId,
-};
+use btleplug::api::{Central, CentralEvent, Manager, Peripheral, ScanFilter};
+use btleplug::platform::PeripheralId;
 use device::MiFloraDevice;
 use lru::LruCache;
 use myhomelab_agent_prelude::mpsc::Sender;
-use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags, value::MetricValue};
+use myhomelab_metric::entity::value::MetricValue;
+use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
+use myhomelab_prelude::parse_from_env;
 use myhomelab_prelude::time::current_timestamp;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -18,19 +19,33 @@ pub mod device;
 // MAC address prefix (C4:7C:8D = original)
 
 const DEVICE: &str = "xiaomi-miflora";
-const TIMEOUT: u64 = 60 * 60 * 2; // 2h
+const TIMEOUT: Duration = Duration::from_secs(60 * 60 * 2); // 2h
 
-#[derive(Debug, Default)]
-pub struct ReaderConfig {}
+#[derive(Debug)]
+pub struct ReaderConfig {
+    enabled: bool,
+    cache_size: NonZeroUsize,
+}
 
 impl myhomelab_prelude::FromEnv for ReaderConfig {
     fn from_env() -> anyhow::Result<Self> {
-        Ok(Self {})
+        let enabled =
+            parse_from_env::<bool>("MYHOMELAB_READER_XIAOMI_MIFLORA_ENABLED")?.unwrap_or(false);
+        let cache_size =
+            parse_from_env::<NonZeroUsize>("MYHOMELAB_READER_XIAOMI_LYWSD03MMC_ATC_CACHE_SIZE")?
+                .unwrap_or(NonZeroUsize::new(20).unwrap());
+        Ok(Self {
+            enabled,
+            cache_size,
+        })
     }
 }
 
 impl ReaderConfig {
-    pub async fn build(&self) -> anyhow::Result<Reader> {
+    pub async fn build(&self) -> anyhow::Result<Option<Reader>> {
+        if !self.enabled {
+            return Ok(None);
+        }
         let manager = btleplug::platform::Manager::new().await.unwrap();
         // get the first bluetooth adapter
         let adapters = manager.adapters().await?;
@@ -45,18 +60,18 @@ impl ReaderConfig {
             ],
         };
 
-        Ok(Reader {
-            cache: LruCache::new(NonZeroUsize::new(10).unwrap()),
+        Ok(Some(Reader {
+            cache: LruCache::new(self.cache_size),
             manager,
             adapter,
             scan_filter,
-        })
+        }))
     }
 }
 
 #[derive(Debug)]
 pub struct Reader {
-    cache: LruCache<PeripheralId, u64>,
+    cache: LruCache<PeripheralId, SystemTime>,
     #[allow(unused)]
     manager: btleplug::platform::Manager,
     adapter: btleplug::platform::Adapter,
@@ -65,11 +80,10 @@ pub struct Reader {
 
 impl Reader {
     async fn handle_discovered(&mut self, id: PeripheralId) -> anyhow::Result<()> {
-        let now = current_timestamp();
         if self
             .cache
             .get(&id)
-            .map_or(false, |last_seen| last_seen + TIMEOUT > now)
+            .map_or(false, |last_seen| *last_seen + TIMEOUT > SystemTime::now())
         {
             // device already in cache
             return Ok(());
@@ -144,7 +158,7 @@ impl Reader {
 
         device.into_peripheral().disconnect().await.unwrap();
 
-        self.cache.push(id, now);
+        self.cache.push(id, SystemTime::now());
 
         Ok(())
     }

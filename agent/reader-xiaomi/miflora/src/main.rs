@@ -1,7 +1,5 @@
-use btleplug::{
-    api::{Central, CentralEvent, Manager, ScanFilter},
-    platform::{Adapter, Peripheral},
-};
+use btleplug::api::{Central, CentralEvent, Manager, ScanFilter};
+use btleplug::platform::{Adapter, Peripheral};
 use myhomelab_agent_reader_xiaomi_miflora::device::MiFloraDevice;
 use tokio_stream::StreamExt;
 // use myhomelab_agent_prelude::mpsc::Sender;
@@ -10,8 +8,8 @@ use tokio_stream::StreamExt;
 // struct ConsoleSender;
 
 // impl Sender for ConsoleSender {
-//     async fn push(&self, item: myhomelab_metric::entity::Metric) -> anyhow::Result<()> {
-//         println!("metric: {item}");
+//     async fn push(&self, item: myhomelab_metric::entity::Metric) ->
+// anyhow::Result<()> {         println!("metric: {item}");
 //         Ok(())
 //     }
 // }
