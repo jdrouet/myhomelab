@@ -5,23 +5,21 @@ ENV USER=root
 WORKDIR /code
 
 RUN cargo init
-COPY Cargo.toml /code/Cargo.toml
-COPY Cargo.lock /code/Cargo.lock
 
-RUN cargo init --lib --name myhomelab-adapter-file adapter-file
-COPY adapter-file/Cargo.toml /code/adapter-file/Cargo.toml
+RUN cargo init --lib --name myhomelab-adapter-file adapter/file
+COPY adapter/file/Cargo.toml /code/adapter/file/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-adapter-http-client adapter-http/client
-COPY adapter-http/client/Cargo.toml /code/adapter-http/client/Cargo.toml
+RUN cargo init --lib --name myhomelab-adapter-http-client adapter/http/client
+COPY adapter/http/client/Cargo.toml /code/adapter/http/client/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-adapter-http-server adapter-http/server
-COPY adapter-http/server/Cargo.toml /code/adapter-http/server/Cargo.toml
+RUN cargo init --lib --name myhomelab-adapter-http-server adapter/http/server
+COPY adapter/http/server/Cargo.toml /code/adapter/http/server/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-adapter-http-shared adapter-http/shared
-COPY adapter-http/shared/Cargo.toml /code/adapter-http/shared/Cargo.toml
+RUN cargo init --lib --name myhomelab-adapter-http-shared adapter/http/shared
+COPY adapter/http/shared/Cargo.toml /code/adapter/http/shared/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-adapter-sqlite adapter-sqlite
-COPY adapter-sqlite/Cargo.toml /code/adapter-sqlite/Cargo.toml
+RUN cargo init --lib --name myhomelab-adapter-sqlite adapter/sqlite
+COPY adapter/sqlite/Cargo.toml /code/adapter/sqlite/Cargo.toml
 
 RUN cargo init --lib --name myhomelab-agent-core agent/core
 COPY agent/core/Cargo.toml /code/agent/core/Cargo.toml
@@ -34,6 +32,9 @@ COPY agent/reader-system/Cargo.toml /code/agent/reader-system/Cargo.toml
 
 RUN cargo init --lib --name myhomelab-agent-reader-xiaomi-lywsd03mmc-atc agent/reader-xiaomi/lywsd03mmc-atc
 COPY agent/reader-xiaomi/lywsd03mmc-atc/Cargo.toml /code/agent/reader-xiaomi/lywsd03mmc-atc/Cargo.toml
+
+RUN cargo init --lib --name myhomelab-agent-reader-xiaomi-miflora agent/reader-xiaomi/miflora
+COPY agent/reader-xiaomi/miflora/Cargo.toml /code/agent/reader-xiaomi/miflora/Cargo.toml
 
 RUN cargo init --lib --name myhomelab-client-tui client/tui
 COPY client/tui/Cargo.toml /code/client/tui/Cargo.toml
@@ -53,6 +54,8 @@ COPY prelude/Cargo.toml /code/prelude/Cargo.toml
 RUN cargo init --lib --name myhomelab-server server
 COPY server/Cargo.toml /code/server/Cargo.toml
 
+COPY Cargo.toml /code/Cargo.toml
+COPY Cargo.lock /code/Cargo.lock
 
 # https://docs.docker.com/engine/reference/builder/#run---mounttypecache
 RUN --mount=type=cache,target=$CARGO_HOME/git,sharing=locked \
