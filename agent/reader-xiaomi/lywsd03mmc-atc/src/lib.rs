@@ -95,19 +95,14 @@ impl<C: Collector> SensorRunner<C> {
         if let Some(device) = self.cache.get(&id) {
             device.populate(&mut tags);
         }
-        for (name, value) in values {
-            let _ = self
-                .collector
-                .push_metrics(
-                    [Metric {
-                        header: MetricHeader::new(name, tags.clone()),
-                        timestamp,
-                        value: MetricValue::gauge(value),
-                    }]
-                    .into_iter(),
-                )
-                .await;
-        }
+        let metrics = values
+            .map(|(name, value)| Metric {
+                header: MetricHeader::new(name, tags.clone()),
+                timestamp,
+                value: MetricValue::gauge(value),
+            })
+            .collect::<Vec<_>>();
+        let _ = self.collector.push_metrics(&metrics).await;
     }
 
     async fn handle_event(&mut self, event: CentralEvent) -> anyhow::Result<()> {

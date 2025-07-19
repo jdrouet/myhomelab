@@ -2,11 +2,12 @@ use anyhow::Context;
 use myhomelab_adapter_file::{AdapterFile, AdapterFileConfig};
 use myhomelab_adapter_http_server::ServerState;
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
-use myhomelab_agent_prelude::collector::TracingCollector;
 use myhomelab_agent_prelude::reader::BuildContext;
 use myhomelab_agent_prelude::reader::{Reader, ReaderBuilder};
 use myhomelab_prelude::FromEnv;
 use tokio_util::sync::CancellationToken;
+
+mod collector;
 
 #[derive(Clone, Debug)]
 struct AppState {
@@ -92,7 +93,9 @@ async fn main() -> anyhow::Result<()> {
     let cancel_token = CancellationToken::new();
     let builder_ctx = BuildContext {
         cancel: cancel_token.clone(),
-        collector: TracingCollector, // TODO
+        collector: crate::collector::Collector {
+            sqlite: sqlite.clone(),
+        },
     };
 
     let server_config = ServerConfig::from_env()?;
