@@ -6,7 +6,7 @@ use btleplug::api::{
 };
 use btleplug::platform::PeripheralId;
 use lru::LruCache;
-use myhomelab_agent_prelude::mpsc::Sender;
+use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::{BasicTaskReader, BuildContext, ReaderBuilder};
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
@@ -35,7 +35,7 @@ impl Default for SensorConfig {
 impl ReaderBuilder for SensorConfig {
     type Output = SensorReader;
 
-    async fn build<S: Sender>(&self, ctx: &BuildContext<S>) -> anyhow::Result<Self::Output> {
+    async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         let manager = btleplug::platform::Manager::new()
             .await
             .context("getting bluetooth manager")?;
@@ -52,7 +52,7 @@ impl ReaderBuilder for SensorConfig {
             adapter,
             cache: LruCache::new(self.cache_size),
             cancel: ctx.cancel.child_token(),
-            sender: ctx.sender.clone(),
+            collector: ctx.collector.clone(),
         };
         let task = tokio::spawn(async move { runner.run().await });
 
@@ -81,14 +81,14 @@ impl Device {
     }
 }
 
-struct SensorRunner<S: Sender> {
+struct SensorRunner<C: Collector> {
     adapter: btleplug::platform::Adapter,
     cache: LruCache<PeripheralId, Device>,
     cancel: CancellationToken,
-    sender: S,
+    collector: C,
 }
 
-impl<S: Sender> SensorRunner<S> {
+impl<C: Collector> SensorRunner<C> {
     async fn push(&mut self, id: PeripheralId, values: impl Iterator<Item = (&'static str, f64)>) {
         let timestamp = current_timestamp();
         let mut tags = MetricTags::default().with_tag("device", DEVICE);
@@ -97,12 +97,15 @@ impl<S: Sender> SensorRunner<S> {
         }
         for (name, value) in values {
             let _ = self
-                .sender
-                .push(Metric {
-                    header: MetricHeader::new(name, tags.clone()),
-                    timestamp,
-                    value: MetricValue::gauge(value),
-                })
+                .collector
+                .push_metrics(
+                    [Metric {
+                        header: MetricHeader::new(name, tags.clone()),
+                        timestamp,
+                        value: MetricValue::gauge(value),
+                    }]
+                    .into_iter(),
+                )
                 .await;
         }
     }

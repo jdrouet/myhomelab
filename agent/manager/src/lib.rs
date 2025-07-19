@@ -1,4 +1,4 @@
-use myhomelab_agent_prelude::mpsc::Sender;
+use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::BuildContext;
 use myhomelab_agent_prelude::reader::ReaderBuilder;
 
@@ -15,9 +15,9 @@ pub struct ManagerConfig {
 }
 
 impl ManagerConfig {
-    async fn build_system<S: Sender>(
+    async fn build_system<C: Collector>(
         &self,
-        ctx: &BuildContext<S>,
+        ctx: &BuildContext<C>,
     ) -> anyhow::Result<Option<myhomelab_agent_reader_system::SystemReader>> {
         if !self.system.enabled {
             return Ok(None);
@@ -29,10 +29,7 @@ impl ManagerConfig {
 impl myhomelab_agent_prelude::reader::ReaderBuilder for ManagerConfig {
     type Output = Manager;
 
-    async fn build<S: myhomelab_agent_prelude::mpsc::Sender>(
-        &self,
-        ctx: &BuildContext<S>,
-    ) -> anyhow::Result<Self::Output> {
+    async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         Ok(Manager {
             system: self.build_system(ctx).await?,
         })

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use myhomelab_agent_prelude::mpsc::Sender;
+use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::{BasicTaskReader, BuildContext};
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
@@ -31,11 +31,11 @@ impl SystemReaderConfig {
 impl myhomelab_agent_prelude::reader::ReaderBuilder for SystemReaderConfig {
     type Output = SystemReader;
 
-    async fn build<S: Sender>(&self, ctx: &BuildContext<S>) -> anyhow::Result<Self::Output> {
+    async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         let runner = SystemRunner {
             cancel: ctx.cancel.child_token(),
+            collector: ctx.collector.clone(),
             interval: tokio::time::interval(Duration::from_millis(self.interval)),
-            sender: ctx.sender.clone(),
             system: sysinfo::System::new_all(),
         };
         let task = tokio::task::spawn(async move { runner.run().await });
@@ -43,14 +43,14 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for SystemReaderConfig {
     }
 }
 
-struct SystemRunner<S> {
+struct SystemRunner<C> {
     cancel: CancellationToken,
+    collector: C,
     interval: tokio::time::Interval,
     system: System,
-    sender: S,
 }
 
-impl<S: Sender> SystemRunner<S> {
+impl<C: Collector> SystemRunner<C> {
     async fn collect_cpu(&self, host: &str, timestamp: u64) -> anyhow::Result<()> {
         for (index, cpu) in self.system.cpus().iter().enumerate() {
             let tags = MetricTags::default()
@@ -59,19 +59,22 @@ impl<S: Sender> SystemRunner<S> {
                 .with_tag("cpu_name", cpu.name())
                 .with_tag("cpu_brand", cpu.brand())
                 .with_tag("cpu_vendor_id", cpu.vendor_id());
-            self.sender
-                .push(Metric {
-                    header: MetricHeader::new("system.cpu.frequency", tags.clone()),
-                    timestamp,
-                    value: MetricValue::gauge(cpu.frequency() as f64),
-                })
-                .await?;
-            self.sender
-                .push(Metric {
-                    header: MetricHeader::new("system.cpu.usage", tags),
-                    timestamp,
-                    value: MetricValue::gauge(cpu.cpu_usage() as f64),
-                })
+            self.collector
+                .push_metrics(
+                    [
+                        Metric {
+                            header: MetricHeader::new("system.cpu.frequency", tags.clone()),
+                            timestamp,
+                            value: MetricValue::gauge(cpu.frequency() as f64),
+                        },
+                        Metric {
+                            header: MetricHeader::new("system.cpu.usage", tags),
+                            timestamp,
+                            value: MetricValue::gauge(cpu.cpu_usage() as f64),
+                        },
+                    ]
+                    .into_iter(),
+                )
                 .await?;
         }
         Ok(())
@@ -79,33 +82,32 @@ impl<S: Sender> SystemRunner<S> {
 
     async fn collect_memory(&mut self, host: &str, timestamp: u64) -> anyhow::Result<()> {
         let tags = MetricTags::default().with_tag("host", host);
-        self.sender
-            .push(Metric {
-                header: MetricHeader::new("system.memory.total", tags.clone()),
-                timestamp,
-                value: MetricValue::gauge(self.system.total_memory() as f64),
-            })
-            .await?;
-        self.sender
-            .push(Metric {
-                header: MetricHeader::new("system.memory.used", tags.clone()),
-                timestamp,
-                value: MetricValue::gauge(self.system.used_memory() as f64),
-            })
-            .await?;
-        self.sender
-            .push(Metric {
-                header: MetricHeader::new("system.swap.total", tags.clone()),
-                timestamp,
-                value: MetricValue::gauge(self.system.total_swap() as f64),
-            })
-            .await?;
-        self.sender
-            .push(Metric {
-                header: MetricHeader::new("system.swap.used", tags.clone()),
-                timestamp,
-                value: MetricValue::gauge(self.system.used_swap() as f64),
-            })
+        self.collector
+            .push_metrics(
+                [
+                    Metric {
+                        header: MetricHeader::new("system.memory.total", tags.clone()),
+                        timestamp,
+                        value: MetricValue::gauge(self.system.total_memory() as f64),
+                    },
+                    Metric {
+                        header: MetricHeader::new("system.memory.used", tags.clone()),
+                        timestamp,
+                        value: MetricValue::gauge(self.system.used_memory() as f64),
+                    },
+                    Metric {
+                        header: MetricHeader::new("system.swap.total", tags.clone()),
+                        timestamp,
+                        value: MetricValue::gauge(self.system.total_swap() as f64),
+                    },
+                    Metric {
+                        header: MetricHeader::new("system.swap.used", tags.clone()),
+                        timestamp,
+                        value: MetricValue::gauge(self.system.used_swap() as f64),
+                    },
+                ]
+                .into_iter(),
+            )
             .await?;
         Ok(())
     }

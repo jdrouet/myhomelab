@@ -4,7 +4,7 @@ use std::sync::Arc;
 use anyhow::Context;
 use btleplug::api::{Central, CentralEvent, CentralState, Manager, Peripheral, ScanFilter};
 use btleplug::platform::PeripheralId;
-use myhomelab_agent_prelude::mpsc::Sender;
+use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::BuildContext;
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
@@ -23,7 +23,7 @@ pub struct MifloraReaderConfig {}
 impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
     type Output = MifloraReader;
 
-    async fn build<S: Sender>(&self, ctx: &BuildContext<S>) -> anyhow::Result<Self::Output> {
+    async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         let manager = btleplug::platform::Manager::new()
             .await
             .context("getting bluetooth manager")?;

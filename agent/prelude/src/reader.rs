@@ -1,7 +1,7 @@
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
-use crate::mpsc::Sender;
+use crate::collector::Collector;
 
 pub trait Reader: std::fmt::Debug + Send + Sync + 'static {
     fn wait(self) -> impl Future<Output = anyhow::Result<()>> + Send;
@@ -10,16 +10,16 @@ pub trait Reader: std::fmt::Debug + Send + Sync + 'static {
 pub trait ReaderBuilder {
     type Output: Reader;
 
-    fn build<S: Sender>(
+    fn build<C: Collector>(
         &self,
-        ctx: &BuildContext<S>,
+        ctx: &BuildContext<C>,
     ) -> impl Future<Output = anyhow::Result<Self::Output>> + Send;
 }
 
 #[derive(Debug)]
-pub struct BuildContext<S: Sender> {
+pub struct BuildContext<C: Collector> {
     pub cancel: CancellationToken,
-    pub sender: S,
+    pub collector: C,
 }
 
 #[derive(Debug)]

@@ -2,6 +2,7 @@ use anyhow::Context;
 use myhomelab_adapter_file::{AdapterFile, AdapterFileConfig};
 use myhomelab_adapter_http_server::ServerState;
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
+use myhomelab_agent_prelude::collector::TracingCollector;
 use myhomelab_agent_prelude::reader::BuildContext;
 use myhomelab_agent_prelude::reader::{Reader, ReaderBuilder};
 use myhomelab_prelude::FromEnv;
@@ -91,7 +92,7 @@ async fn main() -> anyhow::Result<()> {
     let cancel_token = CancellationToken::new();
     let builder_ctx = BuildContext {
         cancel: cancel_token.clone(),
-        sender: (), // TODO
+        collector: TracingCollector, // TODO
     };
 
     let server_config = ServerConfig::from_env()?;
