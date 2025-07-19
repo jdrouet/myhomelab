@@ -28,7 +28,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     timerange: &TimeRange,
     period: u32,
 ) -> anyhow::Result<Vec<TimeseriesResponse>> {
-    let mut qb = sqlx::QueryBuilder::<'_, sqlx::Sqlite>::new("with gauge_extractions as (");
+    let mut qb = sqlx::QueryBuilder::<'_, sqlx::Sqlite>::new("with extractions as (");
     qb.push("select name");
     super::shared::build_tags_attribute(&mut qb, query);
     qb.push(", timestamp");
@@ -36,32 +36,16 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
         .push_bind(period)
         .push(" as period");
     qb.push(", timestamp");
-    qb.push(", value");
-    qb.push(" from gauge_metrics");
+    qb.push(", json_extract(value, '$.value') as value");
+    qb.push(" from metrics");
     qb.push(" where name = ")
         .push_bind(query.header.name.as_ref());
     super::shared::build_timerange_filter(&mut qb, timerange.into_absolute());
     super::shared::build_tags_filter(&mut qb, query.header.iter_tags());
-    qb.push("), counter_extractions as (");
-    qb.push("select name");
-    super::shared::build_tags_attribute(&mut qb, query);
-    qb.push(", timestamp");
-    qb.push(", timestamp / ")
-        .push_bind(period)
-        .push(" as period");
-    qb.push(", value");
-    qb.push(" from counter_metrics");
-    qb.push(" where name = ")
-        .push_bind(query.header.name.as_ref());
-    super::shared::build_timerange_filter(&mut qb, timerange.into_absolute());
-    super::shared::build_tags_filter(&mut qb, query.header.iter_tags());
-    qb.push("), join_extractions as (");
-    qb.push(" select name, tags, timestamp, period, value from gauge_extractions");
-    qb.push(" union all select name, tags, timestamp, period, value from counter_extractions");
     qb.push("), aggregated_extractions as (");
     qb.push("select name, tags, timestamp");
     super::shared::build_value_attribute(&mut qb, &query.aggregator);
-    qb.push(" from join_extractions");
+    qb.push(" from extractions");
     qb.push(" group by name, tags, period");
     qb.push(") select name, tags, json_group_array(timestamp), json_group_array(value)");
     qb.push(" from aggregated_extractions");

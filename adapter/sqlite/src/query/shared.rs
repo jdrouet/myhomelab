@@ -42,10 +42,12 @@ pub(super) fn build_value_attribute(
     aggr: &myhomelab_metric::query::Aggregator,
 ) {
     match aggr {
-        myhomelab_metric::query::Aggregator::Average => qb.push(", avg(value) as value"),
-        myhomelab_metric::query::Aggregator::Max => qb.push(", max(value) as value"),
-        myhomelab_metric::query::Aggregator::Min => qb.push(", min(value) as value"),
-        myhomelab_metric::query::Aggregator::Sum => qb.push(", sum(value) as value"),
+        myhomelab_metric::query::Aggregator::Average => {
+            qb.push(", cast(avg(value) as real) as value")
+        }
+        myhomelab_metric::query::Aggregator::Max => qb.push(", cast(max(value) as real) as value"),
+        myhomelab_metric::query::Aggregator::Min => qb.push(", cast(min(value) as real) as value"),
+        myhomelab_metric::query::Aggregator::Sum => qb.push(", cast(sum(value) as real) as value"),
     };
 }
 
