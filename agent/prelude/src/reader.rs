@@ -4,9 +4,7 @@ use tokio_util::sync::CancellationToken;
 use crate::mpsc::Sender;
 
 pub trait Reader: std::fmt::Debug + Send + Sync + 'static {
-    fn wait(self) -> impl Future<Output = anyhow::Result<()>> + Send
-    where
-        Self: Sized;
+    fn wait(self) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
 pub trait ReaderBuilder {
@@ -36,10 +34,7 @@ impl BasicTaskReader {
 }
 
 impl Reader for BasicTaskReader {
-    async fn wait(self) -> anyhow::Result<()>
-    where
-        Self: Sized,
-    {
+    async fn wait(self) -> anyhow::Result<()> {
         self.task.await?
     }
 }
