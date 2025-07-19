@@ -6,7 +6,7 @@ members = [
     "adapter/http/server",
     "adapter/http/shared",
     "adapter/sqlite",
-    "agent/core",
+    "agent/manager",
     "agent/prelude",
     "agent/reader-system",
     "agent/reader-xiaomi/lywsd03mmc-atc",
@@ -33,7 +33,7 @@ myhomelab-adapter-http-client = { path = "./adapter/http/client" }
 myhomelab-adapter-http-server = { path = "./adapter/http/server" }
 myhomelab-adapter-http-shared = { path = "./adapter/http/shared" }
 myhomelab-adapter-sqlite = { path = "./adapter/sqlite" }
-myhomelab-agent-core = { path = "./agent/core" }
+myhomelab-agent-manager = { path = "./agent/manager" }
 myhomelab-agent-prelude = { path = "./agent/prelude" }
 myhomelab-agent-reader-system = { path = "./agent/reader-system" }
 myhomelab-agent-reader-xiaomi-lywsd03mmc-atc = { path = "./agent/reader-xiaomi/lywsd03mmc-atc" }

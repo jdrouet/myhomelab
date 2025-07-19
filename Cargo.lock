@@ -1564,7 +1564,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "myhomelab-agent-core"
+name = "myhomelab-agent-manager"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1719,7 +1719,7 @@ dependencies = [
  "myhomelab-adapter-file",
  "myhomelab-adapter-http-server",
  "myhomelab-adapter-sqlite",
- "myhomelab-agent-core",
+ "myhomelab-agent-manager",
  "myhomelab-agent-prelude",
  "myhomelab-agent-reader-system",
  "myhomelab-agent-reader-xiaomi-lywsd03mmc-atc",

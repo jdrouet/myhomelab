@@ -58,7 +58,7 @@ struct ServerConfig {
     #[serde(default)]
     http: myhomelab_adapter_http_server::HttpServerConfig,
     #[serde(default)]
-    manager: myhomelab_agent_core::ManagerConfig,
+    manager: myhomelab_agent_manager::ManagerConfig,
 }
 
 impl ServerConfig {
@@ -95,7 +95,6 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let server_config = ServerConfig::from_env()?;
-    println!("manager = {:?}", server_config.manager);
     let manager = server_config.manager.build(&builder_ctx).await?;
 
     let app_state = AppState { file, sqlite };
