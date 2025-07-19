@@ -1,7 +1,9 @@
+use anyhow::Context;
 use myhomelab_adapter_file::{AdapterFile, AdapterFileConfig};
-use myhomelab_adapter_http_server::{HttpServerConfig, ServerState};
+use myhomelab_adapter_http_server::ServerState;
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
-use myhomelab_agent_core::{Manager, ManagerConfig};
+use myhomelab_agent_prelude::reader::BuildContext;
+use myhomelab_agent_prelude::reader::{Reader, ReaderBuilder};
 use myhomelab_prelude::FromEnv;
 use tokio_util::sync::CancellationToken;
 
@@ -51,6 +53,30 @@ async fn shutdown_signal(cancel: CancellationToken) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[derive(Debug, serde::Deserialize)]
+struct ServerConfig {
+    #[serde(default)]
+    http: myhomelab_adapter_http_server::HttpServerConfig,
+    #[serde(default)]
+    manager: myhomelab_agent_core::ManagerConfig,
+}
+
+impl ServerConfig {
+    fn from_env() -> anyhow::Result<Self> {
+        let settings = config::Config::builder()
+            .add_source(
+                config::Environment::default()
+                    .separator("__")
+                    .list_separator(","),
+            )
+            .build()
+            .context("unable to build config")?;
+        settings
+            .try_deserialize()
+            .context("unable to deserialize config")
+    }
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
@@ -63,33 +89,23 @@ async fn main() -> anyhow::Result<()> {
     sqlite.prepare().await?;
 
     let cancel_token = CancellationToken::new();
+    let builder_ctx = BuildContext {
+        cancel: cancel_token.clone(),
+        sender: (), // TODO
+    };
 
-    let manager_config = ManagerConfig::from_env()?;
-    let manager = Manager::unbounded_builder(cancel_token.child_token(), sqlite.clone());
-    let manager = manager
-        .maybe_with_reader(myhomelab_agent_reader_system::ReaderSystemConfig::default().build()?);
-    let manager = manager.maybe_with_reader(
-        myhomelab_agent_reader_xiaomi_lywsd03mmc_atc::ReaderXiaomiConfig::default()
-            .build()
-            .await?,
-    );
-    let manager = manager.maybe_with_reader(
-        myhomelab_agent_reader_xiaomi_miflora::ReaderConfig::from_env()?
-            .build()
-            .await?,
-    );
-    let manager = manager.build(&manager_config);
+    let server_config = ServerConfig::from_env()?;
+    println!("manager = {:?}", server_config.manager);
+    let manager = server_config.manager.build(&builder_ctx).await?;
 
     let app_state = AppState { file, sqlite };
 
-    let http_server_config = HttpServerConfig::from_env()?;
-    let http_server = http_server_config.build(cancel_token.child_token(), app_state);
+    let http_server = server_config
+        .http
+        .build(cancel_token.child_token(), app_state);
 
-    tokio::try_join!(
-        shutdown_signal(cancel_token),
-        manager.run(),
-        http_server.run(),
-    )?;
+    tokio::try_join!(shutdown_signal(cancel_token), http_server.run(),)?;
+    manager.wait().await?;
 
     Ok(())
 }

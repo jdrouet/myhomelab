@@ -3,34 +3,32 @@ use tower_http::trace::TraceLayer;
 
 mod router;
 
-const DEFAULT_HOST: std::net::IpAddr = std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST);
-const DEFAULT_PORT: u16 = 3000;
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub struct HttpServerConfig {
+    #[serde(default = "HttpServerConfig::default_host")]
     pub host: std::net::IpAddr,
+    #[serde(default = "HttpServerConfig::default_port")]
     pub port: u16,
 }
 
 impl Default for HttpServerConfig {
     fn default() -> Self {
         Self {
-            host: DEFAULT_HOST,
-            port: DEFAULT_PORT,
+            host: Self::default_host(),
+            port: Self::default_port(),
         }
     }
 }
 
-impl myhomelab_prelude::FromEnv for HttpServerConfig {
-    fn from_env() -> anyhow::Result<Self> {
-        Ok(Self {
-            host: myhomelab_prelude::parse_from_env("MYHOMELAB_HTTP_HOST")?.unwrap_or(DEFAULT_HOST),
-            port: myhomelab_prelude::parse_from_env("MYHOMELAB_HTTP_PORT")?.unwrap_or(DEFAULT_PORT),
-        })
-    }
-}
-
 impl HttpServerConfig {
+    const fn default_host() -> std::net::IpAddr {
+        std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST)
+    }
+
+    const fn default_port() -> u16 {
+        3000
+    }
+
     pub fn build<S: ServerState>(&self, cancel: CancellationToken, state: S) -> HttpServer<S> {
         HttpServer {
             address: std::net::SocketAddr::from((self.host, self.port)),

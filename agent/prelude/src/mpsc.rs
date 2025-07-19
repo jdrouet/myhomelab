@@ -5,6 +5,12 @@ pub trait Sender: Clone + Send + Sync + 'static {
     fn push(&self, item: Metric) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
+impl Sender for () {
+    async fn push(&self, _item: Metric) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
+
 impl Sender for tokio::sync::mpsc::Sender<Metric> {
     async fn push(&self, item: Metric) -> anyhow::Result<()> {
         self.send(item).await.context("sending to mpsc queue")

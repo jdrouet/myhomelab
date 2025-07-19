@@ -12,6 +12,7 @@ lru = { version = "0.16" }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 myhomelab-agent-prelude = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tokio-stream = { workspace = true }
 tokio-util = { workspace = true }

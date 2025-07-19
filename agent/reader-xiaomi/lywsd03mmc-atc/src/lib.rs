@@ -1,14 +1,15 @@
 use std::num::NonZeroUsize;
 
+use anyhow::Context;
 use btleplug::api::{
     BDAddr, Central, CentralEvent, Manager, Peripheral, PeripheralProperties, ScanFilter,
 };
 use btleplug::platform::PeripheralId;
 use lru::LruCache;
 use myhomelab_agent_prelude::mpsc::Sender;
+use myhomelab_agent_prelude::reader::{BasicTaskReader, BuildContext, ReaderBuilder};
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
-use myhomelab_prelude::parse_from_env;
 use myhomelab_prelude::time::current_timestamp;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -18,55 +19,44 @@ mod parse;
 const DEVICE: &str = "xiaomi-lywsd03mmc-atc";
 const SERVICE_ID: uuid::Uuid = uuid::Uuid::from_u128(488837762788578050050668711589115);
 
-#[derive(Debug)]
-pub struct ReaderXiaomiConfig {
-    enabled: bool,
+#[derive(Debug, serde::Deserialize)]
+pub struct SensorConfig {
     cache_size: NonZeroUsize,
 }
 
-impl Default for ReaderXiaomiConfig {
+impl Default for SensorConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
             cache_size: NonZeroUsize::new(10).unwrap(),
         }
     }
 }
 
-impl myhomelab_prelude::FromEnv for ReaderXiaomiConfig {
-    fn from_env() -> anyhow::Result<Self> {
-        let enabled = parse_from_env::<bool>("MYHOMELAB_READER_XIAOMI_LYWSD03MMC_ATC_ENABLED")?
-            .unwrap_or(false);
-        let cache_size =
-            parse_from_env::<NonZeroUsize>("MYHOMELAB_READER_XIAOMI_LYWSD03MMC_ATC_CACHE_SIZE")?
-                .unwrap_or(NonZeroUsize::new(10).unwrap());
-        Ok(Self {
-            enabled,
-            cache_size,
-        })
-    }
-}
+impl ReaderBuilder for SensorConfig {
+    type Output = SensorReader;
 
-impl ReaderXiaomiConfig {
-    pub async fn build(&self) -> anyhow::Result<Option<ReaderXiaomi>> {
-        if !self.enabled {
-            return Ok(None);
-        }
+    async fn build<S: Sender>(&self, ctx: &BuildContext<S>) -> anyhow::Result<Self::Output> {
+        let manager = btleplug::platform::Manager::new()
+            .await
+            .context("getting bluetooth manager")?;
+        let adapters = manager
+            .adapters()
+            .await
+            .context("getting bluetooth adapters")?;
+        let adapter = adapters
+            .into_iter()
+            .nth(0)
+            .ok_or_else(|| anyhow::anyhow!("no bluetooth adapter found"))?;
 
-        let cache = LruCache::new(self.cache_size);
-        let manager = btleplug::platform::Manager::new().await.unwrap();
-        // get the first bluetooth adapter
-        let adapters = manager.adapters().await?;
-        let central = adapters.into_iter().nth(0).unwrap();
+        let runner = SensorRunner {
+            adapter,
+            cache: LruCache::new(self.cache_size),
+            cancel: ctx.cancel.child_token(),
+            sender: ctx.sender.clone(),
+        };
+        let task = tokio::spawn(async move { runner.run().await });
 
-        Ok(Some(ReaderXiaomi {
-            cache,
-            manager,
-            central,
-            filter: ScanFilter {
-                services: vec![SERVICE_ID],
-            },
-        }))
+        Ok(BasicTaskReader::new(task))
     }
 }
 
@@ -91,29 +81,23 @@ impl Device {
     }
 }
 
-#[derive(Debug)]
-pub struct ReaderXiaomi {
+struct SensorRunner<S: Sender> {
+    adapter: btleplug::platform::Adapter,
     cache: LruCache<PeripheralId, Device>,
-    #[allow(unused)]
-    manager: btleplug::platform::Manager,
-    central: btleplug::platform::Adapter,
-    filter: ScanFilter,
+    cancel: CancellationToken,
+    sender: S,
 }
 
-impl ReaderXiaomi {
-    async fn push<S: Sender + Send>(
-        &mut self,
-        id: PeripheralId,
-        sender: &S,
-        values: impl Iterator<Item = (&'static str, f64)>,
-    ) {
+impl<S: Sender> SensorRunner<S> {
+    async fn push(&mut self, id: PeripheralId, values: impl Iterator<Item = (&'static str, f64)>) {
         let timestamp = current_timestamp();
         let mut tags = MetricTags::default().with_tag("device", DEVICE);
         if let Some(device) = self.cache.get(&id) {
             device.populate(&mut tags);
         }
         for (name, value) in values {
-            let _ = sender
+            let _ = self
+                .sender
                 .push(Metric {
                     header: MetricHeader::new(name, tags.clone()),
                     timestamp,
@@ -123,14 +107,10 @@ impl ReaderXiaomi {
         }
     }
 
-    async fn handle_event<S: Sender + Send>(
-        &mut self,
-        event: CentralEvent,
-        sender: &S,
-    ) -> anyhow::Result<()> {
+    async fn handle_event(&mut self, event: CentralEvent) -> anyhow::Result<()> {
         match event {
             CentralEvent::DeviceDiscovered(id) => {
-                let peripheral = self.central.peripheral(&id).await?;
+                let peripheral = self.adapter.peripheral(&id).await?;
                 if let Some(properties) = peripheral.properties().await? {
                     self.cache.push(id, Device::from(properties));
                 }
@@ -147,37 +127,41 @@ impl ReaderXiaomi {
                     if let Some(humidity) = parse::read_humidity(data) {
                         values.push(("measurement.humidity", humidity as f64));
                     }
-                    self.push(id, sender, values.into_iter()).await;
+                    self.push(id, values.into_iter()).await;
                 }
             }
             _ => {}
         }
         Ok(())
     }
-}
 
-impl myhomelab_agent_prelude::reader::Reader for ReaderXiaomi {
-    #[tracing::instrument(skip_all)]
-    async fn run<S: Sender + Send>(
-        mut self,
-        token: CancellationToken,
-        sender: S,
-    ) -> anyhow::Result<()> {
-        tracing::info!("preparing reader");
-        let mut events = self.central.events().await?;
+    async fn scan(&mut self) -> anyhow::Result<()> {
         tracing::info!("starting reader");
-        self.central.start_scan(self.filter.clone()).await?;
-        while !token.is_cancelled() {
+        self.adapter.start_scan(ScanFilter::default()).await?;
+        tracing::info!("preparing reader");
+        let mut events = self.adapter.events().await?;
+        while !self.cancel.is_cancelled() {
             tokio::select! {
                 Some(event) = events.next() => {
-                    self.handle_event(event, &sender).await?;
+                    self.handle_event(event).await?;
                 }
-                _ = token.cancelled() => {
-                    self.central.stop_scan().await?;
+                _ = self.cancel.cancelled() => {
+                    // nothing to do
                 }
             }
         }
         tracing::info!("stopped reader");
         Ok(())
     }
+
+    async fn run(mut self) -> anyhow::Result<()> {
+        tracing::info!("starting");
+        while !self.cancel.is_cancelled() {
+            self.scan().await?;
+        }
+        tracing::info!("completed");
+        Ok(())
+    }
 }
+
+pub type SensorReader = BasicTaskReader;

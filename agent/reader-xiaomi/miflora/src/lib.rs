@@ -1,15 +1,12 @@
-use std::num::NonZeroUsize;
-use std::time::{Duration, SystemTime};
+use std::collections::HashSet;
+use std::sync::Arc;
 
-use btleplug::api::{Central, CentralEvent, Manager, Peripheral, ScanFilter};
+use anyhow::Context;
+use btleplug::api::{Central, CentralEvent, CentralState, Manager, Peripheral, ScanFilter};
 use btleplug::platform::PeripheralId;
-use device::MiFloraDevice;
-use lru::LruCache;
 use myhomelab_agent_prelude::mpsc::Sender;
-use myhomelab_metric::entity::value::MetricValue;
-use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
-use myhomelab_prelude::parse_from_env;
-use myhomelab_prelude::time::current_timestamp;
+use myhomelab_agent_prelude::reader::BuildContext;
+use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 
@@ -18,199 +15,129 @@ pub mod device;
 // Device name (e.g. Flower care)
 // MAC address prefix (C4:7C:8D = original)
 
-const DEVICE: &str = "xiaomi-miflora";
+// const DEVICE: &str = "xiaomi-miflora";
 
-#[derive(Debug)]
-pub struct ReaderConfig {
-    enabled: bool,
-    cache_size: NonZeroUsize,
-    interval: Duration,
-}
+#[derive(Debug, serde::Deserialize)]
+pub struct MifloraReaderConfig {}
 
-impl myhomelab_prelude::FromEnv for ReaderConfig {
-    fn from_env() -> anyhow::Result<Self> {
-        let enabled =
-            parse_from_env::<bool>("MYHOMELAB_READER_XIAOMI_MIFLORA_ENABLED")?.unwrap_or(false);
-        let cache_size =
-            parse_from_env::<NonZeroUsize>("MYHOMELAB_READER_XIAOMI_MIFLORA_CACHE_SIZE")?
-                .unwrap_or(NonZeroUsize::new(20).unwrap());
-        let interval = parse_from_env::<u64>("MYHOMELAB_READER_XIAOMI_MIFLORA_INTERVAL")?
-            .unwrap_or(60 * 60 * 2);
-        Ok(Self {
-            enabled,
-            cache_size,
-            interval: Duration::from_secs(interval),
-        })
-    }
-}
+impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
+    type Output = MifloraReader;
 
-impl ReaderConfig {
-    pub async fn build(&self) -> anyhow::Result<Option<Reader>> {
-        if !self.enabled {
-            return Ok(None);
-        }
-        let manager = btleplug::platform::Manager::new().await.unwrap();
-        // get the first bluetooth adapter
-        let adapters = manager.adapters().await?;
-        let adapter = adapters.into_iter().nth(0).unwrap();
+    async fn build<S: Sender>(&self, ctx: &BuildContext<S>) -> anyhow::Result<Self::Output> {
+        let manager = btleplug::platform::Manager::new()
+            .await
+            .context("getting bluetooth manager")?;
+        let adapters = manager
+            .adapters()
+            .await
+            .context("getting bluetooth adapters")?;
+        let adapter = adapters
+            .into_iter()
+            .nth(0)
+            .ok_or_else(|| anyhow::anyhow!("no bluetooth adapter found"))?;
 
-        let scan_filter = ScanFilter {
-            services: vec![
-                uuid::uuid!("00001204-0000-1000-8000-00805f9b34fb"),
-                uuid::uuid!("00001206-0000-1000-8000-00805f9b34fb"),
-                uuid::uuid!("0000fe95-0000-1000-8000-00805f9b34fb"),
-                uuid::uuid!("0000fef5-0000-1000-8000-00805f9b34fb"),
-            ],
-        };
-
-        Ok(Some(Reader {
-            cache: LruCache::new(self.cache_size),
-            manager,
+        let memory: Arc<RwLock<HashSet<PeripheralId>>> = Default::default();
+        let runner = MifloraRunner {
             adapter,
-            scan_filter,
-            interval: self.interval,
-        }))
+            cancel: ctx.cancel.child_token(),
+            memory: memory.clone(),
+        };
+        let task = tokio::task::spawn(async move { runner.run().await });
+        Ok(MifloraReader { memory, task })
     }
 }
 
-#[derive(Debug)]
-pub struct Reader {
-    cache: LruCache<PeripheralId, SystemTime>,
-    #[allow(unused)]
-    manager: btleplug::platform::Manager,
+struct MifloraRunner {
     adapter: btleplug::platform::Adapter,
-    scan_filter: ScanFilter,
-    interval: Duration,
+    cancel: CancellationToken,
+    memory: Arc<RwLock<HashSet<PeripheralId>>>,
 }
 
-impl Reader {
-    async fn handle_discovered(&mut self, id: PeripheralId) -> anyhow::Result<()> {
-        if self
-            .cache
-            .get(&id)
-            .is_some_and(|last_seen| *last_seen + self.interval > SystemTime::now())
-        {
-            // device already in cache
+impl MifloraRunner {
+    #[tracing::instrument(skip(self), err)]
+    async fn handle_discovered(&self, id: &PeripheralId) -> anyhow::Result<()> {
+        if self.memory.read().await.contains(&id) {
+            tracing::trace!("known peripheral, skipping");
             return Ok(());
         }
-        let peripheral = self.adapter.peripheral(&id).await?;
-        if peripheral
+        let peripheral = self
+            .adapter
+            .peripheral(&id)
+            .await
+            .context("accessing peripheral")?;
+        let props = peripheral
             .properties()
             .await
-            .ok()
-            .and_then(|props| props.and_then(|inner| inner.local_name))
-            .is_none_or(|name| name != "Flower care")
-        {
+            .context("reading properties")?;
+        let Some(name) = props.and_then(|props| props.local_name) else {
+            tracing::trace!("peripheral has no name");
             return Ok(());
+        };
+        if name == "Flower care" {
+            self.memory.write().await.insert(id.clone());
         }
-        peripheral.connect().await?;
         Ok(())
     }
 
-    async fn try_handle_connected<S: Sender + Send>(
-        &mut self,
-        peripheral: &impl btleplug::api::Peripheral,
-        sender: &S,
-    ) -> anyhow::Result<()> {
-        let device = MiFloraDevice::new(peripheral).await?;
-
-        let now = current_timestamp();
-        let tags = MetricTags::default()
-            .with_tag("device", DEVICE)
-            .with_tag("address", device.address())
-            .maybe_with_tag("name", device.name());
-
-        let battery_level = device.read_battery().await?;
-        let _ = sender
-            .push(Metric {
-                header: MetricHeader::new("device.battery", tags.clone()),
-                timestamp: now,
-                value: MetricValue::gauge(battery_level as f64),
-            })
-            .await;
-
-        let realtime = device.read_realtime_data().await?;
-
-        let _ = sender
-            .push(Metric {
-                header: MetricHeader::new("measurement.temperature", tags.clone()),
-                timestamp: now,
-                value: MetricValue::gauge(realtime.temperature),
-            })
-            .await;
-        let _ = sender
-            .push(Metric {
-                header: MetricHeader::new("measurement.moisture", tags.clone()),
-                timestamp: now,
-                value: MetricValue::gauge(realtime.moisture as f64),
-            })
-            .await;
-        let _ = sender
-            .push(Metric {
-                header: MetricHeader::new("measurement.light", tags.clone()),
-                timestamp: now,
-                value: MetricValue::gauge(realtime.light as f64),
-            })
-            .await;
-        let _ = sender
-            .push(Metric {
-                header: MetricHeader::new("measurement.conductivity", tags.clone()),
-                timestamp: now,
-                value: MetricValue::gauge(realtime.conductivity as f64),
-            })
-            .await;
-
-        self.cache.push(peripheral.id(), SystemTime::now());
-
-        Ok(())
-    }
-
-    async fn handle_connected<S: Sender + Send>(
-        &mut self,
-        id: PeripheralId,
-        sender: &S,
-    ) -> anyhow::Result<()> {
-        let peripheral = self.adapter.peripheral(&id).await?;
-        let res = self.try_handle_connected(&peripheral, sender).await;
-        let _ = peripheral.disconnect().await;
-        res
-    }
-
-    async fn handle_event<S: Sender + Send>(
-        &mut self,
-        event: CentralEvent,
-        sender: &S,
-    ) -> anyhow::Result<()> {
-        match event {
-            CentralEvent::DeviceDiscovered(id) => self.handle_discovered(id).await,
-            CentralEvent::DeviceConnected(id) => self.handle_connected(id, sender).await,
-            _ => Ok(()),
-        }
-    }
-}
-
-impl myhomelab_agent_prelude::reader::Reader for Reader {
-    #[tracing::instrument(skip_all)]
-    async fn run<S: Sender + Send>(
-        mut self,
-        token: CancellationToken,
-        sender: S,
-    ) -> anyhow::Result<()> {
-        println!("preparing reader");
-        let mut events = self.adapter.events().await?;
-        println!("starting reader");
-        self.adapter.start_scan(self.scan_filter.clone()).await?;
-        while !token.is_cancelled() {
+    #[tracing::instrument(skip(self), err)]
+    async fn scan(&self) -> anyhow::Result<()> {
+        self.adapter
+            .start_scan(ScanFilter::default())
+            .await
+            .context("starting scan")?;
+        let mut events = self
+            .adapter
+            .events()
+            .await
+            .context("accessing bluetooth events")?;
+        while !self.cancel.is_cancelled() {
             tokio::select! {
-                Some(event) = events.next() => {
-                    self.handle_event(event, &sender).await?;
+                maybe_event = events.next() => {
+                    match maybe_event {
+                        Some(CentralEvent::DeviceDiscovered(id)) => {
+                            let _ = self.handle_discovered(&id).await;
+                        }
+                        Some(CentralEvent::StateUpdate(CentralState::PoweredOff)) => {
+                            tracing::warn!("peripheral powered off");
+                        }
+                        Some(CentralEvent::StateUpdate(CentralState::PoweredOn)) => {
+                            tracing::info!("peripheral powered on");
+                        }
+                        Some(_) => {},
+                        None => {
+                            tracing::warn!("event stream closed");
+                            break;
+                        }
+                    }
                 }
-                _ = token.cancelled() => {
-                    self.adapter.stop_scan().await?;
+                _ = self.cancel.cancelled() => {
+                    tracing::trace!("cancellation requested");
+                    // nothing to do, the loop will abort
                 }
             }
         }
-        tracing::info!("stopped reader");
         Ok(())
+    }
+
+    async fn run(&self) -> anyhow::Result<()> {
+        tracing::info!("starting");
+        while !self.cancel.is_cancelled() {
+            self.scan().await?;
+        }
+        tracing::info!("completed");
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct MifloraReader {
+    #[allow(unused)]
+    memory: Arc<RwLock<HashSet<PeripheralId>>>,
+    task: tokio::task::JoinHandle<anyhow::Result<()>>,
+}
+
+impl myhomelab_agent_prelude::reader::Reader for MifloraReader {
+    async fn wait(self) -> anyhow::Result<()> {
+        self.task.await?
     }
 }

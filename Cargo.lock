@@ -345,6 +345,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "config"
+version = "0.15.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b1eb4fb07bc7f012422df02766c7bd5971effb894f573865642f06fa3265440"
+dependencies = [
+ "pathdiff",
+ "serde",
+ "toml",
+ "winnow",
+]
+
+[[package]]
 name = "console"
 version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1561,6 +1573,7 @@ dependencies = [
  "myhomelab-agent-reader-system",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "serde",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -1575,6 +1588,7 @@ dependencies = [
  "derive_more",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "serde",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -1588,6 +1602,7 @@ dependencies = [
  "myhomelab-agent-prelude",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "serde",
  "sysinfo",
  "tokio",
  "tokio-stream",
@@ -1605,6 +1620,7 @@ dependencies = [
  "myhomelab-agent-prelude",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "serde",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -1622,6 +1638,7 @@ dependencies = [
  "myhomelab-agent-prelude",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "serde",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -1698,16 +1715,19 @@ name = "myhomelab-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "config",
  "myhomelab-adapter-file",
  "myhomelab-adapter-http-server",
  "myhomelab-adapter-sqlite",
  "myhomelab-agent-core",
+ "myhomelab-agent-prelude",
  "myhomelab-agent-reader-system",
  "myhomelab-agent-reader-xiaomi-lywsd03mmc-atc",
  "myhomelab-agent-reader-xiaomi-miflora",
  "myhomelab-dashboard",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "serde",
  "tokio",
  "tokio-util",
  "tracing-subscriber",
@@ -1898,6 +1918,12 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
+name = "pathdiff"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df94ce210e5bc13cb6651479fa48d14f601d9858cfe0467f43ae157023b938d3"
 
 [[package]]
 name = "pem-rfc7468"
@@ -3823,6 +3849,9 @@ name = "winnow"
 version = "0.7.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3edebf492c8125044983378ecb5766203ad3b4c2f7a922bd7dd207f6d443e95"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "wit-bindgen-rt"
