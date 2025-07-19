@@ -24,8 +24,8 @@ impl QueryExecutor for crate::Sqlite {
                         Err(err) => eprintln!("something went wrong: {err:?}"),
                     }
                 }
-                RequestKind::Timeseries { period } => {
-                    match timeseries::fetch(self.as_ref(), &req.query, &timerange, period).await {
+                RequestKind::Timeseries => {
+                    match timeseries::fetch(self.as_ref(), &req.query, &timerange, 100).await {
                         Ok(response) => {
                             res.insert(name, Response::Timeseries(response));
                         }
@@ -91,20 +91,17 @@ pub(crate) mod tests {
         );
         reqs.insert(
             Box::from("cpu-global"),
-            Request::timeseries(
-                3,
-                Query::max(MetricHeader::new("system.cpu", MetricTags::default())),
-            ),
+            Request::timeseries(Query::max(MetricHeader::new(
+                "system.cpu",
+                MetricTags::default(),
+            ))),
         );
         reqs.insert(
             Box::from("cpu-raspberry"),
-            Request::timeseries(
-                3,
-                Query::max(MetricHeader::new(
-                    "system.cpu",
-                    MetricTags::default().with_tag("host", "raspberry"),
-                )),
-            ),
+            Request::timeseries(Query::max(MetricHeader::new(
+                "system.cpu",
+                MetricTags::default().with_tag("host", "raspberry"),
+            ))),
         );
 
         let res = sqlite

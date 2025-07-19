@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 use std::collections::BTreeMap;
-use std::fmt::Write;
 
 pub mod tag;
 pub mod value;
@@ -93,10 +92,7 @@ impl MetricHeader {
 
 impl std::fmt::Display for MetricHeader {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.name.fmt(f)?;
-        f.write_char('{')?;
-        self.tags.fmt(f)?;
-        f.write_char('}')
+        write!(f, "{}{{{}}}", self.name, self.tags)
     }
 }
 

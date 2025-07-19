@@ -133,16 +133,13 @@ async fn should_query_batch_metrics() {
     );
     reqs.insert(
         Box::from("timeseries"),
-        Request::timeseries(
-            10,
-            Query::new(
-                MetricHeader::new(
-                    "system.memory.total",
-                    MetricTags::default().with_tag("host", "rpi"),
-                ),
-                myhomelab_metric::query::Aggregator::Average,
+        Request::timeseries(Query::new(
+            MetricHeader::new(
+                "system.memory.total",
+                MetricTags::default().with_tag("host", "rpi"),
             ),
-        ),
+            myhomelab_metric::query::Aggregator::Average,
+        )),
     );
     client
         .execute(reqs, AbsoluteTimeRange::since(0).into())

@@ -27,9 +27,9 @@ impl Request {
         }
     }
 
-    pub fn timeseries(period: u32, query: Query) -> Self {
+    pub fn timeseries(query: Query) -> Self {
         Self {
-            kind: RequestKind::Timeseries { period },
+            kind: RequestKind::Timeseries,
             query,
         }
     }
@@ -39,7 +39,7 @@ impl Request {
 #[serde(tag = "name", rename_all = "kebab-case")]
 pub enum RequestKind {
     Scalar,
-    Timeseries { period: u32 },
+    Timeseries,
 }
 
 #[derive(Clone, Debug, Default, serde::Deserialize, serde::Serialize)]
