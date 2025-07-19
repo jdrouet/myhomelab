@@ -38,32 +38,30 @@ pub struct Payload {
 }
 
 impl Payload {
-    pub fn from_metrics(metrics: Vec<Metric>) -> Self {
-        let mut counters: HashMap<MetricHeader, MetricValues<u64>> = Default::default();
-        let mut gauges: HashMap<MetricHeader, MetricValues<f64>> = Default::default();
+    pub fn from_metrics<'a>(metrics: impl Iterator<Item = &'a Metric>) -> Self {
+        let mut counters: HashMap<&'a MetricHeader, MetricValues<u64>> = Default::default();
+        let mut gauges: HashMap<&'a MetricHeader, MetricValues<f64>> = Default::default();
         metrics.into_iter().for_each(|item| match item.value {
             MetricValue::Counter(inner) => {
-                let values = counters.entry(item.header).or_default();
+                let values = counters.entry(&item.header).or_default();
                 values.timestamps.push(item.timestamp);
                 values.values.push(inner.0);
             }
             MetricValue::Gauge(inner) => {
-                let values = gauges.entry(item.header).or_default();
+                let values = gauges.entry(&item.header).or_default();
                 values.timestamps.push(item.timestamp);
                 values.values.push(inner.0);
             }
         });
         Self {
-            counters: Vec::from_iter(
-                counters
-                    .into_iter()
-                    .map(|(header, values)| Metrics { header, values }),
-            ),
-            gauges: Vec::from_iter(
-                gauges
-                    .into_iter()
-                    .map(|(header, values)| Metrics { header, values }),
-            ),
+            counters: Vec::from_iter(counters.into_iter().map(|(header, values)| Metrics {
+                header: header.clone(),
+                values,
+            })),
+            gauges: Vec::from_iter(gauges.into_iter().map(|(header, values)| Metrics {
+                header: header.clone(),
+                values,
+            })),
         }
     }
 }

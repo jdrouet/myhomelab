@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
+use myhomelab_metric::entity::Metric;
 
 macro_rules! unwrap_status_error {
     ($res:expr) => {
@@ -15,10 +16,10 @@ macro_rules! unwrap_status_error {
 }
 
 impl myhomelab_metric::intake::Intake for super::AdapterHttpClient {
-    async fn ingest(&self, values: Vec<myhomelab_metric::entity::Metric>) -> anyhow::Result<()> {
+    async fn ingest(&self, values: &[Metric]) -> anyhow::Result<()> {
         use myhomelab_adapter_http_shared::metric::create::Payload;
 
-        let payload = Payload::from_metrics(values);
+        let payload = Payload::from_metrics(values.into_iter());
         let res = self
             .0
             .client

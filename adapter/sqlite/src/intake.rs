@@ -2,25 +2,24 @@ use anyhow::Context;
 use myhomelab_metric::entity::Metric;
 
 impl myhomelab_metric::intake::Intake for crate::Sqlite {
-    async fn ingest(&self, values: Vec<Metric>) -> anyhow::Result<()> {
-        if values.is_empty() {
-            tracing::debug!("empty list of metrics, skipping");
-            return Ok(());
-        }
-
-        let mut gauge_builder: sqlx::QueryBuilder<'_, sqlx::Sqlite> =
+    async fn ingest(&self, values: &[Metric]) -> anyhow::Result<()> {
+        let mut count: usize = 0;
+        let mut builder: sqlx::QueryBuilder<'_, sqlx::Sqlite> =
             sqlx::QueryBuilder::new("INSERT INTO metrics (name, tags, timestamp, value) ");
-        gauge_builder.push_values(values.into_iter(), |mut acc, item| {
-            acc.push_bind(item.header.name)
-                .push_bind(sqlx::types::Json(item.header.tags))
+        builder.push_values(values.into_iter(), |mut acc, item| {
+            count += 1;
+            acc.push_bind(&item.header.name)
+                .push_bind(sqlx::types::Json(&item.header.tags))
                 .push_bind(item.timestamp as i64)
-                .push_bind(sqlx::types::Json(item.value));
+                .push_bind(sqlx::types::Json(&item.value));
         });
-        gauge_builder
-            .build()
-            .execute(&self.0)
-            .await
-            .context("saving metrics")?;
+        if count > 0 {
+            builder
+                .build()
+                .execute(&self.0)
+                .await
+                .context("saving metrics")?;
+        }
         Ok(())
     }
 }
@@ -36,7 +35,7 @@ mod tests {
         let sqlite = crate::SqliteConfig::default().build().await.unwrap();
         sqlite.prepare().await.unwrap();
         sqlite
-            .ingest(vec![
+            .ingest(&[
                 Metric {
                     header: MetricHeader::new("foo", Default::default()),
                     timestamp: 0,
@@ -67,7 +66,7 @@ mod tests {
         let sqlite = crate::SqliteConfig::default().build().await.unwrap();
         sqlite.prepare().await.unwrap();
         sqlite
-            .ingest(vec![
+            .ingest(&[
                 Metric {
                     header: MetricHeader::new("foo", Default::default()),
                     timestamp: 0,
@@ -103,7 +102,7 @@ mod tests {
         let sqlite = crate::SqliteConfig::default().build().await.unwrap();
         sqlite.prepare().await.unwrap();
         sqlite
-            .ingest(vec![
+            .ingest(&[
                 Metric {
                     header: MetricHeader::new("foo", Default::default()),
                     timestamp: 0,

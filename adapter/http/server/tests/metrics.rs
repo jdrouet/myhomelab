@@ -78,10 +78,13 @@ async fn should_ingest_metrics() {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
     };
-    state.metric.expect_ingest().once().returning(|metrics| {
-        assert_eq!(metrics.len(), 10);
-        Ok(())
-    });
+    state.metric.expect_ingest().once().returning(
+        |metrics: &[myhomelab_metric::entity::Metric]| {
+            let count = metrics.len();
+            assert_eq!(count, 10);
+            Ok(())
+        },
+    );
     let state = MockServerState(Arc::new(state));
     let server = server_config.build(CancellationToken::new(), state.clone());
     let _handle = tokio::spawn(async { server.run().await });
@@ -89,8 +92,11 @@ async fn should_ingest_metrics() {
         base_url: format!("http://localhost:{port}"),
     };
     let client = client_config.build().unwrap();
-    client.ingest([myhomelab_metric::metrics!("system.memory.total", gauge, "host" => "rpi", [(0, 1024.0), (1, 1024.0), (2, 1024.0), (3, 1024.0), (4, 1024.0)]),
-        myhomelab_metric::metrics!("system.memory.used", gauge, "host" => "rpi", [(0, 256.0), (1, 312.0), (2, 420.0), (3, 320.0), (4, 430.0)])].concat()).await.unwrap();
+    client.ingest(&[
+        myhomelab_metric::metrics!("system.memory.total", gauge, "host" => "rpi", [(0, 1024.0), (1, 1024.0), (2, 1024.0), (3, 1024.0), (4, 1024.0)]),
+        myhomelab_metric::metrics!("system.memory.used", gauge, "host" => "rpi", [(0, 256.0), (1, 312.0), (2, 420.0), (3, 320.0), (4, 430.0)])
+    ]
+    .concat()).await.unwrap();
 }
 
 #[tokio::test]

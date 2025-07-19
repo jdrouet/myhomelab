@@ -9,7 +9,7 @@ pub(super) async fn handle<S: crate::ServerState>(
     Json(payload): Json<Payload>,
 ) -> StatusCode {
     let metrics = payload.into_metrics().collect::<Vec<_>>();
-    match state.metric_intake().ingest(metrics).await {
+    match state.metric_intake().ingest(&metrics).await {
         Ok(_) => StatusCode::CREATED,
         Err(err) => {
             tracing::error!(message = "unable to ingest metrics", cause = ?err);
