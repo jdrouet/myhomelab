@@ -1,5 +1,6 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 use anyhow::Context;
 use btleplug::api::{Central, CentralEvent, CentralState, Manager, Peripheral, ScanFilter};
@@ -7,6 +8,7 @@ use btleplug::platform::PeripheralId;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::BuildContext;
 use tokio::sync::RwLock;
+use tokio::time::Interval;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 
@@ -18,7 +20,33 @@ pub mod device;
 // const DEVICE: &str = "xiaomi-miflora";
 
 #[derive(Debug, serde::Deserialize)]
-pub struct MifloraReaderConfig {}
+pub struct MifloraReaderConfig {
+    #[serde(default = "MifloraReaderConfig::default_check_interval")]
+    check_interval: u64,
+    #[serde(default = "MifloraReaderConfig::default_sync_interval")]
+    sync_interval: u64,
+}
+
+impl MifloraReaderConfig {
+    const fn default_check_interval() -> u64 {
+        // every hour
+        1000 * 60 * 60
+    }
+
+    const fn default_sync_interval() -> u64 {
+        // every day
+        1000 * 60 * 60 * 24
+    }
+}
+
+impl Default for MifloraReaderConfig {
+    fn default() -> Self {
+        Self {
+            check_interval: Self::default_check_interval(),
+            sync_interval: Self::default_sync_interval(),
+        }
+    }
+}
 
 impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
     type Output = MifloraReader;
@@ -36,10 +64,12 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
             .nth(0)
             .ok_or_else(|| anyhow::anyhow!("no bluetooth adapter found"))?;
 
-        let memory: Arc<RwLock<HashSet<PeripheralId>>> = Default::default();
+        let memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>> = Default::default();
         let runner = MifloraRunner {
             adapter,
             cancel: ctx.cancel.child_token(),
+            check_interval: tokio::time::interval(Duration::from_millis(self.check_interval)),
+            sync_interval: Duration::from_millis(self.sync_interval),
             memory: memory.clone(),
         };
         let task = tokio::task::spawn(async move { runner.run().await });
@@ -50,13 +80,15 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
 struct MifloraRunner {
     adapter: btleplug::platform::Adapter,
     cancel: CancellationToken,
-    memory: Arc<RwLock<HashSet<PeripheralId>>>,
+    check_interval: Interval,
+    sync_interval: Duration,
+    memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>>,
 }
 
 impl MifloraRunner {
     #[tracing::instrument(skip(self), err)]
     async fn handle_discovered(&self, id: &PeripheralId) -> anyhow::Result<()> {
-        if self.memory.read().await.contains(&id) {
+        if self.memory.read().await.contains_key(&id) {
             tracing::trace!("known peripheral, skipping");
             return Ok(());
         }
@@ -74,13 +106,33 @@ impl MifloraRunner {
             return Ok(());
         };
         if name == "Flower care" {
-            self.memory.write().await.insert(id.clone());
+            let mut memory = self.memory.write().await;
+            if memory.insert(id.clone(), Default::default()).is_none() {
+                tracing::debug!("discovered new device");
+            }
         }
         Ok(())
     }
 
     #[tracing::instrument(skip(self), err)]
-    async fn scan(&self) -> anyhow::Result<()> {
+    async fn handle_check(&self) -> anyhow::Result<()> {
+        let peripheral_ids = self
+            .memory
+            .read()
+            .await
+            .iter()
+            .filter(|(_, history)| history.should_sync(self.sync_interval))
+            .map(|(key, _)| key.clone())
+            .collect::<Vec<_>>();
+        for peripheral_id in peripheral_ids {
+            // TODO
+            tracing::info!("synchronize {peripheral_id}");
+        }
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn scan(&mut self) -> anyhow::Result<()> {
         self.adapter
             .start_scan(ScanFilter::default())
             .await
@@ -114,12 +166,15 @@ impl MifloraRunner {
                     tracing::trace!("cancellation requested");
                     // nothing to do, the loop will abort
                 }
+                _ = self.check_interval.tick() => {
+                    let _ = self.handle_check().await;
+                }
             }
         }
         Ok(())
     }
 
-    async fn run(&self) -> anyhow::Result<()> {
+    async fn run(mut self) -> anyhow::Result<()> {
         tracing::info!("starting");
         while !self.cancel.is_cancelled() {
             self.scan().await?;
@@ -132,12 +187,24 @@ impl MifloraRunner {
 #[derive(Debug)]
 pub struct MifloraReader {
     #[allow(unused)]
-    memory: Arc<RwLock<HashSet<PeripheralId>>>,
+    memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>>,
     task: tokio::task::JoinHandle<anyhow::Result<()>>,
 }
 
 impl myhomelab_agent_prelude::reader::Reader for MifloraReader {
     async fn wait(self) -> anyhow::Result<()> {
         self.task.await?
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+struct DeviceHistory {
+    last_sync: Option<SystemTime>,
+}
+
+impl DeviceHistory {
+    fn should_sync(&self, sync_interval: Duration) -> bool {
+        self.last_sync
+            .map_or(true, |last| last + sync_interval < SystemTime::now())
     }
 }
