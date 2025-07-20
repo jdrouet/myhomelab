@@ -55,8 +55,16 @@ async fn shutdown_signal(cancel: CancellationToken) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[derive(Debug, Default, serde::Deserialize)]
+struct AdapterConfig {
+    #[serde(default)]
+    sqlite: SqliteConfig,
+}
+
 #[derive(Debug, serde::Deserialize)]
 struct ServerConfig {
+    #[serde(default)]
+    adapters: AdapterConfig,
     #[serde(default)]
     http: myhomelab_adapter_http_server::HttpServerConfig,
     #[serde(default)]
@@ -64,15 +72,19 @@ struct ServerConfig {
 }
 
 impl ServerConfig {
-    fn from_env() -> anyhow::Result<Self> {
-        let settings = config::Config::builder()
-            .add_source(
-                config::Environment::default()
-                    .separator("__")
-                    .list_separator(","),
-            )
-            .build()
-            .context("unable to build config")?;
+    fn build(path: Option<String>) -> anyhow::Result<Self> {
+        let settings = config::Config::builder();
+        let settings = if let Some(ref path) = path {
+            settings.add_source(config::File::with_name(path))
+        } else {
+            settings
+        };
+        let settings = settings.add_source(
+            config::Environment::default()
+                .separator("__")
+                .list_separator(","),
+        );
+        let settings = settings.build().context("unable to build config")?;
         settings
             .try_deserialize()
             .context("unable to deserialize config")
@@ -86,8 +98,8 @@ async fn main() -> anyhow::Result<()> {
     let file_config = AdapterFileConfig::from_env()?;
     let file = file_config.build()?;
 
-    let sqlite_config = SqliteConfig::from_env()?;
-    let sqlite = sqlite_config.build().await?;
+    let server_config = ServerConfig::build(std::env::args().nth(1))?;
+    let sqlite = server_config.adapters.sqlite.build().await?;
     sqlite.prepare().await?;
 
     let cancel_token = CancellationToken::new();
@@ -98,7 +110,6 @@ async fn main() -> anyhow::Result<()> {
         },
     };
 
-    let server_config = ServerConfig::from_env()?;
     let manager = server_config.manager.build(&builder_ctx).await?;
 
     let app_state = AppState { file, sqlite };

@@ -235,7 +235,7 @@ impl<'a, P: Peripheral> MiFloraDevice<'a, P> {
             .await
             .context("couldn't read history length")?;
         let entry_count = count_data.first().copied().unwrap_or(0);
-        println!("expecting {entry_count} values");
+        tracing::debug!("expecting {entry_count} values");
 
         let mut entries = Vec::with_capacity(entry_count as usize);
 

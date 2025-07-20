@@ -130,7 +130,16 @@ impl MifloraRunner {
                 force,
                 peripheral_id,
             } => {
-                let _ = self.handle_synchronize(force, peripheral_id).await;
+                if self
+                    .handle_synchronize(force, peripheral_id.clone())
+                    .await
+                    .is_err()
+                {
+                    let _ = self.action_tx.send(Action::Synchronize {
+                        force,
+                        peripheral_id,
+                    });
+                }
             }
             Action::SynchronizeAll { force } => {
                 let _ = self.handle_synchronize_all(force).await;
@@ -164,7 +173,20 @@ impl MifloraRunner {
             tracing::debug!("no need to synchronize device, skipping");
             return Ok(());
         }
-        tracing::warn!("synchro not yet implemented");
+        let peripheral = self
+            .adapter
+            .peripheral(&id)
+            .await
+            .context("getting peripheral")?;
+        peripheral.connect().await.context("connecting")?;
+        let device = crate::device::MiFloraDevice::new(&peripheral)
+            .await
+            .context("creating device")?;
+        let data = device
+            .read_history_data()
+            .await
+            .context("reading history data")?;
+        tracing::warn!(message = "received data", values = ?data);
         // TODO
         Ok(())
     }

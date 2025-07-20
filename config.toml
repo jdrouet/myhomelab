@@ -1,3 +1,12 @@
+[adapters.sqlite]
+path = "./myhomelab.db"
+
+[manager.system]
+enabled = true
+
+[manager.xiaomi_miflora]
+enabled = true
+
 [[dashboards]]
 id = "c6fadbea-4e0d-423f-8451-dbbc20dd1fa1"
 title = "Host system"
@@ -7,12 +16,12 @@ description = "Metrics of the host running MyHomeLab"
 title = "CPU usage"
 width = "medium"
 height = "medium"
-type = { name = "timeseries", period = 300 }              # 5min period
+type = { name = "timeseries" }                            # 5min period
 query = { name = "system.cpu.usage", aggregator = "avg" }
 
 [[dashboards.cells]]
 title = "Memory usage"
 width = "medium"
 height = "medium"
-type = { name = "timeseries", period = 300 }                # 5min period
+type = { name = "timeseries" }                              # 5min period
 query = { name = "system.memory.used", aggregator = "avg" }

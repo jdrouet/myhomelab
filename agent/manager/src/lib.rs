@@ -9,21 +9,23 @@ pub struct ConfigWrapper<T> {
     pub inner: T,
 }
 
+impl<T: ReaderBuilder> ConfigWrapper<T> {
+    async fn build<C: Collector>(
+        &self,
+        ctx: &BuildContext<C>,
+    ) -> anyhow::Result<Option<T::Output>> {
+        if self.enabled {
+            self.inner.build(ctx).await.map(Some)
+        } else {
+            Ok(None)
+        }
+    }
+}
+
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct ManagerConfig {
     system: ConfigWrapper<myhomelab_agent_reader_system::SystemReaderConfig>,
-}
-
-impl ManagerConfig {
-    async fn build_system<C: Collector>(
-        &self,
-        ctx: &BuildContext<C>,
-    ) -> anyhow::Result<Option<myhomelab_agent_reader_system::SystemReader>> {
-        if !self.system.enabled {
-            return Ok(None);
-        }
-        self.system.inner.build(ctx).await.map(Some)
-    }
+    xiaomi_miflora: ConfigWrapper<myhomelab_agent_reader_xiaomi_miflora::MifloraReaderConfig>,
 }
 
 impl myhomelab_agent_prelude::reader::ReaderBuilder for ManagerConfig {
@@ -31,7 +33,8 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for ManagerConfig {
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         Ok(Manager {
-            system: self.build_system(ctx).await?,
+            system: self.system.build(ctx).await?,
+            xiaomi_miflora: self.xiaomi_miflora.build(ctx).await?,
         })
     }
 }
@@ -39,6 +42,7 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for ManagerConfig {
 #[derive(Debug)]
 pub struct Manager {
     system: Option<myhomelab_agent_reader_system::SystemReader>,
+    xiaomi_miflora: Option<myhomelab_agent_reader_xiaomi_miflora::MifloraReader>,
 }
 
 impl myhomelab_agent_prelude::reader::Reader for Manager {
@@ -49,6 +53,11 @@ impl myhomelab_agent_prelude::reader::Reader for Manager {
         let mut errors = Vec::default();
         if let Some(system) = self.system {
             if let Err(err) = system.wait().await {
+                errors.push(err);
+            }
+        }
+        if let Some(xiaomi_miflora) = self.xiaomi_miflora {
+            if let Err(err) = xiaomi_miflora.wait().await {
                 errors.push(err);
             }
         }

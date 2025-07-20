@@ -3,22 +3,15 @@ mod query;
 
 static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Deserialize)]
 pub struct SqliteConfig {
-    pub url: Option<String>,
-}
-
-impl myhomelab_prelude::FromEnv for SqliteConfig {
-    fn from_env() -> anyhow::Result<Self> {
-        Ok(Self {
-            url: std::env::var("MYHOMELAB_SQLITE_PATH").ok(),
-        })
-    }
+    #[serde(default)]
+    pub path: Option<String>,
 }
 
 impl SqliteConfig {
     pub async fn build(&self) -> sqlx::Result<Sqlite> {
-        match self.url.as_deref() {
+        match self.path.as_deref() {
             None | Some(":memory:") => sqlx::sqlite::SqlitePoolOptions::new()
                 .min_connections(1)
                 .max_connections(1)
