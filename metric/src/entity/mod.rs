@@ -98,59 +98,6 @@ impl std::fmt::Display for MetricHeader {
     }
 }
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
-pub struct Metric {
-    #[serde(flatten)]
-    pub header: MetricHeader,
-    pub timestamp: u64,
-    pub value: value::MetricValue,
-}
-
-impl Metric {
-    pub fn as_counter(&self) -> Option<MetricRef<'_, value::CounterValue>> {
-        match self.value {
-            value::MetricValue::Counter(value) => Some(MetricRef {
-                header: Cow::Borrowed(&self.header),
-                timestamp: self.timestamp,
-                value,
-            }),
-            _ => None,
-        }
-    }
-
-    pub fn as_gauge(&self) -> Option<MetricRef<'_, value::GaugeValue>> {
-        match self.value {
-            value::MetricValue::Gauge(value) => Some(MetricRef {
-                header: Cow::Borrowed(&self.header),
-                timestamp: self.timestamp,
-                value,
-            }),
-            _ => None,
-        }
-    }
-}
-
-impl crate::prelude::MetricFacade for Metric {
-    fn name(&self) -> &str {
-        &self.header.name
-    }
-    fn tags(&self) -> &impl serde::Serialize {
-        &self.header.tags
-    }
-    fn timestamp(&self) -> u64 {
-        self.timestamp
-    }
-    fn value(&self) -> value::MetricValue {
-        self.value
-    }
-}
-
-impl std::fmt::Display for Metric {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {} {}", self.header, self.timestamp, self.value)
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct MetricRef<'a, V = MetricValue> {
     pub header: Cow<'a, MetricHeader>,
