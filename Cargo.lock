@@ -1572,6 +1572,7 @@ dependencies = [
  "derive_more",
  "myhomelab-agent-prelude",
  "myhomelab-agent-reader-system",
+ "myhomelab-agent-reader-xiaomi-lywsd03mmc-atc",
  "myhomelab-agent-reader-xiaomi-miflora",
  "myhomelab-metric",
  "myhomelab-prelude",

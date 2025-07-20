@@ -25,6 +25,8 @@ impl<T: ReaderBuilder> ConfigWrapper<T> {
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct ManagerConfig {
     system: ConfigWrapper<myhomelab_agent_reader_system::SystemReaderConfig>,
+    xiaomi_lywsd03mmc_atc:
+        ConfigWrapper<myhomelab_agent_reader_xiaomi_lywsd03mmc_atc::SensorConfig>,
     xiaomi_miflora: ConfigWrapper<myhomelab_agent_reader_xiaomi_miflora::MifloraReaderConfig>,
 }
 
@@ -34,6 +36,7 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for ManagerConfig {
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         Ok(Manager {
             system: self.system.build(ctx).await?,
+            xiaomi_lywsd03mmc_atc: self.xiaomi_lywsd03mmc_atc.build(ctx).await?,
             xiaomi_miflora: self.xiaomi_miflora.build(ctx).await?,
         })
     }
@@ -42,6 +45,7 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for ManagerConfig {
 #[derive(Debug)]
 pub struct Manager {
     system: Option<myhomelab_agent_reader_system::SystemReader>,
+    xiaomi_lywsd03mmc_atc: Option<myhomelab_agent_reader_xiaomi_lywsd03mmc_atc::SensorReader>,
     xiaomi_miflora: Option<myhomelab_agent_reader_xiaomi_miflora::MifloraReader>,
 }
 
@@ -51,13 +55,18 @@ impl myhomelab_agent_prelude::reader::Reader for Manager {
         Self: Sized,
     {
         let mut errors = Vec::default();
-        if let Some(system) = self.system {
-            if let Err(err) = system.wait().await {
+        if let Some(sensor) = self.system {
+            if let Err(err) = sensor.wait().await {
                 errors.push(err);
             }
         }
-        if let Some(xiaomi_miflora) = self.xiaomi_miflora {
-            if let Err(err) = xiaomi_miflora.wait().await {
+        if let Some(sensor) = self.xiaomi_lywsd03mmc_atc {
+            if let Err(err) = sensor.wait().await {
+                errors.push(err);
+            }
+        }
+        if let Some(sensor) = self.xiaomi_miflora {
+            if let Err(err) = sensor.wait().await {
                 errors.push(err);
             }
         }
