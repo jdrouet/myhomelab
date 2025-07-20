@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use myhomelab_metric::entity::value::{CounterValue, GaugeValue, MetricValue};
-use myhomelab_metric::entity::{MetricHeader, Metric};
+use myhomelab_metric::entity::{Metric, MetricHeader};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Metrics<'h, V> {
@@ -11,21 +11,27 @@ pub struct Metrics<'h, V> {
 }
 
 impl<'h> Metrics<'h, CounterValue> {
-    fn iter(&'h self) -> impl Iterator<Item = Metric<'h, MetricValue>> {
+    fn iter<'a>(&'h self) -> impl Iterator<Item = Metric<'a, MetricValue>>
+    where
+        'h: 'a,
+    {
         self.values.iter().map(|(timestamp, value)| Metric {
-            header: self.header.clone(),
+            header: Cow::Borrowed(&self.header),
             timestamp,
-            value: value.into(),
+            value,
         })
     }
 }
 
 impl<'h> Metrics<'h, GaugeValue> {
-    fn iter(&'h self) -> impl Iterator<Item = Metric<'h, MetricValue>> {
+    fn iter<'a>(&'h self) -> impl Iterator<Item = Metric<'a, MetricValue>>
+    where
+        'h: 'a,
+    {
         self.values.iter().map(|(timestamp, value)| Metric {
-            header: self.header.clone(),
+            header: Cow::Borrowed(&self.header),
             timestamp,
-            value: value.into(),
+            value,
         })
     }
 }
