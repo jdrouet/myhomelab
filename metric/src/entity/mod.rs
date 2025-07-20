@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 
+use value::MetricValue;
+
 pub mod tag;
 pub mod value;
 
@@ -128,6 +130,21 @@ impl Metric {
     }
 }
 
+impl crate::prelude::MetricFacade for Metric {
+    fn name(&self) -> &str {
+        &self.header.name
+    }
+    fn tags(&self) -> &impl serde::Serialize {
+        &self.header.tags
+    }
+    fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
+    fn value(&self) -> value::MetricValue {
+        self.value
+    }
+}
+
 impl std::fmt::Display for Metric {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {} {}", self.header, self.timestamp, self.value)
@@ -139,6 +156,21 @@ pub struct MetricRef<'a, V> {
     pub header: &'a MetricHeader,
     pub timestamp: u64,
     pub value: &'a V,
+}
+
+impl<'a> crate::prelude::MetricFacade for MetricRef<'a, MetricValue> {
+    fn name(&self) -> &str {
+        &self.header.name
+    }
+    fn tags(&self) -> &impl serde::Serialize {
+        &self.header.tags
+    }
+    fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
+    fn value(&self) -> value::MetricValue {
+        *self.value
+    }
 }
 
 #[cfg(feature = "macros")]

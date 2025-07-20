@@ -18,11 +18,23 @@ impl From<f64> for GaugeValue {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(tag = "type", content = "value")]
 pub enum MetricValue {
     Counter(CounterValue),
     Gauge(GaugeValue),
+}
+
+impl From<CounterValue> for MetricValue {
+    fn from(value: CounterValue) -> Self {
+        Self::Counter(value)
+    }
+}
+
+impl From<GaugeValue> for MetricValue {
+    fn from(value: GaugeValue) -> Self {
+        Self::Gauge(value)
+    }
 }
 
 impl MetricValue {

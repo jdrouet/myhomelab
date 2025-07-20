@@ -1,17 +1,17 @@
 use anyhow::Context;
-use myhomelab_metric::entity::Metric;
+use myhomelab_metric::{entity::Metric, prelude::MetricFacade};
 
 impl myhomelab_metric::intake::Intake for crate::Sqlite {
     async fn ingest(&self, values: &[Metric]) -> anyhow::Result<()> {
         let mut count: usize = 0;
         let mut builder: sqlx::QueryBuilder<'_, sqlx::Sqlite> =
             sqlx::QueryBuilder::new("INSERT INTO metrics (name, tags, timestamp, value) ");
-        builder.push_values(values.into_iter(), |mut acc, item| {
+        builder.push_values(values.iter(), |mut acc, item| {
             count += 1;
-            acc.push_bind(&item.header.name)
-                .push_bind(sqlx::types::Json(&item.header.tags))
-                .push_bind(item.timestamp as i64)
-                .push_bind(sqlx::types::Json(&item.value));
+            acc.push_bind(item.name())
+                .push_bind(sqlx::types::Json(item.tags()))
+                .push_bind(item.timestamp() as i64)
+                .push_bind(sqlx::types::Json(item.value()));
         });
         if count > 0 {
             builder

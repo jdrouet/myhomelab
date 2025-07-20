@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use myhomelab_metric::entity::value::MetricValue;
+use myhomelab_metric::entity::value::{CounterValue, GaugeValue, MetricValue};
 use myhomelab_metric::entity::{Metric, MetricHeader};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
@@ -9,22 +9,22 @@ pub struct Metrics<V> {
     pub values: MetricValues<V>,
 }
 
-impl Metrics<u64> {
+impl Metrics<CounterValue> {
     fn into_metrics(self) -> impl Iterator<Item = Metric> {
         self.values.map(move |(timestamp, value)| Metric {
             header: self.header.clone(),
             timestamp,
-            value: MetricValue::counter(value),
+            value: value.into(),
         })
     }
 }
 
-impl Metrics<f64> {
+impl Metrics<GaugeValue> {
     fn into_metrics(self) -> impl Iterator<Item = Metric> {
         self.values.map(move |(timestamp, value)| Metric {
             header: self.header.clone(),
             timestamp,
-            value: MetricValue::gauge(value),
+            value: value.into(),
         })
     }
 }
@@ -32,25 +32,26 @@ impl Metrics<f64> {
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Payload {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub counters: Vec<Metrics<u64>>,
+    pub counters: Vec<Metrics<CounterValue>>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub gauges: Vec<Metrics<f64>>,
+    pub gauges: Vec<Metrics<GaugeValue>>,
 }
 
 impl Payload {
     pub fn from_metrics<'a>(metrics: impl Iterator<Item = &'a Metric>) -> Self {
-        let mut counters: HashMap<&'a MetricHeader, MetricValues<u64>> = Default::default();
-        let mut gauges: HashMap<&'a MetricHeader, MetricValues<f64>> = Default::default();
+        let mut counters: HashMap<&'a MetricHeader, MetricValues<CounterValue>> =
+            Default::default();
+        let mut gauges: HashMap<&'a MetricHeader, MetricValues<GaugeValue>> = Default::default();
         metrics.into_iter().for_each(|item| match item.value {
             MetricValue::Counter(inner) => {
                 let values = counters.entry(&item.header).or_default();
                 values.timestamps.push(item.timestamp);
-                values.values.push(inner.0);
+                values.values.push(inner);
             }
             MetricValue::Gauge(inner) => {
                 let values = gauges.entry(&item.header).or_default();
                 values.timestamps.push(item.timestamp);
-                values.values.push(inner.0);
+                values.values.push(inner);
             }
         });
         Self {
@@ -75,10 +76,19 @@ impl Payload {
     }
 }
 
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct MetricValues<V> {
     pub timestamps: Vec<u64>,
     pub values: Vec<V>,
+}
+
+impl<V: Into<MetricValue>> Default for MetricValues<V> {
+    fn default() -> Self {
+        Self {
+            timestamps: Vec::new(),
+            values: Vec::new(),
+        }
+    }
 }
 
 impl<V> Iterator for MetricValues<V> {
