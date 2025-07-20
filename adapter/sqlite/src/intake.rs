@@ -29,36 +29,37 @@ impl myhomelab_metric::intake::Intake for crate::Sqlite {
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::Cow;
-
+    use myhomelab_metric::entity::Metric;
     use myhomelab_metric::entity::value::MetricValue;
-    use myhomelab_metric::entity::{MetricHeader, Metric};
     use myhomelab_metric::intake::Intake;
 
     #[tokio::test]
     async fn should_ingest_only_counters() {
         let sqlite = crate::SqliteConfig::default().build().await.unwrap();
         sqlite.prepare().await.unwrap();
-        let header = MetricHeader::new("foo", Default::default());
         sqlite
             .ingest(&[
                 Metric {
-                    header: Cow::Borrowed(&header),
+                    name: "foo".into(),
+                    tags: Default::default(),
                     timestamp: 0,
                     value: MetricValue::counter(42),
                 },
                 Metric {
-                    header: Cow::Borrowed(&header),
+                    name: "foo".into(),
+                    tags: Default::default(),
                     timestamp: 1,
                     value: MetricValue::counter(41),
                 },
                 Metric {
-                    header: Cow::Borrowed(&header),
+                    name: "foo".into(),
+                    tags: Default::default(),
                     timestamp: 2,
                     value: MetricValue::counter(43),
                 },
                 Metric {
-                    header: Cow::Borrowed(&header),
+                    name: "foo".into(),
+                    tags: Default::default(),
                     timestamp: 3,
                     value: MetricValue::counter(45),
                 },
@@ -71,32 +72,35 @@ mod tests {
     async fn should_ingest_only_gauges() {
         let sqlite = crate::SqliteConfig::default().build().await.unwrap();
         sqlite.prepare().await.unwrap();
-        let foo = MetricHeader::new("foo", Default::default());
-        let bar = MetricHeader::new("foo", Default::default());
         sqlite
             .ingest(&[
                 Metric {
-                    header: Cow::Borrowed(&foo),
+                    name: "foo".into(),
+                    tags: Default::default(),
                     timestamp: 0,
                     value: MetricValue::gauge(1.1),
                 },
                 Metric {
-                    header: Cow::Borrowed(&foo),
+                    name: "foo".into(),
+                    tags: Default::default(),
                     timestamp: 1,
                     value: MetricValue::gauge(1.2),
                 },
                 Metric {
-                    header: Cow::Borrowed(&foo),
+                    name: "foo".into(),
+                    tags: Default::default(),
                     timestamp: 2,
                     value: MetricValue::gauge(-2.0),
                 },
                 Metric {
-                    header: Cow::Borrowed(&foo),
+                    name: "foo".into(),
+                    tags: Default::default(),
                     timestamp: 3,
                     value: MetricValue::gauge(4.1),
                 },
                 Metric {
-                    header: Cow::Borrowed(&bar),
+                    name: "bar".into(),
+                    tags: Default::default(),
                     timestamp: 4,
                     value: MetricValue::gauge(6.1),
                 },
@@ -112,12 +116,14 @@ mod tests {
         sqlite
             .ingest(&[
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("foo", Default::default())),
+                    name: "foo".into(),
+                    tags: Default::default(),
                     timestamp: 0,
                     value: MetricValue::counter(42),
                 },
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("bar", Default::default())),
+                    name: "bar".into(),
+                    tags: Default::default(),
                     timestamp: 1,
                     value: MetricValue::gauge(42.0),
                 },

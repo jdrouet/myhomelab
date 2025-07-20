@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 
+use tag::TagValue;
 use value::MetricValue;
 
 pub mod tag;
@@ -14,6 +15,14 @@ impl MetricTags {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
+    }
+
+    pub fn get(&self, name: &str) -> Option<&TagValue> {
+        self.0.get(name)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&str, &TagValue)> {
+        self.0.iter().map(|(key, value)| (key.as_ref(), value))
     }
 
     pub fn set_tag<N, V>(&mut self, name: N, value: V)
@@ -68,19 +77,15 @@ impl std::fmt::Display for MetricTags {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, serde::Deserialize, serde::Serialize)]
-pub struct MetricHeader {
-    pub name: Cow<'static, str>,
-    #[serde(default, skip_serializing_if = "MetricTags::is_empty")]
-    pub tags: MetricTags,
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MetricHeader<'h> {
+    pub name: &'h str,
+    pub tags: &'h MetricTags,
 }
 
-impl MetricHeader {
-    pub fn new(name: impl Into<Cow<'static, str>>, tags: MetricTags) -> Self {
-        Self {
-            name: name.into(),
-            tags,
-        }
+impl<'h> MetricHeader<'h> {
+    pub fn new(name: &'h str, tags: &'h MetricTags) -> Self {
+        Self { name, tags }
     }
 
     pub fn tag(&self, name: &str) -> Option<&tag::TagValue> {
@@ -92,7 +97,7 @@ impl MetricHeader {
     }
 }
 
-impl std::fmt::Display for MetricHeader {
+impl<'h> std::fmt::Display for MetricHeader<'h> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}{{{}}}", self.name, self.tags)
     }
@@ -100,23 +105,41 @@ impl std::fmt::Display for MetricHeader {
 
 #[derive(Clone, Debug)]
 pub struct Metric<'a, V = MetricValue> {
-    pub header: Cow<'a, MetricHeader>,
+    pub name: Cow<'a, str>,
+    pub tags: Cow<'a, MetricTags>,
     pub timestamp: u64,
     pub value: V,
 }
 
+impl<'a> Metric<'a> {
+    pub fn as_borrowed(&'a self) -> Metric<'a> {
+        Metric {
+            name: Cow::Borrowed(&self.name),
+            tags: Cow::Borrowed(&self.tags),
+            timestamp: self.timestamp,
+            value: self.value,
+        }
+    }
+}
+
 impl std::fmt::Display for Metric<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {} {}", self.header, self.timestamp, self.value)
+        write!(
+            f,
+            "{} {} {}",
+            MetricHeader::new(&self.name, &self.tags),
+            self.timestamp,
+            self.value
+        )
     }
 }
 
 impl<'a> crate::prelude::MetricFacade for Metric<'a> {
     fn name(&self) -> &str {
-        &self.header.name
+        &self.name
     }
     fn tags(&self) -> &impl serde::Serialize {
-        &self.header.tags
+        &self.tags
     }
     fn timestamp(&self) -> u64 {
         self.timestamp
@@ -140,12 +163,11 @@ macro_rules! metrics {
             $(
                 tags.set_tag($tag_key, $tag_val);
             )+
-            let mut header = myhomelab_metric::entity::MetricHeader::new($name, tags);
-
             vec![
                 $(
                     myhomelab_metric::entity::Metric {
-                        header: std::borrow::Cow::Owned(header.clone()),
+                        name: $name.into(),
+                        tags: std::borrow::Cow::Owned(tags.clone()),
                         timestamp: $timestamp,
                         value: myhomelab_metric::entity::value::MetricValue::$val_ty($value),
                     }
@@ -162,17 +184,17 @@ mod tests {
     #[test]
     fn should_format_metric_headers() {
         assert_eq!(
-            MetricHeader::new("foo", Default::default()).to_string(),
+            MetricHeader::new("foo", &Default::default()).to_string(),
             "foo{}"
         );
         assert_eq!(
-            MetricHeader::new("foo", MetricTags::default().with_tag("hello", "world")).to_string(),
+            MetricHeader::new("foo", &MetricTags::default().with_tag("hello", "world")).to_string(),
             "foo{hello=\"world\"}"
         );
         assert_eq!(
             MetricHeader::new(
                 "foo",
-                MetricTags::default()
+                &MetricTags::default()
                     .with_tag("hello", 42i64)
                     .with_tag("world", "bar")
             )

@@ -4,7 +4,7 @@ use std::time::Duration;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::{BasicTaskReader, BuildContext};
 use myhomelab_metric::entity::value::MetricValue;
-use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
+use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
 use sysinfo::System;
 use tokio_util::sync::CancellationToken;
@@ -53,32 +53,30 @@ struct SystemRunner<C> {
 
 impl<C: Collector> SystemRunner<C> {
     async fn collect_cpu(&self, host: &str, timestamp: u64) -> anyhow::Result<()> {
-        let mut metrics = Vec::with_capacity(self.system.cpus().len() * 2);
-        self.system
-            .cpus()
-            .iter()
-            .enumerate()
-            .for_each(|(index, cpu)| {
-                let tags = MetricTags::default()
-                    .with_tag("host", host)
-                    .with_tag("index", index as i64)
-                    .with_tag("cpu_name", cpu.name())
-                    .with_tag("cpu_brand", cpu.brand())
-                    .with_tag("cpu_vendor_id", cpu.vendor_id());
-                metrics.extend_from_slice(&[
+        for (index, cpu) in self.system.cpus().iter().enumerate() {
+            let tags = MetricTags::default()
+                .with_tag("host", host)
+                .with_tag("index", index as i64)
+                .with_tag("cpu_name", cpu.name())
+                .with_tag("cpu_brand", cpu.brand())
+                .with_tag("cpu_vendor_id", cpu.vendor_id());
+            self.collector
+                .push_metrics(&[
                     Metric {
-                        header: Cow::Owned(MetricHeader::new("system.cpu.frequency", tags.clone())),
+                        name: "system.cpu.frequency".into(),
+                        tags: Cow::Borrowed(&tags),
                         timestamp,
                         value: MetricValue::gauge(cpu.frequency() as f64),
                     },
                     Metric {
-                        header: Cow::Owned(MetricHeader::new("system.cpu.usage", tags)),
+                        name: "system.cpu.usage".into(),
+                        tags: Cow::Borrowed(&tags),
                         timestamp,
                         value: MetricValue::gauge(cpu.cpu_usage() as f64),
                     },
-                ]);
-            });
-        self.collector.push_metrics(&metrics).await?;
+                ])
+                .await?;
+        }
         Ok(())
     }
 
@@ -87,22 +85,26 @@ impl<C: Collector> SystemRunner<C> {
         self.collector
             .push_metrics(&[
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("system.memory.total", tags.clone())),
+                    name: "system.memory.total".into(),
+                    tags: Cow::Borrowed(&tags),
                     timestamp,
                     value: MetricValue::gauge(self.system.total_memory() as f64),
                 },
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("system.memory.used", tags.clone())),
+                    name: "system.memory.used".into(),
+                    tags: Cow::Borrowed(&tags),
                     timestamp,
                     value: MetricValue::gauge(self.system.used_memory() as f64),
                 },
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("system.swap.total", tags.clone())),
+                    name: "system.swap.total".into(),
+                    tags: Cow::Borrowed(&tags),
                     timestamp,
                     value: MetricValue::gauge(self.system.total_swap() as f64),
                 },
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("system.swap.used", tags.clone())),
+                    name: "system.swap.used".into(),
+                    tags: Cow::Borrowed(&tags),
                     timestamp,
                     value: MetricValue::gauge(self.system.used_swap() as f64),
                 },

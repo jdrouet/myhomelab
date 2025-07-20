@@ -10,7 +10,7 @@ use lru::LruCache;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::{BasicTaskReader, BuildContext, ReaderBuilder};
 use myhomelab_metric::entity::value::MetricValue;
-use myhomelab_metric::entity::{MetricHeader, Metric, MetricTags};
+use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -98,7 +98,8 @@ impl<C: Collector> SensorRunner<C> {
         }
         let metrics = values
             .map(|(name, value)| Metric {
-                header: Cow::Owned(MetricHeader::new(name, tags.clone())),
+                name: name.into(),
+                tags: Cow::Borrowed(&tags),
                 timestamp,
                 value: MetricValue::gauge(value),
             })

@@ -9,7 +9,7 @@ use btleplug::platform::PeripheralId;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::BuildContext;
 use myhomelab_metric::entity::value::MetricValue;
-use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
+use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
 use tokio::sync::RwLock;
 use tokio::time::Interval;
@@ -217,27 +217,32 @@ impl<C: Collector> MifloraRunner<C> {
             .collector
             .push_metrics(&[
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("device.battery", tags.clone())),
+                    name: "device.battery".into(),
+                    tags: Cow::Borrowed(&tags),
                     timestamp: now,
                     value: MetricValue::gauge(battery as f64),
                 },
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("measurement.temperature", tags.clone())),
+                    name: "measurement.temperature".into(),
+                    tags: Cow::Borrowed(&tags),
                     timestamp: now,
                     value: MetricValue::gauge(data.temperature),
                 },
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("measurement.moisture", tags.clone())),
+                    name: "measurement.moisture".into(),
+                    tags: Cow::Borrowed(&tags),
                     timestamp: now,
                     value: MetricValue::gauge(data.moisture as f64),
                 },
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("measurement.light", tags.clone())),
+                    name: "measurement.light".into(),
+                    tags: Cow::Borrowed(&tags),
                     timestamp: now,
                     value: MetricValue::gauge(data.light as f64),
                 },
                 Metric {
-                    header: Cow::Owned(MetricHeader::new("measurement.conductivity", tags.clone())),
+                    name: "measurement.conductivity".into(),
+                    tags: Cow::Borrowed(&tags),
                     timestamp: now,
                     value: MetricValue::gauge(data.conductivity as f64),
                 },

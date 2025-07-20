@@ -1,5 +1,4 @@
 use anyhow::Context;
-use myhomelab_metric::entity::MetricHeader;
 use myhomelab_metric::query::{Query, TimeseriesResponse};
 use myhomelab_prelude::time::TimeRange;
 use sqlx::types::Json;
@@ -13,10 +12,8 @@ impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<TimeseriesResponse> {
         let timestamps: Json<Vec<u64>> = row.try_get(2)?;
         let values: Json<Vec<f64>> = row.try_get(3)?;
         Ok(Wrapper(TimeseriesResponse {
-            header: MetricHeader {
-                name: name.into(),
-                tags: row.try_get(1).map(|Json(value)| value)?,
-            },
+            name: name.into(),
+            tags: row.try_get(1).map(|Json(value)| value)?,
             values: timestamps.0.into_iter().zip(values.0).collect(),
         }))
     }
@@ -38,10 +35,9 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     qb.push(", timestamp");
     qb.push(", json_extract(value, '$.value') as value");
     qb.push(" from metrics");
-    qb.push(" where name = ")
-        .push_bind(query.header.name.as_ref());
+    qb.push(" where name = ").push_bind(query.name.as_ref());
     super::shared::build_timerange_filter(&mut qb, timerange.into_absolute());
-    super::shared::build_tags_filter(&mut qb, query.header.iter_tags());
+    super::shared::build_tags_filter(&mut qb, query.tags.iter());
     qb.push("), aggregated_extractions as (");
     qb.push("select name, tags, timestamp");
     super::shared::build_value_attribute(&mut qb, &query.aggregator);
@@ -60,8 +56,8 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use myhomelab_metric::entity::MetricTags;
     use myhomelab_metric::entity::tag::TagValue;
-    use myhomelab_metric::entity::{MetricHeader, MetricTags};
     use myhomelab_metric::query::Query;
     use myhomelab_prelude::time::AbsoluteTimeRange;
 
@@ -71,7 +67,7 @@ pub(crate) mod tests {
 
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::max(MetricHeader::new("system.cpu", Default::default())),
+            &Query::max("system.cpu", Default::default()),
             &AbsoluteTimeRange::since(0).into(),
             3,
         )
@@ -80,7 +76,7 @@ pub(crate) mod tests {
 
         assert_eq!(res.len(), 1);
         let entry = &res[0];
-        assert_eq!(entry.header.name.as_ref(), "system.cpu");
+        assert_eq!(entry.name.as_ref(), "system.cpu");
         assert!(!entry.values.is_empty());
     }
 
@@ -90,8 +86,7 @@ pub(crate) mod tests {
 
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::max(MetricHeader::new("system.cpu", Default::default()))
-                .with_group_by(["host"].into_iter()),
+            &Query::max("system.cpu", Default::default()).with_group_by(["host"].into_iter()),
             &AbsoluteTimeRange::since(0).into(),
             3,
         )
@@ -100,8 +95,8 @@ pub(crate) mod tests {
 
         assert_eq!(res.len(), 2);
         for entry in &res {
-            assert_eq!(entry.header.name.as_ref(), "system.cpu");
-            assert!(entry.header.tag("host").is_some());
+            assert_eq!(entry.name.as_ref(), "system.cpu");
+            assert!(entry.tags.get("host").is_some());
         }
     }
 
@@ -111,10 +106,10 @@ pub(crate) mod tests {
 
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::min(MetricHeader::new(
+            &Query::min(
                 "system.cpu",
                 MetricTags::default().with_tag("host", "macbook"),
-            )),
+            ),
             &AbsoluteTimeRange::since(0).into(),
             3,
         )
@@ -123,9 +118,9 @@ pub(crate) mod tests {
 
         assert_eq!(res.len(), 1);
         let entry = &res[0];
-        assert_eq!(entry.header.name.as_ref(), "system.cpu");
+        assert_eq!(entry.name.as_ref(), "system.cpu");
         assert_eq!(
-            entry.header.tag("host").unwrap(),
+            entry.tags.get("host").unwrap(),
             &TagValue::Text("macbook".into())
         );
     }
@@ -136,7 +131,7 @@ pub(crate) mod tests {
 
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::sum(MetricHeader::new("system.reboot", MetricTags::default())),
+            &Query::sum("system.reboot", MetricTags::default()),
             &AbsoluteTimeRange::since(0).into(),
             3,
         )
@@ -145,7 +140,7 @@ pub(crate) mod tests {
 
         assert_eq!(res.len(), 1);
         let entry = &res[0];
-        assert_eq!(entry.header.name.as_ref(), "system.reboot");
+        assert_eq!(entry.name.as_ref(), "system.reboot");
         assert!(!entry.values.is_empty());
     }
 
@@ -155,7 +150,7 @@ pub(crate) mod tests {
 
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::sum(MetricHeader::new("nonexistent.metric", Default::default())),
+            &Query::sum("nonexistent.metric", Default::default()),
             &AbsoluteTimeRange::since(0).into(),
             3,
         )

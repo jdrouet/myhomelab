@@ -1,5 +1,4 @@
 use anyhow::Context;
-use myhomelab_metric::entity::MetricHeader;
 use myhomelab_metric::query::{Query, ScalarResponse};
 use myhomelab_prelude::time::TimeRange;
 use sqlx::types::Json;
@@ -11,10 +10,8 @@ impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarResponse> {
     fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
         let name: String = row.try_get(0)?;
         Ok(Wrapper(ScalarResponse {
-            header: MetricHeader {
-                name: name.into(),
-                tags: row.try_get(1).map(|Json(inner)| inner)?,
-            },
+            name: name.into(),
+            tags: row.try_get(1).map(|Json(inner)| inner)?,
             value: row.try_get(2)?,
         }))
     }
@@ -30,10 +27,9 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     super::shared::build_tags_attribute(&mut qb, query);
     qb.push(", json_extract(value, '$.value') as value");
     qb.push(" from metrics");
-    qb.push(" where name = ")
-        .push_bind(query.header.name.as_ref());
+    qb.push(" where name = ").push_bind(query.name.as_ref());
     super::shared::build_timerange_filter(&mut qb, timerange.into_absolute());
-    super::shared::build_tags_filter(&mut qb, query.header.iter_tags());
+    super::shared::build_tags_filter(&mut qb, query.tags.iter());
     qb.push(") select name, tags");
     super::shared::build_value_attribute(&mut qb, &query.aggregator);
     qb.push(" from extractions");
@@ -48,7 +44,7 @@ pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use myhomelab_metric::entity::{MetricHeader, MetricTags};
+    use myhomelab_metric::entity::MetricTags;
     use myhomelab_metric::query::Query;
     use myhomelab_prelude::time::AbsoluteTimeRange;
 
@@ -59,7 +55,7 @@ pub(crate) mod tests {
         // basic
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::max(MetricHeader::new("system.cpu", Default::default())),
+            &Query::max("system.cpu", Default::default()),
             &AbsoluteTimeRange::since(0).into(),
         )
         .await
@@ -76,8 +72,7 @@ pub(crate) mod tests {
         // with group by host
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::max(MetricHeader::new("system.cpu", Default::default()))
-                .with_group_by(["host"].into_iter()),
+            &Query::max("system.cpu", Default::default()).with_group_by(["host"].into_iter()),
             &AbsoluteTimeRange::since(0).into(),
         )
         .await
@@ -93,10 +88,10 @@ pub(crate) mod tests {
         // basic
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::max(MetricHeader::new(
+            &Query::max(
                 "system.cpu",
                 MetricTags::default().with_tag("host", "macbook"),
-            )),
+            ),
             &AbsoluteTimeRange::since(0).into(),
         )
         .await
@@ -113,7 +108,7 @@ pub(crate) mod tests {
         // basic
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::sum(MetricHeader::new("system.reboot", MetricTags::default())),
+            &Query::sum("system.reboot", MetricTags::default()),
             &AbsoluteTimeRange::since(0).into(),
         )
         .await
@@ -129,7 +124,7 @@ pub(crate) mod tests {
 
         let res = super::fetch(
             sqlite.as_ref(),
-            &Query::sum(MetricHeader::new("nonexistent.metric", Default::default())),
+            &Query::sum("nonexistent.metric", Default::default()),
             &AbsoluteTimeRange::since(0).into(),
         )
         .await

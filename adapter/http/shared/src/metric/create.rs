@@ -2,11 +2,12 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use myhomelab_metric::entity::value::{CounterValue, GaugeValue, MetricValue};
-use myhomelab_metric::entity::{Metric, MetricHeader};
+use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Metrics<'h, V> {
-    pub header: Cow<'h, MetricHeader>,
+    pub name: Cow<'h, str>,
+    pub tags: Cow<'h, MetricTags>,
     pub values: MetricValues<V>,
 }
 
@@ -16,7 +17,8 @@ impl<'h> Metrics<'h, CounterValue> {
         'h: 'a,
     {
         self.values.iter().map(|(timestamp, value)| Metric {
-            header: Cow::Borrowed(&self.header),
+            name: Cow::Borrowed(&self.name),
+            tags: Cow::Borrowed(&self.tags),
             timestamp,
             value,
         })
@@ -29,7 +31,8 @@ impl<'h> Metrics<'h, GaugeValue> {
         'h: 'a,
     {
         self.values.iter().map(|(timestamp, value)| Metric {
-            header: Cow::Borrowed(&self.header),
+            name: Cow::Borrowed(&self.name),
+            tags: Cow::Borrowed(&self.tags),
             timestamp,
             value,
         })
@@ -46,28 +49,34 @@ pub struct Payload<'h> {
 
 impl<'h> Payload<'h> {
     pub fn from_metrics(metrics: impl Iterator<Item = &'h Metric<'h, MetricValue>>) -> Self {
-        let mut counters: HashMap<&'h MetricHeader, MetricValues<CounterValue>> =
+        let mut counters: HashMap<MetricHeader<'h>, MetricValues<CounterValue>> =
             Default::default();
-        let mut gauges: HashMap<&'h MetricHeader, MetricValues<GaugeValue>> = Default::default();
+        let mut gauges: HashMap<MetricHeader, MetricValues<GaugeValue>> = Default::default();
         metrics.into_iter().for_each(|item| match item.value {
             MetricValue::Counter(inner) => {
-                let values = counters.entry(&item.header).or_default();
+                let values = counters
+                    .entry(MetricHeader::new(&item.name, &item.tags))
+                    .or_default();
                 values.timestamps.push(item.timestamp);
                 values.values.push(inner);
             }
             MetricValue::Gauge(inner) => {
-                let values = gauges.entry(&item.header).or_default();
+                let values = gauges
+                    .entry(MetricHeader::new(&item.name, &item.tags))
+                    .or_default();
                 values.timestamps.push(item.timestamp);
                 values.values.push(inner);
             }
         });
         Self {
             counters: Vec::from_iter(counters.into_iter().map(|(header, values)| Metrics {
-                header: Cow::Borrowed(header),
+                name: Cow::Borrowed(header.name),
+                tags: Cow::Borrowed(header.tags),
                 values,
             })),
             gauges: Vec::from_iter(gauges.into_iter().map(|(header, values)| Metrics {
-                header: Cow::Borrowed(header),
+                name: Cow::Borrowed(header.name),
+                tags: Cow::Borrowed(header.tags),
                 values,
             })),
         }

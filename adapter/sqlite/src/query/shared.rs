@@ -17,8 +17,8 @@ pub(super) fn build_tags_attribute<'a>(
 ) {
     qb.push(", json_object(");
     for (index, name) in query
-        .header
-        .iter_tags()
+        .tags
+        .iter()
         .map(|(key, _)| key)
         .chain(query.group_by.iter().map(AsRef::as_ref))
         .unique()

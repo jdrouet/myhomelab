@@ -42,7 +42,7 @@ impl QueryExecutor for crate::Sqlite {
 pub(crate) mod tests {
     use std::collections::HashMap;
 
-    use myhomelab_metric::entity::{MetricHeader, MetricTags};
+    use myhomelab_metric::entity::MetricTags;
     use myhomelab_metric::intake::Intake;
     use myhomelab_metric::metrics;
     use myhomelab_metric::query::{Query, QueryExecutor, Request, Response};
@@ -72,38 +72,32 @@ pub(crate) mod tests {
         let mut reqs = HashMap::with_capacity(1);
         reqs.insert(
             Box::from("default"),
-            Request::scalar(Query::sum(MetricHeader::new(
-                "system.reboot",
-                Default::default(),
-            ))),
+            Request::scalar(Query::sum("system.reboot", Default::default())),
         );
         reqs.insert(
             Box::from("reboot-macbook"),
-            Request::scalar(Query::sum(MetricHeader::new(
+            Request::scalar(Query::sum(
                 "system.reboot",
                 MetricTags::default().with_tag("host", "macbook"),
-            ))),
+            )),
         );
         reqs.insert(
             Box::from("reboot-raspberry"),
-            Request::scalar(Query::sum(MetricHeader::new(
+            Request::scalar(Query::sum(
                 "system.reboot",
                 MetricTags::default().with_tag("host", "raspberry"),
-            ))),
+            )),
         );
         reqs.insert(
             Box::from("cpu-global"),
-            Request::timeseries(Query::max(MetricHeader::new(
-                "system.cpu",
-                MetricTags::default(),
-            ))),
+            Request::timeseries(Query::max("system.cpu", MetricTags::default())),
         );
         reqs.insert(
             Box::from("cpu-raspberry"),
-            Request::timeseries(Query::max(MetricHeader::new(
+            Request::timeseries(Query::max(
                 "system.cpu",
                 MetricTags::default().with_tag("host", "raspberry"),
-            ))),
+            )),
         );
 
         let res = sqlite
@@ -126,10 +120,7 @@ pub(crate) mod tests {
         let mut reqs = HashMap::with_capacity(1);
         reqs.insert(
             Box::from("default"),
-            Request::scalar(Query::sum(MetricHeader::new(
-                "nonexistent.metric",
-                Default::default(),
-            ))),
+            Request::scalar(Query::sum("nonexistent.metric", Default::default())),
         );
         let res = sqlite
             .execute(reqs, AbsoluteTimeRange::since(0).into())
@@ -155,7 +146,7 @@ pub(crate) mod tests {
         let mut reqs = HashMap::with_capacity(1);
         reqs.insert(
             Box::from("default"),
-            Request::scalar(Query::sum(MetricHeader::new("system.cpu", tags))),
+            Request::scalar(Query::sum("system.cpu", tags)),
         );
         let res = sqlite
             .execute(reqs, AbsoluteTimeRange::since(0).into())
@@ -178,24 +169,15 @@ pub(crate) mod tests {
         let mut reqs = HashMap::with_capacity(3);
         reqs.insert(
             Box::from("sum_req"),
-            Request::scalar(Query::sum(MetricHeader::new(
-                "system.cpu",
-                Default::default(),
-            ))),
+            Request::scalar(Query::sum("system.cpu", Default::default())),
         );
         reqs.insert(
             Box::from("max_req"),
-            Request::scalar(Query::max(MetricHeader::new(
-                "system.cpu",
-                Default::default(),
-            ))),
+            Request::scalar(Query::max("system.cpu", Default::default())),
         );
         reqs.insert(
             Box::from("min_req"),
-            Request::scalar(Query::min(MetricHeader::new(
-                "system.cpu",
-                Default::default(),
-            ))),
+            Request::scalar(Query::min("system.cpu", Default::default())),
         );
 
         let res = sqlite

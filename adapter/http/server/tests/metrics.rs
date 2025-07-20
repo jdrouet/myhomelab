@@ -5,7 +5,7 @@ use std::sync::atomic::AtomicU16;
 
 use myhomelab_adapter_http_server::ServerState;
 use myhomelab_dashboard::repository::MockDashboardRepo;
-use myhomelab_metric::entity::{MetricHeader, MetricTags};
+use myhomelab_metric::entity::MetricTags;
 use myhomelab_metric::intake::Intake;
 use myhomelab_metric::mock::MockMetric;
 use myhomelab_metric::query::{Query, QueryExecutor, Request};
@@ -128,20 +128,16 @@ async fn should_query_batch_metrics() {
     reqs.insert(
         Box::from("scalar"),
         Request::scalar(Query::new(
-            MetricHeader::new(
-                "system.memory.total",
-                MetricTags::default().with_tag("host", "rpi"),
-            ),
+            "system.memory.total",
+            MetricTags::default().with_tag("host", "rpi"),
             myhomelab_metric::query::Aggregator::Average,
         )),
     );
     reqs.insert(
         Box::from("timeseries"),
         Request::timeseries(Query::new(
-            MetricHeader::new(
-                "system.memory.total",
-                MetricTags::default().with_tag("host", "rpi"),
-            ),
+            "system.memory.total",
+            MetricTags::default().with_tag("host", "rpi"),
             myhomelab_metric::query::Aggregator::Average,
         )),
     );
@@ -182,10 +178,8 @@ async fn should_query_single_metric() {
     reqs.insert(
         Box::from("default"),
         Request::scalar(Query::new(
-            MetricHeader::new(
-                "system.memory.total",
-                MetricTags::default().with_tag("host", "rpi"),
-            ),
+            "system.memory.total",
+            MetricTags::default().with_tag("host", "rpi"),
             myhomelab_metric::query::Aggregator::Average,
         )),
     );
@@ -226,10 +220,8 @@ async fn should_query_single_metrics() {
     reqs.insert(
         Box::from("default"),
         Request::scalar(Query::new(
-            MetricHeader::new(
-                "system.memory.total",
-                MetricTags::default().with_tag("host", "rpi"),
-            ),
+            "system.memory.total",
+            MetricTags::default().with_tag("host", "rpi"),
             myhomelab_metric::query::Aggregator::Average,
         )),
     );
