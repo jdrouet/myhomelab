@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
-use myhomelab_metric::entity::{Metric, value::MetricValue};
+use myhomelab_metric::entity::Metric;
+use myhomelab_metric::entity::value::MetricValue;
 
 macro_rules! unwrap_status_error {
     ($res:expr) => {

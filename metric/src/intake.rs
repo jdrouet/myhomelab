@@ -1,6 +1,7 @@
 use myhomelab_prelude::Healthcheck;
 
-use crate::entity::{Metric, value::MetricValue};
+use crate::entity::Metric;
+use crate::entity::value::MetricValue;
 
 pub trait Intake: Healthcheck {
     fn ingest<'h>(

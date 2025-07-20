@@ -134,21 +134,6 @@ impl std::fmt::Display for Metric<'_> {
     }
 }
 
-impl<'a> crate::prelude::MetricFacade for Metric<'a> {
-    fn name(&self) -> &str {
-        &self.name
-    }
-    fn tags(&self) -> &impl serde::Serialize {
-        &self.tags
-    }
-    fn timestamp(&self) -> u64 {
-        self.timestamp
-    }
-    fn value(&self) -> value::MetricValue {
-        self.value
-    }
-}
-
 #[cfg(feature = "macros")]
 #[macro_export]
 macro_rules! metrics {

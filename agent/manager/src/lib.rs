@@ -1,6 +1,5 @@
 use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::reader::BuildContext;
-use myhomelab_agent_prelude::reader::ReaderBuilder;
+use myhomelab_agent_prelude::reader::{BuildContext, ReaderBuilder};
 
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct ConfigWrapper<T> {
