@@ -87,14 +87,6 @@ impl<'h> MetricHeader<'h> {
     pub fn new(name: &'h str, tags: &'h MetricTags) -> Self {
         Self { name, tags }
     }
-
-    pub fn tag(&self, name: &str) -> Option<&tag::TagValue> {
-        self.tags.0.get(name)
-    }
-
-    pub fn iter_tags(&self) -> impl Iterator<Item = (&str, &tag::TagValue)> {
-        self.tags.0.iter().map(|(key, value)| (key.as_ref(), value))
-    }
 }
 
 impl<'h> std::fmt::Display for MetricHeader<'h> {

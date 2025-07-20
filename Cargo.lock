@@ -1701,6 +1701,7 @@ name = "myhomelab-metric"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "derive_more",
  "mockall",
  "myhomelab-prelude",
  "serde",
