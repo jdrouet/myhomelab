@@ -23,7 +23,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_qs = { workspace = true, features = ["axum", "tracing"] }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
-tower-http = { version = "0.6", features = ["trace"] }
+tower-http = { version = "0.6", features = ["timeout", "trace"] }
 tracing = { workspace = true }
 uuid = { workspace = true }
 

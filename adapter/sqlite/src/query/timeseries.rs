@@ -19,6 +19,7 @@ impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<TimeseriesResponse> {
     }
 }
 
+#[tracing::instrument(skip_all, err)]
 pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     executor: E,
     query: &Query,

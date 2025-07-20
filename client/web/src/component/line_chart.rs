@@ -20,12 +20,14 @@ impl<'a> LineChart<'a> {
     }
 
     fn range_y(&self) -> (f64, f64) {
-        self.data
+        let (min, max) = self
+            .data
             .iter()
             .flat_map(|serie| serie.values.iter().map(|(_, value)| *value))
-            .fold((f64::MAX, f64::MIN), |(prev_min, prev_max), item| {
-                (prev_min.min(item), prev_max.max(item))
-            })
+            .fold((None::<f64>, None::<f64>), |(prev_min, prev_max), item| {
+                (prev_min.map(|v| v.min(item)), prev_max.map(|v| v.max(item)))
+            });
+        (min.unwrap_or(0.0), max.unwrap_or(0.0))
     }
 }
 
@@ -51,9 +53,9 @@ impl<'a> crate::prelude::Component for LineChart<'a> {
             .disable_y_mesh()
             .draw()?;
 
-        for response in self.data.iter() {
-            chart.draw_series(LineSeries::new(response.values.iter().copied(), RED))?;
-        }
+        // for response in self.data.iter() {
+        //     chart.draw_series(LineSeries::new(response.values.iter().copied(), RED))?;
+        // }
 
         drawing_area.present()?;
 
