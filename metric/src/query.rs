@@ -57,6 +57,7 @@ pub enum Aggregator {
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Query {
     pub name: Cow<'static, str>,
+    #[serde(default)]
     pub tags: MetricTags,
     pub aggregator: Aggregator,
     #[serde(default, skip_serializing_if = "HashSet::is_empty")]

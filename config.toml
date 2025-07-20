@@ -7,19 +7,19 @@ enabled = true
 [manager.xiaomi_miflora]
 enabled = true
 
-[[dashboards]]
+[[dataset.dashboards]]
 id = "c6fadbea-4e0d-423f-8451-dbbc20dd1fa1"
 title = "Host system"
 description = "Metrics of the host running MyHomeLab"
 
-[[dashboards.cells]]
+[[dataset.dashboards.cells]]
 title = "CPU usage"
 width = "medium"
 height = "medium"
 type = { name = "timeseries" }                            # 5min period
 query = { name = "system.cpu.usage", aggregator = "avg" }
 
-[[dashboards.cells]]
+[[dataset.dashboards.cells]]
 title = "Memory usage"
 width = "medium"
 height = "medium"
