@@ -1,17 +1,18 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use myhomelab_metric::entity::value::{CounterValue, GaugeValue, MetricValue};
-use myhomelab_metric::entity::{Metric, MetricHeader};
+use myhomelab_metric::entity::{MetricHeader, MetricRef};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
-pub struct Metrics<V> {
-    pub header: MetricHeader,
+pub struct Metrics<'h, V> {
+    pub header: Cow<'h, MetricHeader>,
     pub values: MetricValues<V>,
 }
 
-impl Metrics<CounterValue> {
-    fn into_metrics(self) -> impl Iterator<Item = Metric> {
-        self.values.map(move |(timestamp, value)| Metric {
+impl<'h> Metrics<'h, CounterValue> {
+    fn iter(&'h self) -> impl Iterator<Item = MetricRef<'h, MetricValue>> {
+        self.values.iter().map(|(timestamp, value)| MetricRef {
             header: self.header.clone(),
             timestamp,
             value: value.into(),
@@ -19,9 +20,9 @@ impl Metrics<CounterValue> {
     }
 }
 
-impl Metrics<GaugeValue> {
-    fn into_metrics(self) -> impl Iterator<Item = Metric> {
-        self.values.map(move |(timestamp, value)| Metric {
+impl<'h> Metrics<'h, GaugeValue> {
+    fn iter(&'h self) -> impl Iterator<Item = MetricRef<'h, MetricValue>> {
+        self.values.iter().map(|(timestamp, value)| MetricRef {
             header: self.header.clone(),
             timestamp,
             value: value.into(),
@@ -30,18 +31,18 @@ impl Metrics<GaugeValue> {
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct Payload {
+pub struct Payload<'h> {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub counters: Vec<Metrics<CounterValue>>,
+    pub counters: Vec<Metrics<'h, CounterValue>>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub gauges: Vec<Metrics<GaugeValue>>,
+    pub gauges: Vec<Metrics<'h, GaugeValue>>,
 }
 
-impl Payload {
-    pub fn from_metrics<'a>(metrics: impl Iterator<Item = &'a Metric>) -> Self {
-        let mut counters: HashMap<&'a MetricHeader, MetricValues<CounterValue>> =
+impl<'h> Payload<'h> {
+    pub fn from_metrics(metrics: impl Iterator<Item = &'h MetricRef<'h, MetricValue>>) -> Self {
+        let mut counters: HashMap<&'h MetricHeader, MetricValues<CounterValue>> =
             Default::default();
-        let mut gauges: HashMap<&'a MetricHeader, MetricValues<GaugeValue>> = Default::default();
+        let mut gauges: HashMap<&'h MetricHeader, MetricValues<GaugeValue>> = Default::default();
         metrics.into_iter().for_each(|item| match item.value {
             MetricValue::Counter(inner) => {
                 let values = counters.entry(&item.header).or_default();
@@ -56,23 +57,23 @@ impl Payload {
         });
         Self {
             counters: Vec::from_iter(counters.into_iter().map(|(header, values)| Metrics {
-                header: header.clone(),
+                header: Cow::Borrowed(header),
                 values,
             })),
             gauges: Vec::from_iter(gauges.into_iter().map(|(header, values)| Metrics {
-                header: header.clone(),
+                header: Cow::Borrowed(header),
                 values,
             })),
         }
     }
 }
 
-impl Payload {
-    pub fn into_metrics(self) -> impl Iterator<Item = Metric> {
+impl<'h> Payload<'h> {
+    pub fn metrics(&'h self) -> impl Iterator<Item = MetricRef<'h, MetricValue>> {
         self.counters
-            .into_iter()
-            .flat_map(|item| item.into_metrics())
-            .chain(self.gauges.into_iter().flat_map(|item| item.into_metrics()))
+            .iter()
+            .flat_map(|item| item.iter())
+            .chain(self.gauges.iter().flat_map(|item| item.iter()))
     }
 }
 
@@ -91,13 +92,11 @@ impl<V: Into<MetricValue>> Default for MetricValues<V> {
     }
 }
 
-impl<V> Iterator for MetricValues<V> {
-    type Item = (u64, V);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let ts = self.timestamps.pop()?;
-        let value = self.values.pop()?;
-
-        Some((ts, value))
+impl<V: Copy + Into<MetricValue>> MetricValues<V> {
+    fn iter(&self) -> impl Iterator<Item = (u64, MetricValue)> {
+        self.timestamps
+            .iter()
+            .copied()
+            .zip(self.values.iter().copied().map(Into::into))
     }
 }

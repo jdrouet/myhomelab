@@ -6,9 +6,9 @@ use myhomelab_metric::intake::Intake;
 
 pub(super) async fn handle<S: crate::ServerState>(
     State(state): State<S>,
-    Json(payload): Json<Payload>,
+    Json(payload): Json<Payload<'_>>,
 ) -> StatusCode {
-    let metrics = payload.into_metrics().collect::<Vec<_>>();
+    let metrics = payload.metrics().collect::<Vec<_>>();
     match state.metric_intake().ingest(&metrics).await {
         Ok(_) => StatusCode::CREATED,
         Err(err) => {

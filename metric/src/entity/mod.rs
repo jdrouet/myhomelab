@@ -109,8 +109,8 @@ pub struct Metric {
 impl Metric {
     pub fn as_counter(&self) -> Option<MetricRef<'_, value::CounterValue>> {
         match self.value {
-            value::MetricValue::Counter(ref value) => Some(MetricRef {
-                header: &self.header,
+            value::MetricValue::Counter(value) => Some(MetricRef {
+                header: Cow::Borrowed(&self.header),
                 timestamp: self.timestamp,
                 value,
             }),
@@ -120,8 +120,8 @@ impl Metric {
 
     pub fn as_gauge(&self) -> Option<MetricRef<'_, value::GaugeValue>> {
         match self.value {
-            value::MetricValue::Gauge(ref value) => Some(MetricRef {
-                header: &self.header,
+            value::MetricValue::Gauge(value) => Some(MetricRef {
+                header: Cow::Borrowed(&self.header),
                 timestamp: self.timestamp,
                 value,
             }),
@@ -151,14 +151,20 @@ impl std::fmt::Display for Metric {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct MetricRef<'a, V> {
-    pub header: &'a MetricHeader,
+#[derive(Clone, Debug)]
+pub struct MetricRef<'a, V = MetricValue> {
+    pub header: Cow<'a, MetricHeader>,
     pub timestamp: u64,
-    pub value: &'a V,
+    pub value: V,
 }
 
-impl<'a> crate::prelude::MetricFacade for MetricRef<'a, MetricValue> {
+impl std::fmt::Display for MetricRef<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {} {}", self.header, self.timestamp, self.value)
+    }
+}
+
+impl<'a> crate::prelude::MetricFacade for MetricRef<'a> {
     fn name(&self) -> &str {
         &self.header.name
     }
@@ -169,7 +175,7 @@ impl<'a> crate::prelude::MetricFacade for MetricRef<'a, MetricValue> {
         self.timestamp
     }
     fn value(&self) -> value::MetricValue {
-        *self.value
+        self.value
     }
 }
 
@@ -191,8 +197,8 @@ macro_rules! metrics {
 
             vec![
                 $(
-                    myhomelab_metric::entity::Metric {
-                        header: header.clone(),
+                    myhomelab_metric::entity::MetricRef {
+                        header: std::borrow::Cow::Owned(header.clone()),
                         timestamp: $timestamp,
                         value: myhomelab_metric::entity::value::MetricValue::$val_ty($value),
                     }

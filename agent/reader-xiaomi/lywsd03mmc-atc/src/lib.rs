@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::num::NonZeroUsize;
 
 use anyhow::Context;
@@ -9,7 +10,7 @@ use lru::LruCache;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::{BasicTaskReader, BuildContext, ReaderBuilder};
 use myhomelab_metric::entity::value::MetricValue;
-use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
+use myhomelab_metric::entity::{MetricHeader, MetricRef, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -96,8 +97,8 @@ impl<C: Collector> SensorRunner<C> {
             device.populate(&mut tags);
         }
         let metrics = values
-            .map(|(name, value)| Metric {
-                header: MetricHeader::new(name, tags.clone()),
+            .map(|(name, value)| MetricRef {
+                header: Cow::Owned(MetricHeader::new(name, tags.clone())),
                 timestamp,
                 value: MetricValue::gauge(value),
             })

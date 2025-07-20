@@ -78,13 +78,11 @@ async fn should_ingest_metrics() {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
     };
-    state.metric.expect_ingest().once().returning(
-        |metrics: &[myhomelab_metric::entity::Metric]| {
-            let count = metrics.len();
-            assert_eq!(count, 10);
-            Ok(())
-        },
-    );
+    state.metric.expect_ingest().once().returning(|metrics| {
+        let count = metrics.len();
+        assert_eq!(count, 10);
+        Ok(())
+    });
     let state = MockServerState(Arc::new(state));
     let server = server_config.build(CancellationToken::new(), state.clone());
     let _handle = tokio::spawn(async { server.run().await });

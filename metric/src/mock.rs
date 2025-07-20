@@ -8,7 +8,7 @@ mockall::mock! {
     }
 
     impl crate::intake::Intake for Metric {
-        async fn ingest(&self, values: &[crate::entity::Metric]) -> anyhow::Result<()>;
+        async fn ingest<'h>(&self, values: &[crate::entity::MetricRef<'h, crate::entity::value::MetricValue>]) -> anyhow::Result<()>;
     }
 
     impl crate::query::QueryExecutor for Metric {
