@@ -64,8 +64,12 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
             .nth(0)
             .ok_or_else(|| anyhow::anyhow!("no bluetooth adapter found"))?;
 
+        let (action_tx, action_rx) = tokio::sync::mpsc::unbounded_channel();
+
         let memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>> = Default::default();
         let runner = MifloraRunner {
+            action_tx: action_tx.clone(),
+            action_rx,
             adapter,
             cancel: ctx.cancel.child_token(),
             check_interval: tokio::time::interval(Duration::from_millis(self.check_interval)),
@@ -73,11 +77,17 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
             memory: memory.clone(),
         };
         let task = tokio::task::spawn(async move { runner.run().await });
-        Ok(MifloraReader { memory, task })
+        Ok(MifloraReader {
+            action_tx,
+            memory,
+            task,
+        })
     }
 }
 
 struct MifloraRunner {
+    action_tx: tokio::sync::mpsc::UnboundedSender<Action>,
+    action_rx: tokio::sync::mpsc::UnboundedReceiver<Action>,
     adapter: btleplug::platform::Adapter,
     cancel: CancellationToken,
     check_interval: Interval,
@@ -114,20 +124,48 @@ impl MifloraRunner {
         Ok(())
     }
 
+    async fn handle_action(&self, action: Action) -> anyhow::Result<()> {
+        match action {
+            Action::Synchronize {
+                force,
+                peripheral_id,
+            } => {
+                let _ = self.handle_synchronize(force, peripheral_id).await;
+            }
+            Action::SynchronizeAll { force } => {
+                let _ = self.handle_synchronize_all(force).await;
+            }
+        }
+        Ok(())
+    }
+
     #[tracing::instrument(skip(self), err)]
-    async fn handle_check(&self) -> anyhow::Result<()> {
-        let peripheral_ids = self
+    async fn handle_synchronize_all(&self, force: bool) -> anyhow::Result<()> {
+        let peripheral_ids = self.memory.read().await.keys().cloned().collect::<Vec<_>>();
+        for peripheral_id in peripheral_ids {
+            let _ = self.action_tx.send(Action::Synchronize {
+                force,
+                peripheral_id,
+            });
+        }
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn handle_synchronize(&self, force: bool, id: PeripheralId) -> anyhow::Result<()> {
+        let device = self
             .memory
             .read()
             .await
-            .iter()
-            .filter(|(_, history)| history.should_sync(self.sync_interval))
-            .map(|(key, _)| key.clone())
-            .collect::<Vec<_>>();
-        for peripheral_id in peripheral_ids {
-            // TODO
-            tracing::info!("synchronize {peripheral_id}");
+            .get(&id)
+            .cloned()
+            .unwrap_or_default();
+        if !force && !device.should_sync(self.sync_interval) {
+            tracing::debug!("no need to synchronize device, skipping");
+            return Ok(());
         }
+        tracing::warn!("synchro not yet implemented");
+        // TODO
         Ok(())
     }
 
@@ -162,12 +200,15 @@ impl MifloraRunner {
                         }
                     }
                 }
+                Some(action) = self.action_rx.recv() => {
+                    let _ = self.handle_action(action).await;
+                }
                 _ = self.cancel.cancelled() => {
                     tracing::trace!("cancellation requested");
                     // nothing to do, the loop will abort
                 }
                 _ = self.check_interval.tick() => {
-                    let _ = self.handle_check().await;
+                    let _ = self.handle_synchronize_all(false).await;
                 }
             }
         }
@@ -186,9 +227,18 @@ impl MifloraRunner {
 
 #[derive(Debug)]
 pub struct MifloraReader {
+    action_tx: tokio::sync::mpsc::UnboundedSender<Action>,
     #[allow(unused)]
     memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>>,
     task: tokio::task::JoinHandle<anyhow::Result<()>>,
+}
+
+impl MifloraReader {
+    pub fn execute(&self, action: Action) -> anyhow::Result<()> {
+        self.action_tx
+            .send(action)
+            .context("sending action to the action queue")
+    }
 }
 
 impl myhomelab_agent_prelude::reader::Reader for MifloraReader {
@@ -207,4 +257,15 @@ impl DeviceHistory {
         self.last_sync
             .map_or(true, |last| last + sync_interval < SystemTime::now())
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum Action {
+    Synchronize {
+        force: bool,
+        peripheral_id: PeripheralId,
+    },
+    SynchronizeAll {
+        force: bool,
+    },
 }
