@@ -1,22 +1,21 @@
 use anyhow::Context;
-use myhomelab_adapter_file::{AdapterFile, AdapterFileConfig};
+use myhomelab_adapter_dataset::{AdapterDataset, AdapterDatasetConfig};
 use myhomelab_adapter_http_server::ServerState;
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
 use myhomelab_agent_prelude::reader::{BuildContext, Reader, ReaderBuilder};
-use myhomelab_prelude::FromEnv;
 use tokio_util::sync::CancellationToken;
 
 mod collector;
 
 #[derive(Clone, Debug)]
 struct AppState {
-    file: AdapterFile,
+    dataset: AdapterDataset,
     sqlite: Sqlite,
 }
 
 impl ServerState for AppState {
     fn dashboard_repository(&self) -> &impl myhomelab_dashboard::repository::DashboardRepository {
-        &self.file
+        &self.dataset
     }
 
     fn metric_intake(&self) -> &impl myhomelab_metric::intake::Intake {
@@ -65,6 +64,8 @@ struct ServerConfig {
     #[serde(default)]
     adapters: AdapterConfig,
     #[serde(default)]
+    dataset: AdapterDatasetConfig,
+    #[serde(default)]
     http: myhomelab_adapter_http_server::HttpServerConfig,
     #[serde(default)]
     manager: myhomelab_agent_manager::ManagerConfig,
@@ -94,9 +95,6 @@ impl ServerConfig {
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let file_config = AdapterFileConfig::from_env()?;
-    let file = file_config.build()?;
-
     let server_config = ServerConfig::build(std::env::args().nth(1))?;
     let sqlite = server_config.adapters.sqlite.build().await?;
     sqlite.prepare().await?;
@@ -111,7 +109,10 @@ async fn main() -> anyhow::Result<()> {
 
     let manager = server_config.manager.build(&builder_ctx).await?;
 
-    let app_state = AppState { file, sqlite };
+    let app_state = AppState {
+        dataset: server_config.dataset.build(),
+        sqlite,
+    };
 
     let http_server = server_config
         .http

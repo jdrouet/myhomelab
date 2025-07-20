@@ -1492,7 +1492,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "myhomelab-adapter-file"
+name = "myhomelab-adapter-dataset"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1524,7 +1524,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
- "myhomelab-adapter-file",
+ "myhomelab-adapter-dataset",
  "myhomelab-adapter-http-client",
  "myhomelab-adapter-http-shared",
  "myhomelab-client-web",
@@ -1722,7 +1722,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "config",
- "myhomelab-adapter-file",
+ "myhomelab-adapter-dataset",
  "myhomelab-adapter-http-server",
  "myhomelab-adapter-sqlite",
  "myhomelab-agent-manager",

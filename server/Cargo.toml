@@ -10,7 +10,7 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 config = { version = "0.15", default-features = false, features = ["toml"] }
-myhomelab-adapter-file = { workspace = true }
+myhomelab-adapter-dataset = { workspace = true }
 myhomelab-adapter-sqlite = { workspace = true }
 myhomelab-adapter-http-server = { workspace = true }
 myhomelab-agent-manager = { workspace = true }

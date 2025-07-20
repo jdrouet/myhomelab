@@ -6,8 +6,8 @@ WORKDIR /code
 
 RUN cargo init
 
-RUN cargo init --lib --name myhomelab-adapter-file adapter/file
-COPY adapter/file/Cargo.toml /code/adapter/file/Cargo.toml
+RUN cargo init --lib --name myhomelab-adapter-dataset adapter/dataset
+COPY adapter/dataset/Cargo.toml /code/adapter/dataset/Cargo.toml
 
 RUN cargo init --lib --name myhomelab-adapter-http-client adapter/http/client
 COPY adapter/http/client/Cargo.toml /code/adapter/http/client/Cargo.toml

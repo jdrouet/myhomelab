@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
-    "adapter/file",
+    "adapter/dataset",
     "adapter/http/client",
     "adapter/http/server",
     "adapter/http/shared",
@@ -28,7 +28,7 @@ anyhow = { version = "1.0" }
 btleplug = { version = "0.11" }
 derive_more = { version = "2.0", default-features = false }
 mockall = { version = "0.13" }
-myhomelab-adapter-file = { path = "./adapter/file" }
+myhomelab-adapter-dataset = { path = "./adapter/dataset" }
 myhomelab-adapter-http-client = { path = "./adapter/http/client" }
 myhomelab-adapter-http-server = { path = "./adapter/http/server" }
 myhomelab-adapter-http-shared = { path = "./adapter/http/shared" }

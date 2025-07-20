@@ -28,7 +28,7 @@ tracing = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]
-myhomelab-adapter-file = { workspace = true }
+myhomelab-adapter-dataset = { workspace = true }
 myhomelab-adapter-http-client = { workspace = true }
 myhomelab-dashboard = { workspace = true, features = ["mocks"] }
 myhomelab-metric = { workspace = true, features = ["mocks"] }
