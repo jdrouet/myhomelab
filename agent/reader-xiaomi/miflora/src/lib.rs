@@ -98,13 +98,13 @@ struct MifloraRunner {
 impl MifloraRunner {
     #[tracing::instrument(skip(self), err)]
     async fn handle_discovered(&self, id: &PeripheralId) -> anyhow::Result<()> {
-        if self.memory.read().await.contains_key(&id) {
+        if self.memory.read().await.contains_key(id) {
             tracing::trace!("known peripheral, skipping");
             return Ok(());
         }
         let peripheral = self
             .adapter
-            .peripheral(&id)
+            .peripheral(id)
             .await
             .context("accessing peripheral")?;
         let props = peripheral
@@ -277,7 +277,7 @@ struct DeviceHistory {
 impl DeviceHistory {
     fn should_sync(&self, sync_interval: Duration) -> bool {
         self.last_sync
-            .map_or(true, |last| last + sync_interval < SystemTime::now())
+            .is_none_or(|last| last + sync_interval < SystemTime::now())
     }
 }
 

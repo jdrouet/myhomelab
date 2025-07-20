@@ -56,7 +56,7 @@ impl<C: Collector> SystemRunner<C> {
         let mut metrics = Vec::with_capacity(self.system.cpus().len() * 2);
         self.system
             .cpus()
-            .into_iter()
+            .iter()
             .enumerate()
             .for_each(|(index, cpu)| {
                 let tags = MetricTags::default()

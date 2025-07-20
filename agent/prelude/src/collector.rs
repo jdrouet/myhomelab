@@ -12,7 +12,7 @@ pub struct TracingCollector;
 
 impl Collector for TracingCollector {
     async fn push_metrics<'h>(&self, metrics: &[Metric<'h>]) -> anyhow::Result<()> {
-        metrics.into_iter().for_each(|metric| {
+        metrics.iter().for_each(|metric| {
             tracing::debug!("received {metric}");
         });
         Ok(())
