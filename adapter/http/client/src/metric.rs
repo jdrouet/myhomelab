@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
-use myhomelab_metric::entity::{MetricRef, value::MetricValue};
+use myhomelab_metric::entity::{Metric, value::MetricValue};
 
 macro_rules! unwrap_status_error {
     ($res:expr) => {
@@ -16,7 +16,7 @@ macro_rules! unwrap_status_error {
 }
 
 impl myhomelab_metric::intake::Intake for super::AdapterHttpClient {
-    async fn ingest<'h>(&self, values: &[MetricRef<'h, MetricValue>]) -> anyhow::Result<()> {
+    async fn ingest<'h>(&self, values: &[Metric<'h, MetricValue>]) -> anyhow::Result<()> {
         use myhomelab_adapter_http_shared::metric::create::Payload;
 
         let payload = Payload::from_metrics(values.iter());

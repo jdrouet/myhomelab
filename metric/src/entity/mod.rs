@@ -99,19 +99,19 @@ impl std::fmt::Display for MetricHeader {
 }
 
 #[derive(Clone, Debug)]
-pub struct MetricRef<'a, V = MetricValue> {
+pub struct Metric<'a, V = MetricValue> {
     pub header: Cow<'a, MetricHeader>,
     pub timestamp: u64,
     pub value: V,
 }
 
-impl std::fmt::Display for MetricRef<'_> {
+impl std::fmt::Display for Metric<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {} {}", self.header, self.timestamp, self.value)
     }
 }
 
-impl<'a> crate::prelude::MetricFacade for MetricRef<'a> {
+impl<'a> crate::prelude::MetricFacade for Metric<'a> {
     fn name(&self) -> &str {
         &self.header.name
     }
@@ -144,7 +144,7 @@ macro_rules! metrics {
 
             vec![
                 $(
-                    myhomelab_metric::entity::MetricRef {
+                    myhomelab_metric::entity::Metric {
                         header: std::borrow::Cow::Owned(header.clone()),
                         timestamp: $timestamp,
                         value: myhomelab_metric::entity::value::MetricValue::$val_ty($value),

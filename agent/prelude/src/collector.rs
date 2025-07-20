@@ -1,9 +1,9 @@
-use myhomelab_metric::entity::MetricRef;
+use myhomelab_metric::entity::Metric;
 
 pub trait Collector: Clone + Send + Sync + 'static {
     fn push_metrics<'h>(
         &self,
-        metrics: &[MetricRef<'h>],
+        metrics: &[Metric<'h>],
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
@@ -11,7 +11,7 @@ pub trait Collector: Clone + Send + Sync + 'static {
 pub struct TracingCollector;
 
 impl Collector for TracingCollector {
-    async fn push_metrics<'h>(&self, metrics: &[MetricRef<'h>]) -> anyhow::Result<()> {
+    async fn push_metrics<'h>(&self, metrics: &[Metric<'h>]) -> anyhow::Result<()> {
         metrics.into_iter().for_each(|metric| {
             tracing::debug!("received {metric}");
         });

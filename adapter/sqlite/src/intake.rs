@@ -1,11 +1,11 @@
 use anyhow::Context;
 use myhomelab_metric::{
-    entity::{MetricRef, value::MetricValue},
+    entity::{Metric, value::MetricValue},
     prelude::MetricFacade,
 };
 
 impl myhomelab_metric::intake::Intake for crate::Sqlite {
-    async fn ingest<'h>(&self, values: &[MetricRef<'h, MetricValue>]) -> anyhow::Result<()> {
+    async fn ingest<'h>(&self, values: &[Metric<'h, MetricValue>]) -> anyhow::Result<()> {
         let mut count: usize = 0;
         let mut builder: sqlx::QueryBuilder<'_, sqlx::Sqlite> =
             sqlx::QueryBuilder::new("INSERT INTO metrics (name, tags, timestamp, value) ");
@@ -32,7 +32,7 @@ mod tests {
     use std::borrow::Cow;
 
     use myhomelab_metric::entity::value::MetricValue;
-    use myhomelab_metric::entity::{MetricHeader, MetricRef};
+    use myhomelab_metric::entity::{MetricHeader, Metric};
     use myhomelab_metric::intake::Intake;
 
     #[tokio::test]
@@ -42,22 +42,22 @@ mod tests {
         let header = MetricHeader::new("foo", Default::default());
         sqlite
             .ingest(&[
-                MetricRef {
+                Metric {
                     header: Cow::Borrowed(&header),
                     timestamp: 0,
                     value: MetricValue::counter(42),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Borrowed(&header),
                     timestamp: 1,
                     value: MetricValue::counter(41),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Borrowed(&header),
                     timestamp: 2,
                     value: MetricValue::counter(43),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Borrowed(&header),
                     timestamp: 3,
                     value: MetricValue::counter(45),
@@ -75,27 +75,27 @@ mod tests {
         let bar = MetricHeader::new("foo", Default::default());
         sqlite
             .ingest(&[
-                MetricRef {
+                Metric {
                     header: Cow::Borrowed(&foo),
                     timestamp: 0,
                     value: MetricValue::gauge(1.1),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Borrowed(&foo),
                     timestamp: 1,
                     value: MetricValue::gauge(1.2),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Borrowed(&foo),
                     timestamp: 2,
                     value: MetricValue::gauge(-2.0),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Borrowed(&foo),
                     timestamp: 3,
                     value: MetricValue::gauge(4.1),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Borrowed(&bar),
                     timestamp: 4,
                     value: MetricValue::gauge(6.1),
@@ -111,12 +111,12 @@ mod tests {
         sqlite.prepare().await.unwrap();
         sqlite
             .ingest(&[
-                MetricRef {
+                Metric {
                     header: Cow::Owned(MetricHeader::new("foo", Default::default())),
                     timestamp: 0,
                     value: MetricValue::counter(42),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Owned(MetricHeader::new("bar", Default::default())),
                     timestamp: 1,
                     value: MetricValue::gauge(42.0),

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use myhomelab_metric::entity::value::{CounterValue, GaugeValue, MetricValue};
-use myhomelab_metric::entity::{MetricHeader, MetricRef};
+use myhomelab_metric::entity::{MetricHeader, Metric};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Metrics<'h, V> {
@@ -11,8 +11,8 @@ pub struct Metrics<'h, V> {
 }
 
 impl<'h> Metrics<'h, CounterValue> {
-    fn iter(&'h self) -> impl Iterator<Item = MetricRef<'h, MetricValue>> {
-        self.values.iter().map(|(timestamp, value)| MetricRef {
+    fn iter(&'h self) -> impl Iterator<Item = Metric<'h, MetricValue>> {
+        self.values.iter().map(|(timestamp, value)| Metric {
             header: self.header.clone(),
             timestamp,
             value: value.into(),
@@ -21,8 +21,8 @@ impl<'h> Metrics<'h, CounterValue> {
 }
 
 impl<'h> Metrics<'h, GaugeValue> {
-    fn iter(&'h self) -> impl Iterator<Item = MetricRef<'h, MetricValue>> {
-        self.values.iter().map(|(timestamp, value)| MetricRef {
+    fn iter(&'h self) -> impl Iterator<Item = Metric<'h, MetricValue>> {
+        self.values.iter().map(|(timestamp, value)| Metric {
             header: self.header.clone(),
             timestamp,
             value: value.into(),
@@ -39,7 +39,7 @@ pub struct Payload<'h> {
 }
 
 impl<'h> Payload<'h> {
-    pub fn from_metrics(metrics: impl Iterator<Item = &'h MetricRef<'h, MetricValue>>) -> Self {
+    pub fn from_metrics(metrics: impl Iterator<Item = &'h Metric<'h, MetricValue>>) -> Self {
         let mut counters: HashMap<&'h MetricHeader, MetricValues<CounterValue>> =
             Default::default();
         let mut gauges: HashMap<&'h MetricHeader, MetricValues<GaugeValue>> = Default::default();
@@ -69,7 +69,7 @@ impl<'h> Payload<'h> {
 }
 
 impl<'h> Payload<'h> {
-    pub fn metrics(&'h self) -> impl Iterator<Item = MetricRef<'h, MetricValue>> {
+    pub fn metrics(&'h self) -> impl Iterator<Item = Metric<'h, MetricValue>> {
         self.counters
             .iter()
             .flat_map(|item| item.iter())

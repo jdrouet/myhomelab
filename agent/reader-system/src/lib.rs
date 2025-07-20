@@ -4,7 +4,7 @@ use std::time::Duration;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::{BasicTaskReader, BuildContext};
 use myhomelab_metric::entity::value::MetricValue;
-use myhomelab_metric::entity::{MetricHeader, MetricRef, MetricTags};
+use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
 use sysinfo::System;
 use tokio_util::sync::CancellationToken;
@@ -66,12 +66,12 @@ impl<C: Collector> SystemRunner<C> {
                     .with_tag("cpu_brand", cpu.brand())
                     .with_tag("cpu_vendor_id", cpu.vendor_id());
                 metrics.extend_from_slice(&[
-                    MetricRef {
+                    Metric {
                         header: Cow::Owned(MetricHeader::new("system.cpu.frequency", tags.clone())),
                         timestamp,
                         value: MetricValue::gauge(cpu.frequency() as f64),
                     },
-                    MetricRef {
+                    Metric {
                         header: Cow::Owned(MetricHeader::new("system.cpu.usage", tags)),
                         timestamp,
                         value: MetricValue::gauge(cpu.cpu_usage() as f64),
@@ -86,22 +86,22 @@ impl<C: Collector> SystemRunner<C> {
         let tags = MetricTags::default().with_tag("host", host);
         self.collector
             .push_metrics(&[
-                MetricRef {
+                Metric {
                     header: Cow::Owned(MetricHeader::new("system.memory.total", tags.clone())),
                     timestamp,
                     value: MetricValue::gauge(self.system.total_memory() as f64),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Owned(MetricHeader::new("system.memory.used", tags.clone())),
                     timestamp,
                     value: MetricValue::gauge(self.system.used_memory() as f64),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Owned(MetricHeader::new("system.swap.total", tags.clone())),
                     timestamp,
                     value: MetricValue::gauge(self.system.total_swap() as f64),
                 },
-                MetricRef {
+                Metric {
                     header: Cow::Owned(MetricHeader::new("system.swap.used", tags.clone())),
                     timestamp,
                     value: MetricValue::gauge(self.system.used_swap() as f64),
