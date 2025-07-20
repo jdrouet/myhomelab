@@ -24,9 +24,12 @@ impl<T: ReaderBuilder> ConfigWrapper<T> {
 
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct ManagerConfig {
+    #[serde(default)]
     system: ConfigWrapper<myhomelab_agent_reader_system::SystemReaderConfig>,
+    #[serde(default)]
     xiaomi_lywsd03mmc_atc:
         ConfigWrapper<myhomelab_agent_reader_xiaomi_lywsd03mmc_atc::SensorConfig>,
+    #[serde(default)]
     xiaomi_miflora: ConfigWrapper<myhomelab_agent_reader_xiaomi_miflora::MifloraReaderConfig>,
 }
 

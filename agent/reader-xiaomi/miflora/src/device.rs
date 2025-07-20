@@ -55,8 +55,11 @@ fn read_address<P: Peripheral>(peripheral: &P) -> String {
     peripheral.address().to_string()
 }
 
-enum Mode {
+#[derive(Clone, Copy, Debug, Default, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Mode {
     History,
+    #[default]
     Realtime,
 }
 

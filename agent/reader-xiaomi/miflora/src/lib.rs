@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
@@ -7,6 +8,9 @@ use btleplug::api::{Central, CentralEvent, CentralState, Manager, Peripheral, Sc
 use btleplug::platform::PeripheralId;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::reader::BuildContext;
+use myhomelab_metric::entity::value::MetricValue;
+use myhomelab_metric::entity::{Metric, MetricHeader, MetricTags};
+use myhomelab_prelude::time::current_timestamp;
 use tokio::sync::RwLock;
 use tokio::time::Interval;
 use tokio_stream::StreamExt;
@@ -17,7 +21,7 @@ pub mod device;
 // Device name (e.g. Flower care)
 // MAC address prefix (C4:7C:8D = original)
 
-// const DEVICE: &str = "xiaomi-miflora";
+const DEVICE: &str = "xiaomi-miflora";
 
 #[derive(Debug, serde::Deserialize)]
 pub struct MifloraReaderConfig {
@@ -30,12 +34,16 @@ pub struct MifloraReaderConfig {
 impl MifloraReaderConfig {
     const fn default_check_interval() -> u64 {
         // every hour
-        1000 * 60 * 60
+        // 1000 * 60 * 60
+        // every 10 min
+        1000 * 60 * 10
     }
 
     const fn default_sync_interval() -> u64 {
         // every day
-        1000 * 60 * 60 * 24
+        // 1000 * 60 * 60 * 24
+        // every hour
+        1000 * 60 * 60
     }
 }
 
@@ -72,6 +80,7 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
             action_rx,
             adapter,
             cancel: ctx.cancel.child_token(),
+            collector: ctx.collector.clone(),
             check_interval: tokio::time::interval(Duration::from_millis(self.check_interval)),
             sync_interval: Duration::from_millis(self.sync_interval),
             memory: memory.clone(),
@@ -85,17 +94,18 @@ impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
     }
 }
 
-struct MifloraRunner {
+struct MifloraRunner<C: Collector> {
     action_tx: tokio::sync::mpsc::UnboundedSender<Action>,
     action_rx: tokio::sync::mpsc::UnboundedReceiver<Action>,
     adapter: btleplug::platform::Adapter,
     cancel: CancellationToken,
+    collector: C,
     check_interval: Interval,
     sync_interval: Duration,
     memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>>,
 }
 
-impl MifloraRunner {
+impl<C: Collector> MifloraRunner<C> {
     #[tracing::instrument(skip(self), err)]
     async fn handle_discovered(&self, id: &PeripheralId) -> anyhow::Result<()> {
         if self.memory.read().await.contains_key(id) {
@@ -119,6 +129,10 @@ impl MifloraRunner {
             let mut memory = self.memory.write().await;
             if memory.insert(id.clone(), Default::default()).is_none() {
                 tracing::debug!("discovered new device");
+                let _ = self.action_tx.send(Action::Synchronize {
+                    force: true,
+                    peripheral_id: id.clone(),
+                });
             }
         }
         Ok(())
@@ -182,12 +196,61 @@ impl MifloraRunner {
         let device = crate::device::MiFloraDevice::new(&peripheral)
             .await
             .context("creating device")?;
-        let data = device
-            .read_history_data()
+
+        let now = current_timestamp();
+        let battery = device
+            .read_battery()
             .await
-            .context("reading history data")?;
-        tracing::warn!(message = "received data", values = ?data);
-        // TODO
+            .context("reading battery level")?;
+        let data = device
+            .read_realtime_data()
+            .await
+            .context("reading realtime data")?;
+
+        peripheral.disconnect().await.context("disconnecting")?;
+
+        let tags = MetricTags::default()
+            .with_tag("device", DEVICE)
+            .maybe_with_tag("name", device.name())
+            .with_tag("address", device.address());
+        let _ = self
+            .collector
+            .push_metrics(&[
+                Metric {
+                    header: Cow::Owned(MetricHeader::new("device.battery", tags.clone())),
+                    timestamp: now,
+                    value: MetricValue::gauge(battery as f64),
+                },
+                Metric {
+                    header: Cow::Owned(MetricHeader::new("measurement.temperature", tags.clone())),
+                    timestamp: now,
+                    value: MetricValue::gauge(data.temperature),
+                },
+                Metric {
+                    header: Cow::Owned(MetricHeader::new("measurement.moisture", tags.clone())),
+                    timestamp: now,
+                    value: MetricValue::gauge(data.moisture as f64),
+                },
+                Metric {
+                    header: Cow::Owned(MetricHeader::new("measurement.light", tags.clone())),
+                    timestamp: now,
+                    value: MetricValue::gauge(data.light as f64),
+                },
+                Metric {
+                    header: Cow::Owned(MetricHeader::new("measurement.conductivity", tags.clone())),
+                    timestamp: now,
+                    value: MetricValue::gauge(data.conductivity as f64),
+                },
+            ])
+            .await;
+
+        self.memory
+            .write()
+            .await
+            .entry(peripheral.id())
+            .or_default()
+            .synced();
+
         Ok(())
     }
 
@@ -278,6 +341,10 @@ impl DeviceHistory {
     fn should_sync(&self, sync_interval: Duration) -> bool {
         self.last_sync
             .is_none_or(|last| last + sync_interval < SystemTime::now())
+    }
+
+    fn synced(&mut self) {
+        self.last_sync = Some(SystemTime::now());
     }
 }
 
