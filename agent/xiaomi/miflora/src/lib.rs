@@ -337,7 +337,8 @@ impl myhomelab_agent_prelude::sensor::Sensor for MifloraSensor {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(tag = "command", rename_all = "kebab-case")]
 pub enum MifloraCommand {
     SynchronizeAll,
 }

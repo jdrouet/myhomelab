@@ -15,6 +15,8 @@ axum = { version = "0.8", default-features = false, features = [
     "matched-path",
 ] }
 myhomelab-adapter-http-shared = { workspace = true }
+myhomelab-agent-manager = { workspace = true }
+myhomelab-agent-prelude = { workspace = true }
 myhomelab-client-web = { workspace = true }
 myhomelab-dashboard = { workspace = true }
 myhomelab-metric = { workspace = true }

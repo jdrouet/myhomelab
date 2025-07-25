@@ -52,8 +52,10 @@ pub struct Manager {
     xiaomi_miflora: Option<myhomelab_agent_sensor_xiaomi_miflora::MifloraSensor>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(tag = "sensor")]
 pub enum ManagerCommand {
+    #[serde(rename = "xiaomi.miflora")]
     XiaomiMiflora(myhomelab_agent_sensor_xiaomi_miflora::MifloraCommand),
 }
 

@@ -1,3 +1,4 @@
+use myhomelab_agent_manager::ManagerCommand;
 use tokio_util::sync::CancellationToken;
 use tower_http::trace::TraceLayer;
 
@@ -70,4 +71,6 @@ pub trait ServerState: Clone + Send + Sync + 'static {
     fn dashboard_repository(&self) -> &impl myhomelab_dashboard::repository::DashboardRepository;
     fn metric_intake(&self) -> &impl myhomelab_metric::intake::Intake;
     fn metric_query_executor(&self) -> &impl myhomelab_metric::query::QueryExecutor;
+    fn sensor_manager(&self)
+    -> &impl myhomelab_agent_prelude::sensor::Sensor<Cmd = ManagerCommand>;
 }

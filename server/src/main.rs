@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::Context;
 use myhomelab_adapter_dataset::{AdapterDataset, AdapterDatasetConfig};
 use myhomelab_adapter_http_server::ServerState;
@@ -10,6 +12,7 @@ mod collector;
 #[derive(Clone, Debug)]
 struct AppState {
     dataset: AdapterDataset,
+    manager: Arc<myhomelab_agent_manager::Manager>,
     sqlite: Sqlite,
 }
 
@@ -24,6 +27,13 @@ impl ServerState for AppState {
 
     fn metric_query_executor(&self) -> &impl myhomelab_metric::query::QueryExecutor {
         &self.sqlite
+    }
+
+    fn sensor_manager(
+        &self,
+    ) -> &impl myhomelab_agent_prelude::sensor::Sensor<Cmd = myhomelab_agent_manager::ManagerCommand>
+    {
+        self.manager.as_ref()
     }
 }
 
@@ -107,11 +117,12 @@ async fn main() -> anyhow::Result<()> {
         },
     };
 
-    let manager = server_config.manager.build(&builder_ctx).await?;
+    let manager = Arc::new(server_config.manager.build(&builder_ctx).await?);
 
     let app_state = AppState {
         dataset: server_config.dataset.build(),
         sqlite,
+        manager: manager.clone(),
     };
 
     let http_server = server_config
@@ -119,7 +130,10 @@ async fn main() -> anyhow::Result<()> {
         .build(cancel_token.child_token(), app_state);
 
     tokio::try_join!(shutdown_signal(cancel_token), http_server.run(),)?;
-    manager.wait().await?;
+
+    if let Some(manager) = Arc::into_inner(manager) {
+        manager.wait().await?;
+    }
 
     Ok(())
 }
