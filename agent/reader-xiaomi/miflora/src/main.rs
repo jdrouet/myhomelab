@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use myhomelab_agent_prelude::collector::TracingCollector;
-use myhomelab_agent_prelude::reader::{BuildContext, Reader, ReaderBuilder};
+use myhomelab_agent_prelude::sensor::{BuildContext, Reader, ReaderBuilder};
 use myhomelab_agent_reader_xiaomi_miflora::{Action, MifloraReaderConfig};
 use tokio_util::sync::CancellationToken;
 

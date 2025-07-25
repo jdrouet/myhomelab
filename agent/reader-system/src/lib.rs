@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::time::Duration;
 
 use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::reader::{BasicTaskReader, BuildContext};
+use myhomelab_agent_prelude::sensor::{BasicTaskReader, BuildContext};
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
@@ -29,7 +29,7 @@ impl SystemReaderConfig {
     }
 }
 
-impl myhomelab_agent_prelude::reader::ReaderBuilder for SystemReaderConfig {
+impl myhomelab_agent_prelude::sensor::ReaderBuilder for SystemReaderConfig {
     type Output = SystemReader;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {

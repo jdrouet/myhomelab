@@ -8,7 +8,7 @@ use btleplug::api::{
 use btleplug::platform::PeripheralId;
 use lru::LruCache;
 use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::reader::{BasicTaskReader, BuildContext, ReaderBuilder};
+use myhomelab_agent_prelude::sensor::{BasicTaskReader, BuildContext, ReaderBuilder};
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;

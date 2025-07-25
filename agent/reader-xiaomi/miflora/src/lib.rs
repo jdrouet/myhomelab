@@ -7,7 +7,7 @@ use anyhow::Context;
 use btleplug::api::{Central, CentralEvent, CentralState, Manager, Peripheral, ScanFilter};
 use btleplug::platform::PeripheralId;
 use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::reader::BuildContext;
+use myhomelab_agent_prelude::sensor::BuildContext;
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
@@ -56,7 +56,7 @@ impl Default for MifloraReaderConfig {
     }
 }
 
-impl myhomelab_agent_prelude::reader::ReaderBuilder for MifloraReaderConfig {
+impl myhomelab_agent_prelude::sensor::ReaderBuilder for MifloraReaderConfig {
     type Output = MifloraReader;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
@@ -331,7 +331,7 @@ impl MifloraReader {
     }
 }
 
-impl myhomelab_agent_prelude::reader::Reader for MifloraReader {
+impl myhomelab_agent_prelude::sensor::Reader for MifloraReader {
     async fn wait(self) -> anyhow::Result<()> {
         self.task.await?
     }

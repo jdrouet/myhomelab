@@ -1,5 +1,5 @@
 use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::reader::{BuildContext, ReaderBuilder};
+use myhomelab_agent_prelude::sensor::{BuildContext, ReaderBuilder};
 
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct ConfigWrapper<T> {
@@ -32,7 +32,7 @@ pub struct ManagerConfig {
     xiaomi_miflora: ConfigWrapper<myhomelab_agent_reader_xiaomi_miflora::MifloraReaderConfig>,
 }
 
-impl myhomelab_agent_prelude::reader::ReaderBuilder for ManagerConfig {
+impl myhomelab_agent_prelude::sensor::ReaderBuilder for ManagerConfig {
     type Output = Manager;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
@@ -51,7 +51,7 @@ pub struct Manager {
     xiaomi_miflora: Option<myhomelab_agent_reader_xiaomi_miflora::MifloraReader>,
 }
 
-impl myhomelab_agent_prelude::reader::Reader for Manager {
+impl myhomelab_agent_prelude::sensor::Reader for Manager {
     async fn wait(self) -> anyhow::Result<()>
     where
         Self: Sized,

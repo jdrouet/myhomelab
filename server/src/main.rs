@@ -2,7 +2,7 @@ use anyhow::Context;
 use myhomelab_adapter_dataset::{AdapterDataset, AdapterDatasetConfig};
 use myhomelab_adapter_http_server::ServerState;
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
-use myhomelab_agent_prelude::reader::{BuildContext, Reader, ReaderBuilder};
+use myhomelab_agent_prelude::sensor::{BuildContext, Reader, ReaderBuilder};
 use tokio_util::sync::CancellationToken;
 
 mod collector;
