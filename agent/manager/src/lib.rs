@@ -1,3 +1,4 @@
+use anyhow::Context;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::sensor::{BuildContext, SensorBuilder};
 
@@ -51,7 +52,30 @@ pub struct Manager {
     xiaomi_miflora: Option<myhomelab_agent_sensor_xiaomi_miflora::MifloraSensor>,
 }
 
+#[derive(Debug)]
+pub enum ManagerCommand {
+    XiaomiMiflora(myhomelab_agent_sensor_xiaomi_miflora::MifloraCommand),
+}
+
 impl myhomelab_agent_prelude::sensor::Sensor for Manager {
+    type Cmd = ManagerCommand;
+
+    async fn execute(&self, command: Self::Cmd) -> anyhow::Result<()> {
+        match command {
+            ManagerCommand::XiaomiMiflora(inner) => {
+                if let Some(ref sensor) = self.xiaomi_miflora {
+                    sensor
+                        .execute(inner)
+                        .await
+                        .context("executing miflora command")?;
+                } else {
+                    tracing::warn!(message = "miflora sensor disabled", command = ?inner);
+                }
+            }
+        };
+        Ok(())
+    }
+
     async fn wait(self) -> anyhow::Result<()>
     where
         Self: Sized,

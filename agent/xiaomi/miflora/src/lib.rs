@@ -323,18 +323,23 @@ pub struct MifloraSensor {
     task: tokio::task::JoinHandle<anyhow::Result<()>>,
 }
 
-impl MifloraSensor {
-    pub fn execute(&self, action: Action) -> anyhow::Result<()> {
+impl myhomelab_agent_prelude::sensor::Sensor for MifloraSensor {
+    type Cmd = MifloraCommand;
+
+    async fn execute(&self, command: Self::Cmd) -> anyhow::Result<()> {
         self.action_tx
-            .send(action)
+            .send(command.into())
             .context("sending action to the action queue")
     }
-}
 
-impl myhomelab_agent_prelude::sensor::Sensor for MifloraSensor {
     async fn wait(self) -> anyhow::Result<()> {
         self.task.await?
     }
+}
+
+#[derive(Debug)]
+pub enum MifloraCommand {
+    SynchronizeAll,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -354,7 +359,7 @@ impl DeviceHistory {
 }
 
 #[derive(Clone, Debug)]
-pub enum Action {
+enum Action {
     Synchronize {
         force: bool,
         peripheral_id: PeripheralId,
@@ -362,4 +367,12 @@ pub enum Action {
     SynchronizeAll {
         force: bool,
     },
+}
+
+impl From<MifloraCommand> for Action {
+    fn from(value: MifloraCommand) -> Self {
+        match value {
+            MifloraCommand::SynchronizeAll => Action::SynchronizeAll { force: true },
+        }
+    }
 }
