@@ -1571,9 +1571,9 @@ dependencies = [
  "anyhow",
  "derive_more",
  "myhomelab-agent-prelude",
- "myhomelab-agent-reader-system",
- "myhomelab-agent-reader-xiaomi-lywsd03mmc-atc",
- "myhomelab-agent-reader-xiaomi-miflora",
+ "myhomelab-agent-sensor-system",
+ "myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc",
+ "myhomelab-agent-sensor-xiaomi-miflora",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",
@@ -1599,7 +1599,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "myhomelab-agent-reader-system"
+name = "myhomelab-agent-sensor-system"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1615,7 +1615,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "myhomelab-agent-reader-xiaomi-lywsd03mmc-atc"
+name = "myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1633,7 +1633,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "myhomelab-agent-reader-xiaomi-miflora"
+name = "myhomelab-agent-sensor-xiaomi-miflora"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1727,9 +1727,6 @@ dependencies = [
  "myhomelab-adapter-sqlite",
  "myhomelab-agent-manager",
  "myhomelab-agent-prelude",
- "myhomelab-agent-reader-system",
- "myhomelab-agent-reader-xiaomi-lywsd03mmc-atc",
- "myhomelab-agent-reader-xiaomi-miflora",
  "myhomelab-dashboard",
  "myhomelab-metric",
  "myhomelab-prelude",

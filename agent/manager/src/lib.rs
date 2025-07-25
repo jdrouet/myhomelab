@@ -24,12 +24,12 @@ impl<T: SensorBuilder> ConfigWrapper<T> {
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct ManagerConfig {
     #[serde(default)]
-    system: ConfigWrapper<myhomelab_agent_reader_system::SystemReaderConfig>,
+    system: ConfigWrapper<myhomelab_agent_sensor_system::SystemSensorConfig>,
     #[serde(default)]
     xiaomi_lywsd03mmc_atc:
-        ConfigWrapper<myhomelab_agent_reader_xiaomi_lywsd03mmc_atc::SensorConfig>,
+        ConfigWrapper<myhomelab_agent_sensor_xiaomi_lywsd03mmc_atc::SensorConfig>,
     #[serde(default)]
-    xiaomi_miflora: ConfigWrapper<myhomelab_agent_reader_xiaomi_miflora::MifloraReaderConfig>,
+    xiaomi_miflora: ConfigWrapper<myhomelab_agent_sensor_xiaomi_miflora::MifloraSensorConfig>,
 }
 
 impl myhomelab_agent_prelude::sensor::SensorBuilder for ManagerConfig {
@@ -46,9 +46,9 @@ impl myhomelab_agent_prelude::sensor::SensorBuilder for ManagerConfig {
 
 #[derive(Debug)]
 pub struct Manager {
-    system: Option<myhomelab_agent_reader_system::SystemReader>,
-    xiaomi_lywsd03mmc_atc: Option<myhomelab_agent_reader_xiaomi_lywsd03mmc_atc::SensorReader>,
-    xiaomi_miflora: Option<myhomelab_agent_reader_xiaomi_miflora::MifloraReader>,
+    system: Option<myhomelab_agent_sensor_system::SystemSensor>,
+    xiaomi_lywsd03mmc_atc: Option<myhomelab_agent_sensor_xiaomi_lywsd03mmc_atc::AtcSensor>,
+    xiaomi_miflora: Option<myhomelab_agent_sensor_xiaomi_miflora::MifloraSensor>,
 }
 
 impl myhomelab_agent_prelude::sensor::Sensor for Manager {

@@ -1,15 +1,15 @@
 use std::time::Duration;
 
 use myhomelab_agent_prelude::collector::TracingCollector;
-use myhomelab_agent_prelude::sensor::{BuildContext, SensorBuilder, Sensor};
-use myhomelab_agent_reader_xiaomi_miflora::{Action, MifloraReaderConfig};
+use myhomelab_agent_prelude::sensor::{BuildContext, Sensor, SensorBuilder};
+use myhomelab_agent_sensor_xiaomi_miflora::{Action, MifloraSensorConfig};
 use tokio_util::sync::CancellationToken;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let config = MifloraReaderConfig::default();
+    let config = MifloraSensorConfig::default();
     let cancel = CancellationToken::new();
     let build_ctx = BuildContext {
         cancel: cancel.child_token(),

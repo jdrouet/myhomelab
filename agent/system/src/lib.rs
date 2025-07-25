@@ -10,12 +10,12 @@ use sysinfo::System;
 use tokio_util::sync::CancellationToken;
 
 #[derive(Debug, serde::Deserialize)]
-pub struct SystemReaderConfig {
-    #[serde(default = "SystemReaderConfig::default_interval")]
+pub struct SystemSensorConfig {
+    #[serde(default = "SystemSensorConfig::default_interval")]
     pub interval: u64,
 }
 
-impl Default for SystemReaderConfig {
+impl Default for SystemSensorConfig {
     fn default() -> Self {
         Self {
             interval: Self::default_interval(),
@@ -23,14 +23,14 @@ impl Default for SystemReaderConfig {
     }
 }
 
-impl SystemReaderConfig {
+impl SystemSensorConfig {
     const fn default_interval() -> u64 {
         10_000
     }
 }
 
-impl myhomelab_agent_prelude::sensor::SensorBuilder for SystemReaderConfig {
-    type Output = SystemReader;
+impl myhomelab_agent_prelude::sensor::SensorBuilder for SystemSensorConfig {
+    type Output = SystemSensor;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         let runner = SystemRunner {
@@ -140,4 +140,4 @@ impl<C: Collector> SystemRunner<C> {
     }
 }
 
-pub type SystemReader = BasicTaskSensor;
+pub type SystemSensor = BasicTaskSensor;

@@ -1,5 +1,5 @@
 [package]
-name = "myhomelab-agent-reader-xiaomi-miflora"
+name = "myhomelab-agent-sensor-system"
 version = "0.1.0"
 edition = "2024"
 authors.workspace = true
@@ -7,15 +7,12 @@ license.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-btleplug = { workspace = true }
-lru = { version = "0.16" }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 myhomelab-agent-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+sysinfo = { version = "0.36" }
+tokio = { workspace = true }
 tokio-stream = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
-uuid = { workspace = true }
-tracing-subscriber = { version = "0.3" }

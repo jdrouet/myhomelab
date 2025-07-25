@@ -34,7 +34,7 @@ impl Default for SensorConfig {
 }
 
 impl SensorBuilder for SensorConfig {
-    type Output = SensorReader;
+    type Output = AtcSensor;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         let manager = btleplug::platform::Manager::new()
@@ -164,4 +164,4 @@ impl<C: Collector> SensorRunner<C> {
     }
 }
 
-pub type SensorReader = BasicTaskSensor;
+pub type AtcSensor = BasicTaskSensor;

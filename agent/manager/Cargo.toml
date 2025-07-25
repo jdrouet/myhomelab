@@ -9,9 +9,9 @@ license.workspace = true
 anyhow = { workspace = true }
 derive_more = { workspace = true, features = ["from"] }
 myhomelab-agent-prelude = { workspace = true }
-myhomelab-agent-reader-system = { workspace = true }
-myhomelab-agent-reader-xiaomi-lywsd03mmc-atc = { workspace = true }
-myhomelab-agent-reader-xiaomi-miflora = { workspace = true }
+myhomelab-agent-sensor-system = { workspace = true }
+myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc = { workspace = true }
+myhomelab-agent-sensor-xiaomi-miflora = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

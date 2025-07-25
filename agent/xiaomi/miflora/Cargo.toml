@@ -1,5 +1,5 @@
 [package]
-name = "myhomelab-agent-reader-xiaomi-lywsd03mmc-atc"
+name = "myhomelab-agent-sensor-xiaomi-miflora"
 version = "0.1.0"
 edition = "2024"
 authors.workspace = true
@@ -13,8 +13,9 @@ myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 myhomelab-agent-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tokio-stream = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
+tracing-subscriber = { version = "0.3" }

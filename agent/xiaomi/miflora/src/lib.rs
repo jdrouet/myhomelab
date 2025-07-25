@@ -24,14 +24,14 @@ pub mod device;
 const DEVICE: &str = "xiaomi-miflora";
 
 #[derive(Debug, serde::Deserialize)]
-pub struct MifloraReaderConfig {
-    #[serde(default = "MifloraReaderConfig::default_check_interval")]
+pub struct MifloraSensorConfig {
+    #[serde(default = "MifloraSensorConfig::default_check_interval")]
     check_interval: u64,
-    #[serde(default = "MifloraReaderConfig::default_sync_interval")]
+    #[serde(default = "MifloraSensorConfig::default_sync_interval")]
     sync_interval: u64,
 }
 
-impl MifloraReaderConfig {
+impl MifloraSensorConfig {
     const fn default_check_interval() -> u64 {
         // every hour
         // 1000 * 60 * 60
@@ -47,7 +47,7 @@ impl MifloraReaderConfig {
     }
 }
 
-impl Default for MifloraReaderConfig {
+impl Default for MifloraSensorConfig {
     fn default() -> Self {
         Self {
             check_interval: Self::default_check_interval(),
@@ -56,8 +56,8 @@ impl Default for MifloraReaderConfig {
     }
 }
 
-impl myhomelab_agent_prelude::sensor::SensorBuilder for MifloraReaderConfig {
-    type Output = MifloraReader;
+impl myhomelab_agent_prelude::sensor::SensorBuilder for MifloraSensorConfig {
+    type Output = MifloraSensor;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         let manager = btleplug::platform::Manager::new()
@@ -86,7 +86,7 @@ impl myhomelab_agent_prelude::sensor::SensorBuilder for MifloraReaderConfig {
             memory: memory.clone(),
         };
         let task = tokio::task::spawn(async move { runner.run().await });
-        Ok(MifloraReader {
+        Ok(MifloraSensor {
             action_tx,
             memory,
             task,
@@ -316,14 +316,14 @@ impl<C: Collector> MifloraRunner<C> {
 }
 
 #[derive(Debug)]
-pub struct MifloraReader {
+pub struct MifloraSensor {
     action_tx: tokio::sync::mpsc::UnboundedSender<Action>,
     #[allow(unused)]
     memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>>,
     task: tokio::task::JoinHandle<anyhow::Result<()>>,
 }
 
-impl MifloraReader {
+impl MifloraSensor {
     pub fn execute(&self, action: Action) -> anyhow::Result<()> {
         self.action_tx
             .send(action)
@@ -331,7 +331,7 @@ impl MifloraReader {
     }
 }
 
-impl myhomelab_agent_prelude::sensor::Sensor for MifloraReader {
+impl myhomelab_agent_prelude::sensor::Sensor for MifloraSensor {
     async fn wait(self) -> anyhow::Result<()> {
         self.task.await?
     }
