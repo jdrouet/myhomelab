@@ -3,12 +3,12 @@ use tokio_util::sync::CancellationToken;
 
 use crate::collector::Collector;
 
-pub trait Reader: std::fmt::Debug + Send + Sync + 'static {
+pub trait Sensor: std::fmt::Debug + Send + Sync + 'static {
     fn wait(self) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
-pub trait ReaderBuilder {
-    type Output: Reader;
+pub trait SensorBuilder {
+    type Output: Sensor;
 
     fn build<C: Collector>(
         &self,
@@ -23,17 +23,17 @@ pub struct BuildContext<C: Collector> {
 }
 
 #[derive(Debug)]
-pub struct BasicTaskReader {
+pub struct BasicTaskSensor {
     task: JoinHandle<anyhow::Result<()>>,
 }
 
-impl BasicTaskReader {
+impl BasicTaskSensor {
     pub fn new(task: JoinHandle<anyhow::Result<()>>) -> Self {
         Self { task }
     }
 }
 
-impl Reader for BasicTaskReader {
+impl Sensor for BasicTaskSensor {
     async fn wait(self) -> anyhow::Result<()> {
         self.task.await?
     }

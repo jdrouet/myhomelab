@@ -56,7 +56,7 @@ impl Default for MifloraReaderConfig {
     }
 }
 
-impl myhomelab_agent_prelude::sensor::ReaderBuilder for MifloraReaderConfig {
+impl myhomelab_agent_prelude::sensor::SensorBuilder for MifloraReaderConfig {
     type Output = MifloraReader;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
@@ -331,7 +331,7 @@ impl MifloraReader {
     }
 }
 
-impl myhomelab_agent_prelude::sensor::Reader for MifloraReader {
+impl myhomelab_agent_prelude::sensor::Sensor for MifloraReader {
     async fn wait(self) -> anyhow::Result<()> {
         self.task.await?
     }

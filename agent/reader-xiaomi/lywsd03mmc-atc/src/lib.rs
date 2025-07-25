@@ -8,7 +8,7 @@ use btleplug::api::{
 use btleplug::platform::PeripheralId;
 use lru::LruCache;
 use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::sensor::{BasicTaskReader, BuildContext, ReaderBuilder};
+use myhomelab_agent_prelude::sensor::{BasicTaskSensor, BuildContext, SensorBuilder};
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
@@ -33,7 +33,7 @@ impl Default for SensorConfig {
     }
 }
 
-impl ReaderBuilder for SensorConfig {
+impl SensorBuilder for SensorConfig {
     type Output = SensorReader;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
@@ -57,7 +57,7 @@ impl ReaderBuilder for SensorConfig {
         };
         let task = tokio::spawn(async move { runner.run().await });
 
-        Ok(BasicTaskReader::new(task))
+        Ok(BasicTaskSensor::new(task))
     }
 }
 
@@ -164,4 +164,4 @@ impl<C: Collector> SensorRunner<C> {
     }
 }
 
-pub type SensorReader = BasicTaskReader;
+pub type SensorReader = BasicTaskSensor;

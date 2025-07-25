@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::time::Duration;
 
 use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::sensor::{BasicTaskReader, BuildContext};
+use myhomelab_agent_prelude::sensor::{BasicTaskSensor, BuildContext};
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
@@ -29,7 +29,7 @@ impl SystemReaderConfig {
     }
 }
 
-impl myhomelab_agent_prelude::sensor::ReaderBuilder for SystemReaderConfig {
+impl myhomelab_agent_prelude::sensor::SensorBuilder for SystemReaderConfig {
     type Output = SystemReader;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
@@ -40,7 +40,7 @@ impl myhomelab_agent_prelude::sensor::ReaderBuilder for SystemReaderConfig {
             system: sysinfo::System::new_all(),
         };
         let task = tokio::task::spawn(async move { runner.run().await });
-        Ok(BasicTaskReader::new(task))
+        Ok(BasicTaskSensor::new(task))
     }
 }
 
@@ -140,4 +140,4 @@ impl<C: Collector> SystemRunner<C> {
     }
 }
 
-pub type SystemReader = BasicTaskReader;
+pub type SystemReader = BasicTaskSensor;
