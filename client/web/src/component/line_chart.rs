@@ -54,8 +54,8 @@ impl<'a> crate::prelude::Component for LineChart<'a> {
             .draw()?;
 
         // for response in self.data.iter() {
-        //     chart.draw_series(LineSeries::new(response.values.iter().copied(), RED))?;
-        // }
+        //     chart.draw_series(LineSeries::new(response.values.iter().copied(),
+        // RED))?; }
 
         drawing_area.present()?;
 
