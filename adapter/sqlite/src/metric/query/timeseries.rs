@@ -64,7 +64,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn should_fetch_gauge_max_global() {
-        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+        let sqlite = crate::metric::query::tests::prepare_pool().await.unwrap();
 
         let res = super::fetch(
             sqlite.as_ref(),
@@ -83,7 +83,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn should_fetch_gauge_max_with_group_by() {
-        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+        let sqlite = crate::metric::query::tests::prepare_pool().await.unwrap();
 
         let res = super::fetch(
             sqlite.as_ref(),
@@ -103,7 +103,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn should_fetch_gauge_min_with_header() {
-        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+        let sqlite = crate::metric::query::tests::prepare_pool().await.unwrap();
 
         let res = super::fetch(
             sqlite.as_ref(),
@@ -128,7 +128,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn should_fetch_counters() {
-        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+        let sqlite = crate::metric::query::tests::prepare_pool().await.unwrap();
 
         let res = super::fetch(
             sqlite.as_ref(),
@@ -147,7 +147,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn should_return_none_for_missing_metric() {
-        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+        let sqlite = crate::metric::query::tests::prepare_pool().await.unwrap();
 
         let res = super::fetch(
             sqlite.as_ref(),

@@ -32,6 +32,7 @@ impl Collector for TracingCollector {
         tracing::debug!(
             message = "received event",
             event_source = ?input.source(),
+            event_level = ?input.level(),
             event_message = input.message(),
             event_attributes = ?input.attributes(),
         );
