@@ -22,19 +22,20 @@ WORKDIR /code
 
 COPY Cargo.toml /code/Cargo.toml
 COPY Cargo.lock /code/Cargo.lock
-COPY adapter/file /code/adapter/file
+COPY adapter/dataset /code/adapter/dataset
 COPY adapter/http/client /code/adapter/http/client
 COPY adapter/http/server /code/adapter/http/server
 COPY adapter/http/shared /code/adapter/http/shared
 COPY adapter/sqlite /code/adapter/sqlite
-COPY agent/core /code/agent/core
+COPY agent/manager /code/agent/manager
 COPY agent/prelude /code/agent/prelude
-COPY agent/reader-system /code/agent/reader-system
-COPY agent/reader-xiaomi/lywsd03mmc-atc /code/agent/reader-xiaomi/lywsd03mmc-atc
-COPY agent/reader-xiaomi/miflora /code/agent/reader-xiaomi/miflora
+COPY agent/system /code/agent/system
+COPY agent/xiaomi/lywsd03mmc-atc /code/agent/xiaomi/lywsd03mmc-atc
+COPY agent/xiaomi/miflora /code/agent/xiaomi/miflora
 COPY client/tui /code/client/tui
 COPY client/web /code/client/web
 COPY dashboard /code/dashboard
+COPY event /code/event
 COPY metric /code/metric
 COPY prelude /code/prelude
 COPY server /code/server
