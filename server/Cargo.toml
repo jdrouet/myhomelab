@@ -16,6 +16,7 @@ myhomelab-adapter-http-server = { workspace = true }
 myhomelab-agent-manager = { workspace = true }
 myhomelab-agent-prelude = { workspace = true }
 myhomelab-dashboard = { workspace = true }
+myhomelab-event = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

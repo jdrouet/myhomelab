@@ -1,5 +1,5 @@
-mod intake;
-mod query;
+pub mod event;
+pub mod metric;
 
 static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
 

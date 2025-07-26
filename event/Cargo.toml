@@ -1,5 +1,5 @@
 [package]
-name = "myhomelab-metric"
+name = "myhomelab-event"
 version = "0.1.0"
 edition = "2024"
 authors.workspace = true
@@ -8,11 +8,11 @@ license.workspace = true
 [features]
 default = ["macros"]
 macros = []
-mocks = ["dep:mockall"]
+mocks = ["dep:mockall", "dep:serde_json"]
 
 [dependencies]
 anyhow = { workspace = true }
-derive_more = { workspace = true, features = ["from"] }
 mockall = { workspace = true, optional = true }
 myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, optional = true }

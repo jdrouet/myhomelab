@@ -1559,9 +1559,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "itertools 0.14.0",
+ "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",
+ "serde_json",
  "sqlx",
  "tokio",
  "tracing",
@@ -1592,6 +1594,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "derive_more",
+ "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",
@@ -1625,6 +1628,7 @@ dependencies = [
  "btleplug",
  "lru 0.16.0",
  "myhomelab-agent-prelude",
+ "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",
@@ -1643,6 +1647,7 @@ dependencies = [
  "btleplug",
  "lru 0.16.0",
  "myhomelab-agent-prelude",
+ "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",
@@ -1700,6 +1705,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "myhomelab-event"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "mockall",
+ "myhomelab-prelude",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "myhomelab-metric"
 version = "0.1.0"
 dependencies = [
@@ -1731,6 +1747,7 @@ dependencies = [
  "myhomelab-agent-manager",
  "myhomelab-agent-prelude",
  "myhomelab-dashboard",
+ "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",
@@ -2440,9 +2457,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.140"
+version = "1.0.141"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20068b6e96dc6c9bd23e01df8827e6c7e1f2fddd43c21810382803c136b99373"
+checksum = "30b9eff21ebe718216c6ec64e1d9ac57087aad11efc64e32002bce4a0d4c03d3"
 dependencies = [
  "itoa",
  "memchr",

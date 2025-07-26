@@ -8,6 +8,7 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 itertools = { version = "0.14" }
+myhomelab-event = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
@@ -23,4 +24,5 @@ tracing = { workspace = true }
 [dev-dependencies]
 myhomelab-metric = { workspace = true, features = ["macros"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+serde_json = { workspace = true }
 sqlx = { version = "0.8", features = ["runtime-tokio"] }

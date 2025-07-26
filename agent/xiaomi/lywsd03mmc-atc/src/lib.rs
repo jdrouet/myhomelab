@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::num::NonZeroUsize;
+use std::sync::Arc;
 
 use anyhow::Context;
 use btleplug::api::{
@@ -15,6 +16,7 @@ use myhomelab_prelude::time::current_timestamp;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 
+mod event;
 mod parse;
 
 const DEVICE: &str = "xiaomi-lywsd03mmc-atc";
@@ -61,16 +63,30 @@ impl SensorBuilder for SensorConfig {
     }
 }
 
+#[derive(Debug)]
+struct AddressWrapper(BDAddr);
+
+impl serde::Serialize for AddressWrapper {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let value = self.0.to_string();
+        serializer.serialize_str(value.as_str())
+    }
+}
+
+#[derive(Debug, serde::Serialize)]
 struct Device {
     name: Option<String>,
-    address: BDAddr,
+    address: AddressWrapper,
 }
 
 impl From<PeripheralProperties> for Device {
     fn from(value: PeripheralProperties) -> Self {
         Self {
             name: value.local_name,
-            address: value.address,
+            address: AddressWrapper(value.address),
         }
     }
 }
@@ -78,13 +94,13 @@ impl From<PeripheralProperties> for Device {
 impl Device {
     fn populate(&self, header: &mut MetricTags) {
         header.maybe_set_tag("name", self.name.as_deref());
-        header.set_tag("address", self.address.to_string());
+        header.set_tag("address", self.address.0.to_string());
     }
 }
 
 struct SensorRunner<C: Collector> {
     adapter: btleplug::platform::Adapter,
-    cache: LruCache<PeripheralId, Device>,
+    cache: LruCache<PeripheralId, Arc<Device>>,
     cancel: CancellationToken,
     collector: C,
 }
@@ -109,10 +125,20 @@ impl<C: Collector> SensorRunner<C> {
 
     async fn handle_event(&mut self, event: CentralEvent) -> anyhow::Result<()> {
         match event {
-            CentralEvent::DeviceDiscovered(id) => {
+            CentralEvent::DeviceDiscovered(id) if !self.cache.contains(&id) => {
                 let peripheral = self.adapter.peripheral(&id).await?;
-                if let Some(properties) = peripheral.properties().await? {
-                    self.cache.push(id, Device::from(properties));
+                peripheral.discover_services().await?;
+                if peripheral
+                    .services()
+                    .iter()
+                    .any(|srv| srv.uuid == SERVICE_ID)
+                {
+                    if let Some(properties) = peripheral.properties().await? {
+                        let device = Arc::new(Device::from(properties));
+                        let event = crate::event::DeviceDiscoveredEvent::new(device.clone());
+                        self.collector.push_event(event).await?;
+                        self.cache.push(id, device);
+                    }
                 }
             }
             CentralEvent::ServiceDataAdvertisement { id, service_data } => {

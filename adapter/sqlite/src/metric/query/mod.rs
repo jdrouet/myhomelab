@@ -67,7 +67,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn should_fetch_multiple_requests() {
-        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+        let sqlite = crate::metric::query::tests::prepare_pool().await.unwrap();
 
         let mut reqs = HashMap::with_capacity(1);
         reqs.insert(
@@ -115,7 +115,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn scalar_should_return_none_for_missing_metric() {
-        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+        let sqlite = crate::metric::query::tests::prepare_pool().await.unwrap();
 
         let mut reqs = HashMap::with_capacity(1);
         reqs.insert(
@@ -137,7 +137,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn scalar_should_filter_by_multiple_tags() {
-        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+        let sqlite = crate::metric::query::tests::prepare_pool().await.unwrap();
 
         let tags = MetricTags::default()
             .with_tag("host", "raspberry")
@@ -164,7 +164,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn scalar_should_support_different_aggregations() {
-        let sqlite = crate::query::tests::prepare_pool().await.unwrap();
+        let sqlite = crate::metric::query::tests::prepare_pool().await.unwrap();
 
         let mut reqs = HashMap::with_capacity(3);
         reqs.insert(

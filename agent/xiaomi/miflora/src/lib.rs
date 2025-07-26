@@ -8,6 +8,7 @@ use btleplug::api::{Central, CentralEvent, CentralState, Manager, Peripheral, Sc
 use btleplug::platform::PeripheralId;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::sensor::BuildContext;
+use myhomelab_event::EventLevel;
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
@@ -17,6 +18,7 @@ use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 
 pub mod device;
+mod event;
 
 // Device name (e.g. Flower care)
 // MAC address prefix (C4:7C:8D = original)
@@ -129,6 +131,16 @@ impl<C: Collector> MifloraRunner<C> {
             let mut memory = self.memory.write().await;
             if memory.insert(id.clone(), Default::default()).is_none() {
                 tracing::debug!("discovered new device");
+
+                let address = peripheral.address();
+                self.collector
+                    .push_event(event::DeviceEvent::new(
+                        address,
+                        EventLevel::Info,
+                        "device discovered",
+                    ))
+                    .await?;
+
                 let _ = self.action_tx.send(Action::Synchronize {
                     force: true,
                     peripheral_id: id.clone(),
@@ -187,11 +199,15 @@ impl<C: Collector> MifloraRunner<C> {
             tracing::debug!("no need to synchronize device, skipping");
             return Ok(());
         }
-        let peripheral = self
-            .adapter
-            .peripheral(&id)
-            .await
-            .context("getting peripheral")?;
+        let peripheral = match self.adapter.peripheral(&id).await {
+            Ok(inner) => inner,
+            Err(btleplug::Error::DeviceNotFound) => {
+                return Ok(());
+            }
+            Err(other) => {
+                return Err(anyhow::Error::from(other).context("getting peripheral"));
+            }
+        };
         peripheral.connect().await.context("connecting")?;
         let device = crate::device::MiFloraDevice::new(&peripheral)
             .await
