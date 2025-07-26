@@ -13,7 +13,7 @@ impl myhomelab_agent_prelude::collector::Collector for Collector {
         self.sqlite.ingest(metrics).await
     }
 
-    async fn push_event<I>(&self, input: &I) -> anyhow::Result<()>
+    async fn push_event<I>(&self, input: I) -> anyhow::Result<()>
     where
         I: myhomelab_event::intake::IntakeInput,
     {

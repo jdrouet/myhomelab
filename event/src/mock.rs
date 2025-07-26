@@ -32,6 +32,6 @@ mockall::mock! {
     }
 
     impl crate::intake::Intake for Event {
-        async fn ingest<I>(&self, input: &I) -> anyhow::Result<()>;
+        async fn ingest<I>(&self, input: I) -> anyhow::Result<()>;
     }
 }

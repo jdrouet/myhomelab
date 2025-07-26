@@ -6,7 +6,8 @@ pub trait Collector: Clone + Send + Sync + 'static {
         &self,
         metrics: &[Metric<'h>],
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
-    fn push_event<I>(&self, input: &I) -> impl Future<Output = anyhow::Result<()>>
+
+    fn push_event<I>(&self, input: I) -> impl Future<Output = anyhow::Result<()>> + Send
     where
         I: IntakeInput;
 }
@@ -25,7 +26,7 @@ impl Collector for TracingCollector {
         Ok(())
     }
 
-    async fn push_event<I>(&self, input: &I) -> anyhow::Result<()>
+    async fn push_event<I>(&self, input: I) -> anyhow::Result<()>
     where
         I: IntakeInput,
     {
