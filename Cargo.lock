@@ -1647,6 +1647,7 @@ dependencies = [
  "btleplug",
  "lru 0.16.0",
  "myhomelab-agent-prelude",
+ "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",

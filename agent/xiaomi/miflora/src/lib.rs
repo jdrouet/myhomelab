@@ -17,6 +17,7 @@ use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 
 pub mod device;
+mod event;
 
 // Device name (e.g. Flower care)
 // MAC address prefix (C4:7C:8D = original)
@@ -129,6 +130,12 @@ impl<C: Collector> MifloraRunner<C> {
             let mut memory = self.memory.write().await;
             if memory.insert(id.clone(), Default::default()).is_none() {
                 tracing::debug!("discovered new device");
+
+                let address = peripheral.address();
+                self.collector
+                    .push_event(event::DeviceDiscoveredEvent::new(address))
+                    .await?;
+
                 let _ = self.action_tx.send(Action::Synchronize {
                     force: true,
                     peripheral_id: id.clone(),
