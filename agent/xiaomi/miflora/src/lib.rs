@@ -8,6 +8,7 @@ use btleplug::api::{Central, CentralEvent, CentralState, Manager, Peripheral, Sc
 use btleplug::platform::PeripheralId;
 use myhomelab_agent_prelude::collector::Collector;
 use myhomelab_agent_prelude::sensor::BuildContext;
+use myhomelab_event::EventLevel;
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
@@ -133,7 +134,11 @@ impl<C: Collector> MifloraRunner<C> {
 
                 let address = peripheral.address();
                 self.collector
-                    .push_event(event::DeviceDiscoveredEvent::new(address))
+                    .push_event(event::DeviceEvent::new(
+                        address,
+                        EventLevel::Info,
+                        "device discovered",
+                    ))
                     .await?;
 
                 let _ = self.action_tx.send(Action::Synchronize {
@@ -194,11 +199,15 @@ impl<C: Collector> MifloraRunner<C> {
             tracing::debug!("no need to synchronize device, skipping");
             return Ok(());
         }
-        let peripheral = self
-            .adapter
-            .peripheral(&id)
-            .await
-            .context("getting peripheral")?;
+        let peripheral = match self.adapter.peripheral(&id).await {
+            Ok(inner) => inner,
+            Err(btleplug::Error::DeviceNotFound) => {
+                return Ok(());
+            }
+            Err(other) => {
+                return Err(anyhow::Error::from(other).context("getting peripheral"));
+            }
+        };
         peripheral.connect().await.context("connecting")?;
         let device = crate::device::MiFloraDevice::new(&peripheral)
             .await

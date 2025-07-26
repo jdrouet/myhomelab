@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use btleplug::api::BDAddr;
+use myhomelab_event::EventLevel;
 use myhomelab_prelude::time::current_timestamp;
 
 const EVENT_SOURCE: myhomelab_event::EventSource = myhomelab_event::EventSource::Sensor {
@@ -16,39 +17,43 @@ where
 }
 
 #[derive(Debug, serde::Serialize)]
-pub(crate) struct EventAttributes {
+pub(crate) struct DeviceAttributes {
     #[serde(serialize_with = "serialize_address")]
     address: BDAddr,
 }
 
 #[derive(Debug)]
-pub(crate) struct DeviceDiscoveredEvent {
+pub(crate) struct DeviceEvent {
+    attrs: DeviceAttributes,
+    level: EventLevel,
+    message: &'static str,
     timestamp: u64,
-    attrs: EventAttributes,
 }
 
-impl DeviceDiscoveredEvent {
-    pub fn new(address: BDAddr) -> Self {
+impl DeviceEvent {
+    pub fn new(address: BDAddr, level: EventLevel, message: &'static str) -> Self {
         Self {
+            attrs: DeviceAttributes { address },
+            level,
+            message,
             timestamp: current_timestamp(),
-            attrs: EventAttributes { address },
         }
     }
 }
 
-impl myhomelab_event::intake::IntakeInput for DeviceDiscoveredEvent {
-    type Attrs = EventAttributes;
+impl myhomelab_event::intake::IntakeInput for DeviceEvent {
+    type Attrs = DeviceAttributes;
 
     fn source(&self) -> &'static myhomelab_event::EventSource {
         &EVENT_SOURCE
     }
 
     fn level(&self) -> myhomelab_event::EventLevel {
-        myhomelab_event::EventLevel::Info
+        self.level
     }
 
     fn message(&self) -> &str {
-        "device discovered"
+        self.message
     }
 
     fn timestamp(&self) -> u64 {
