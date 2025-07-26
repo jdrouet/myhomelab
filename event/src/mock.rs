@@ -3,16 +3,31 @@
 use std::borrow::Cow;
 
 pub struct MockIntakeInput<V: serde::Serialize> {
-    pub source: crate::EventSource,
+    pub source: &'static crate::EventSource,
+    pub timestamp: u64,
+    pub level: crate::EventLevel,
     pub message: Cow<'static, str>,
     pub attributes: Option<V>,
 }
 
-impl<V: serde::Serialize> crate::intake::IntakeInput for MockIntakeInput<V> {
+impl<V> crate::intake::IntakeInput for MockIntakeInput<V>
+where
+    V: std::fmt::Debug,
+    V: serde::Serialize,
+    V: Send + Sync,
+{
     type Attrs = V;
 
-    fn source(&self) -> &crate::EventSource {
-        &self.source
+    fn source(&self) -> &'static crate::EventSource {
+        self.source
+    }
+
+    fn level(&self) -> crate::EventLevel {
+        self.level
+    }
+
+    fn timestamp(&self) -> u64 {
+        self.timestamp
     }
 
     fn message(&self) -> &str {
@@ -32,6 +47,9 @@ mockall::mock! {
     }
 
     impl crate::intake::Intake for Event {
-        async fn ingest<I>(&self, input: I) -> anyhow::Result<()>;
+        async fn ingest<I>(&self, input: I) -> anyhow::Result<()>
+        where
+            I: crate::intake::IntakeInput,
+            I: 'static;
     }
 }

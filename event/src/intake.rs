@@ -15,5 +15,6 @@ pub trait IntakeInput: Send + Sync {
 pub trait Intake: Healthcheck {
     fn ingest<I>(&self, input: I) -> impl Future<Output = anyhow::Result<()>> + Send
     where
-        I: IntakeInput;
+        I: IntakeInput,
+        I: 'static;
 }

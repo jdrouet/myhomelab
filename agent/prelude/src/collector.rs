@@ -9,7 +9,8 @@ pub trait Collector: Clone + Send + Sync + 'static {
 
     fn push_event<I>(&self, input: I) -> impl Future<Output = anyhow::Result<()>> + Send
     where
-        I: IntakeInput;
+        I: IntakeInput,
+        I: 'static;
 }
 
 #[derive(Clone)]

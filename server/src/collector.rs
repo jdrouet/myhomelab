@@ -16,6 +16,7 @@ impl myhomelab_agent_prelude::collector::Collector for Collector {
     async fn push_event<I>(&self, input: I) -> anyhow::Result<()>
     where
         I: myhomelab_event::intake::IntakeInput,
+        I: 'static,
     {
         use myhomelab_event::intake::Intake;
 
