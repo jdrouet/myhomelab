@@ -41,6 +41,7 @@ myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc = { path = "./agent/xiaomi/lywsd03m
 myhomelab-agent-sensor-xiaomi-miflora = { path = "./agent/xiaomi/miflora" }
 myhomelab-client-web = { path = "./client/web" }
 myhomelab-dashboard = { path = "./dashboard" }
+myhomelab-event = { path = "./event" }
 myhomelab-metric = { path = "./metric" }
 myhomelab-prelude = { path = "./prelude" }
 serde = { version = "1.0" }

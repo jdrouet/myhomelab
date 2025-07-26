@@ -1,3 +1,4 @@
+pub mod event;
 pub mod metric;
 
 static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();

@@ -1559,6 +1559,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "itertools 0.14.0",
+ "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",
@@ -1592,6 +1593,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "derive_more",
+ "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",
@@ -1742,6 +1744,7 @@ dependencies = [
  "myhomelab-agent-manager",
  "myhomelab-agent-prelude",
  "myhomelab-dashboard",
+ "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",

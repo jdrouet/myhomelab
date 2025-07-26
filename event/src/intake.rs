@@ -3,7 +3,7 @@ use myhomelab_prelude::Healthcheck;
 use crate::EventSource;
 
 pub trait IntakeInput {
-    type Attrs: serde::Serialize;
+    type Attrs: std::fmt::Debug + serde::Serialize;
 
     fn source(&self) -> &EventSource;
     fn message(&self) -> &str;
@@ -11,5 +11,5 @@ pub trait IntakeInput {
 }
 
 pub trait Intake: Healthcheck {
-    fn ingest<I: IntakeInput>(&self, input: &I) -> impl Future<Output = anyhow::Result<()>> + Send;
+    fn ingest<I: IntakeInput>(&self, input: &I) -> impl Future<Output = anyhow::Result<()>>;
 }
