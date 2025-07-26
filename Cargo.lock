@@ -1563,6 +1563,7 @@ dependencies = [
  "myhomelab-metric",
  "myhomelab-prelude",
  "serde",
+ "serde_json",
  "sqlx",
  "tokio",
  "tracing",
