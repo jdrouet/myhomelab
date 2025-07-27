@@ -106,11 +106,32 @@ struct SensorRunner<C: Collector> {
 }
 
 impl<C: Collector> SensorRunner<C> {
+    async fn device(&mut self, id: &PeripheralId) -> Option<Arc<Device>> {
+        if let Some(device) = self.cache.get(&id) {
+            Some(device.clone())
+        } else if let Ok(peripheral) = self.adapter.peripheral(&id).await {
+            let mut device = Device {
+                address: AddressWrapper(peripheral.address()),
+                name: None,
+            };
+            if let Ok(Some(props)) = peripheral.properties().await {
+                device.name = props.local_name;
+            }
+            let device = Arc::new(device);
+            self.cache.push(id.clone(), device.clone());
+            Some(device)
+        } else {
+            None
+        }
+    }
+
     async fn push(&mut self, id: PeripheralId, values: impl Iterator<Item = (&'static str, f64)>) {
         let timestamp = current_timestamp();
         let mut tags = MetricTags::default().with_tag("device", DEVICE);
-        if let Some(device) = self.cache.get(&id) {
+        if let Some(device) = self.device(&id).await {
             device.populate(&mut tags);
+        } else {
+            tags.set_tag("peripheral_id", id.to_string());
         }
         let metrics = values
             .map(|(name, value)| Metric {
