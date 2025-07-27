@@ -4,6 +4,10 @@ FROM ./.docker/alpine AS builder
 
 RUN cargo build --release --package myhomelab-server
 
+FROM scratch AS binary
+
+COPY --from=builder /code/target/release/myhomelab-server /myhomelab-server
+
 FROM alpine:3
 
 RUN apk add --no-cache dbus-libs bluez-libs
