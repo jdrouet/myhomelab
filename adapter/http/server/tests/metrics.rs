@@ -91,7 +91,7 @@ async fn should_handle_healthcheck() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockManager::default(),
+        manager: MockManager,
     };
     state.metric.expect_healthcheck().returning(|| Ok(()));
     let state = MockServerState(Arc::new(state));
@@ -114,7 +114,7 @@ async fn should_ingest_metrics() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockManager::default(),
+        manager: MockManager,
     };
     state.metric.expect_ingest().once().returning(|metrics| {
         let count = metrics.len();
@@ -145,7 +145,7 @@ async fn should_query_batch_metrics() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockManager::default(),
+        manager: MockManager,
     };
     state
         .metric
@@ -196,7 +196,7 @@ async fn should_query_single_metric() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockManager::default(),
+        manager: MockManager,
     };
     state
         .metric
@@ -239,7 +239,7 @@ async fn should_query_single_metrics() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockManager::default(),
+        manager: MockManager,
     };
     state
         .metric

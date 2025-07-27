@@ -107,9 +107,9 @@ struct SensorRunner<C: Collector> {
 
 impl<C: Collector> SensorRunner<C> {
     async fn device(&mut self, id: &PeripheralId) -> Option<Arc<Device>> {
-        if let Some(device) = self.cache.get(&id) {
+        if let Some(device) = self.cache.get(id) {
             Some(device.clone())
-        } else if let Ok(peripheral) = self.adapter.peripheral(&id).await {
+        } else if let Ok(peripheral) = self.adapter.peripheral(id).await {
             let mut device = Device {
                 address: AddressWrapper(peripheral.address()),
                 name: None,

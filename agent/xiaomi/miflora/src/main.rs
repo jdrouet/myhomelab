@@ -17,7 +17,9 @@ async fn main() -> anyhow::Result<()> {
     };
     let sensor = config.build(&build_ctx).await?;
     tokio::time::sleep(Duration::new(30, 0)).await;
-    let _ = sensor.execute(MifloraCommand::SynchronizeAll);
+    if let Err(err) = sensor.execute(MifloraCommand::SynchronizeAll).await {
+        tracing::error!(message = "unable to execute command", cause = ?err);
+    }
     tokio::time::sleep(Duration::new(60, 0)).await;
     cancel.cancel();
     sensor.wait().await
