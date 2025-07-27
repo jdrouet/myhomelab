@@ -59,7 +59,7 @@ impl SensorBuilder for SensorConfig {
         };
         let task = tokio::spawn(async move { runner.run().await });
 
-        Ok(BasicTaskSensor::new(task))
+        Ok(BasicTaskSensor::new(DEVICE, task))
     }
 }
 

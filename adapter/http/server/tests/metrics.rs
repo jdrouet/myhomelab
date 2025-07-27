@@ -4,8 +4,8 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicU16;
 
 use myhomelab_adapter_http_server::ServerState;
-use myhomelab_agent_manager::ManagerCommand;
-use myhomelab_agent_prelude::sensor::Sensor;
+use myhomelab_agent_manager::sensor::AnySensor;
+use myhomelab_agent_prelude::manager::Manager;
 use myhomelab_dashboard::repository::MockDashboardRepo;
 use myhomelab_metric::entity::MetricTags;
 use myhomelab_metric::intake::Intake;
@@ -18,19 +18,23 @@ use tokio_util::sync::CancellationToken;
 static PORT_ITERATOR: AtomicU16 = AtomicU16::new(5000);
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-struct MockSensor;
+struct MockManager;
 
-impl Healthcheck for MockSensor {
+impl Healthcheck for MockManager {
     async fn healthcheck(&self) -> anyhow::Result<()> {
         Ok(())
     }
 }
 
-impl Sensor for MockSensor {
-    type Cmd = ManagerCommand;
+impl Manager for MockManager {
+    type Sensor = AnySensor;
 
-    async fn execute(&self, _command: Self::Cmd) -> anyhow::Result<()> {
-        Ok(())
+    fn get_sensor(&self, _name: &str) -> Option<&Self::Sensor> {
+        None
+    }
+
+    fn sensors(&self) -> impl Iterator<Item = &Self::Sensor> {
+        std::iter::empty()
     }
 
     async fn wait(self) -> anyhow::Result<()> {
@@ -42,7 +46,7 @@ impl Sensor for MockSensor {
 struct InnerState {
     dashboard: MockDashboardRepo,
     metric: MockMetric,
-    manager: MockSensor,
+    manager: MockManager,
 }
 
 impl std::fmt::Debug for InnerState {
@@ -56,6 +60,8 @@ impl std::fmt::Debug for InnerState {
 struct MockServerState(Arc<InnerState>);
 
 impl ServerState for MockServerState {
+    type ManagerSensor = AnySensor;
+
     fn dashboard_repository(&self) -> &impl myhomelab_dashboard::repository::DashboardRepository {
         &self.0.dashboard
     }
@@ -70,7 +76,7 @@ impl ServerState for MockServerState {
 
     fn sensor_manager(
         &self,
-    ) -> &impl myhomelab_agent_prelude::sensor::Sensor<Cmd = ManagerCommand> {
+    ) -> &impl myhomelab_agent_prelude::manager::Manager<Sensor = AnySensor> {
         &self.0.manager
     }
 }
@@ -85,7 +91,7 @@ async fn should_handle_healthcheck() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockSensor::default(),
+        manager: MockManager::default(),
     };
     state.metric.expect_healthcheck().returning(|| Ok(()));
     let state = MockServerState(Arc::new(state));
@@ -108,7 +114,7 @@ async fn should_ingest_metrics() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockSensor::default(),
+        manager: MockManager::default(),
     };
     state.metric.expect_ingest().once().returning(|metrics| {
         let count = metrics.len();
@@ -139,7 +145,7 @@ async fn should_query_batch_metrics() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockSensor::default(),
+        manager: MockManager::default(),
     };
     state
         .metric
@@ -190,7 +196,7 @@ async fn should_query_single_metric() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockSensor::default(),
+        manager: MockManager::default(),
     };
     state
         .metric
@@ -233,7 +239,7 @@ async fn should_query_single_metrics() {
     let mut state = InnerState {
         dashboard: MockDashboardRepo::new(),
         metric: MockMetric::new(),
-        manager: MockSensor::default(),
+        manager: MockManager::default(),
     };
     state
         .metric

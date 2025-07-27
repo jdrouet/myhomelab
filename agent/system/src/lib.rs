@@ -40,7 +40,7 @@ impl myhomelab_agent_prelude::sensor::SensorBuilder for SystemSensorConfig {
             system: sysinfo::System::new_all(),
         };
         let task = tokio::task::spawn(async move { runner.run().await });
-        Ok(BasicTaskSensor::new(task))
+        Ok(BasicTaskSensor::new("system", task))
     }
 }
 

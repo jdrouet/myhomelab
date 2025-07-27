@@ -8,6 +8,7 @@ pub trait Sensor: std::fmt::Debug + Healthcheck + Send + Sync + 'static {
     type Cmd: Send + Sync;
 
     fn execute(&self, command: Self::Cmd) -> impl Future<Output = anyhow::Result<()>> + Send;
+    fn name(&self) -> &'static str;
     fn wait(self) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
@@ -28,12 +29,13 @@ pub struct BuildContext<C: Collector> {
 
 #[derive(Debug)]
 pub struct BasicTaskSensor {
+    name: &'static str,
     task: JoinHandle<anyhow::Result<()>>,
 }
 
 impl BasicTaskSensor {
-    pub fn new(task: JoinHandle<anyhow::Result<()>>) -> Self {
-        Self { task }
+    pub fn new(name: &'static str, task: JoinHandle<anyhow::Result<()>>) -> Self {
+        Self { name, task }
     }
 }
 
@@ -53,6 +55,10 @@ impl Sensor for BasicTaskSensor {
     async fn execute(&self, _command: Self::Cmd) -> anyhow::Result<()> {
         tracing::debug!("this sensor doesn't execute commands");
         Ok(())
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
     }
 
     async fn wait(self) -> anyhow::Result<()> {

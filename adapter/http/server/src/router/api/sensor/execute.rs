@@ -1,18 +1,25 @@
 use axum::Json;
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use myhomelab_adapter_http_shared::sensor::execute::Payload;
+use myhomelab_agent_prelude::manager::Manager;
 use myhomelab_agent_prelude::sensor::Sensor;
 
 pub(super) async fn handle<S: crate::ServerState>(
     State(state): State<S>,
-    Json(payload): Json<Payload>,
-) -> StatusCode {
-    match state.sensor_manager().execute(payload).await {
-        Ok(_) => StatusCode::CREATED,
-        Err(err) => {
-            tracing::error!(message = "unable to execute command", error = %err);
-            StatusCode::INTERNAL_SERVER_ERROR
-        }
-    }
+    Path(name): Path<String>,
+    Json(payload): Json<<<S as crate::ServerState>::ManagerSensor as Sensor>::Cmd>,
+) -> StatusCode
+where
+    for<'de> <<S as crate::ServerState>::ManagerSensor as Sensor>::Cmd: serde::Deserialize<'de>,
+{
+    let Some(sensor) = state.sensor_manager().get_sensor(name.as_str()) else {
+        tracing::debug!(message = "sensor not found", name = %name);
+        return StatusCode::NOT_FOUND;
+    };
+    let Err(err) = sensor.execute(payload).await else {
+        tracing::debug!(message = "execution triggered", name = %name);
+        return StatusCode::CREATED;
+    };
+    tracing::error!(message = "unable to execute command", error = %err);
+    StatusCode::INTERNAL_SERVER_ERROR
 }

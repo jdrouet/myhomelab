@@ -359,6 +359,10 @@ impl myhomelab_agent_prelude::sensor::Sensor for MifloraSensor {
             .context("sending action to the action queue")
     }
 
+    fn name(&self) -> &'static str {
+        DEVICE
+    }
+
     async fn wait(self) -> anyhow::Result<()> {
         self.task.await?
     }

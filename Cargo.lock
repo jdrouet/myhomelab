@@ -1546,7 +1546,6 @@ dependencies = [
 name = "myhomelab-adapter-http-shared"
 version = "0.1.0"
 dependencies = [
- "myhomelab-agent-manager",
  "myhomelab-dashboard",
  "myhomelab-metric",
  "myhomelab-prelude",

@@ -4,7 +4,9 @@ use anyhow::Context;
 use myhomelab_adapter_dataset::{AdapterDataset, AdapterDatasetConfig};
 use myhomelab_adapter_http_server::ServerState;
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
-use myhomelab_agent_prelude::sensor::{BuildContext, Sensor, SensorBuilder};
+use myhomelab_agent_manager::sensor::AnySensor;
+use myhomelab_agent_prelude::manager::{Manager, ManagerBuilder};
+use myhomelab_agent_prelude::sensor::BuildContext;
 use tokio_util::sync::CancellationToken;
 
 mod collector;
@@ -17,6 +19,8 @@ struct AppState {
 }
 
 impl ServerState for AppState {
+    type ManagerSensor = AnySensor;
+
     fn dashboard_repository(&self) -> &impl myhomelab_dashboard::repository::DashboardRepository {
         &self.dataset
     }
@@ -31,8 +35,7 @@ impl ServerState for AppState {
 
     fn sensor_manager(
         &self,
-    ) -> &impl myhomelab_agent_prelude::sensor::Sensor<Cmd = myhomelab_agent_manager::ManagerCommand>
-    {
+    ) -> &impl myhomelab_agent_prelude::manager::Manager<Sensor = AnySensor> {
         self.manager.as_ref()
     }
 }
@@ -78,7 +81,7 @@ struct ServerConfig {
     #[serde(default)]
     http: myhomelab_adapter_http_server::HttpServerConfig,
     #[serde(default)]
-    manager: myhomelab_agent_manager::ManagerConfig,
+    manager: myhomelab_agent_manager::config::ManagerConfig,
 }
 
 impl ServerConfig {
@@ -129,7 +132,7 @@ async fn main() -> anyhow::Result<()> {
         .http
         .build(cancel_token.child_token(), app_state);
 
-    tokio::try_join!(shutdown_signal(cancel_token), http_server.run(),)?;
+    tokio::try_join!(shutdown_signal(cancel_token), http_server.run())?;
 
     if let Some(manager) = Arc::into_inner(manager) {
         manager.wait().await?;

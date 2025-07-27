@@ -1,4 +1,4 @@
-use myhomelab_agent_manager::ManagerCommand;
+use myhomelab_agent_prelude::sensor::Sensor;
 use tokio_util::sync::CancellationToken;
 use tower_http::trace::TraceLayer;
 
@@ -30,7 +30,10 @@ impl HttpServerConfig {
         3000
     }
 
-    pub fn build<S: ServerState>(&self, cancel: CancellationToken, state: S) -> HttpServer<S> {
+    pub fn build<S: ServerState>(&self, cancel: CancellationToken, state: S) -> HttpServer<S>
+    where
+        for<'de> <<S as ServerState>::ManagerSensor as Sensor>::Cmd: serde::Deserialize<'de>,
+    {
         HttpServer {
             address: std::net::SocketAddr::from((self.host, self.port)),
             cancel,
@@ -40,13 +43,19 @@ impl HttpServerConfig {
 }
 
 #[derive(Debug)]
-pub struct HttpServer<S: ServerState> {
+pub struct HttpServer<S: ServerState>
+where
+    for<'de> <<S as ServerState>::ManagerSensor as Sensor>::Cmd: serde::Deserialize<'de>,
+{
     address: std::net::SocketAddr,
     cancel: CancellationToken,
     state: S,
 }
 
-impl<S: ServerState> HttpServer<S> {
+impl<S: ServerState> HttpServer<S>
+where
+    for<'de> <<S as ServerState>::ManagerSensor as Sensor>::Cmd: serde::Deserialize<'de>,
+{
     #[tracing::instrument(skip_all, fields(address = %self.address))]
     pub async fn run(self) -> anyhow::Result<()> {
         let Self {
@@ -68,9 +77,12 @@ impl<S: ServerState> HttpServer<S> {
 }
 
 pub trait ServerState: Clone + Send + Sync + 'static {
+    type ManagerSensor: Sensor;
+
     fn dashboard_repository(&self) -> &impl myhomelab_dashboard::repository::DashboardRepository;
     fn metric_intake(&self) -> &impl myhomelab_metric::intake::Intake;
     fn metric_query_executor(&self) -> &impl myhomelab_metric::query::QueryExecutor;
-    fn sensor_manager(&self)
-    -> &impl myhomelab_agent_prelude::sensor::Sensor<Cmd = ManagerCommand>;
+    fn sensor_manager(
+        &self,
+    ) -> &impl myhomelab_agent_prelude::manager::Manager<Sensor = Self::ManagerSensor>;
 }

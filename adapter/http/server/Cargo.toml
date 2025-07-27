@@ -15,7 +15,6 @@ axum = { version = "0.8", default-features = false, features = [
     "matched-path",
 ] }
 myhomelab-adapter-http-shared = { workspace = true }
-myhomelab-agent-manager = { workspace = true }
 myhomelab-agent-prelude = { workspace = true }
 myhomelab-client-web = { workspace = true }
 myhomelab-dashboard = { workspace = true }
@@ -32,6 +31,7 @@ uuid = { workspace = true }
 [dev-dependencies]
 myhomelab-adapter-dataset = { workspace = true }
 myhomelab-adapter-http-client = { workspace = true }
+myhomelab-agent-manager = { workspace = true }
 myhomelab-dashboard = { workspace = true, features = ["mocks"] }
 myhomelab-metric = { workspace = true, features = ["mocks"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
