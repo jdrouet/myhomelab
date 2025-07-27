@@ -46,10 +46,18 @@ impl<'a> crate::prelude::Component for DashboardCell<'a> {
             buf.push_str("<i>No title</i>");
         }
         buf.push_str("</h2>");
-        if let Some(Response::Timeseries(data)) = result.get("default") {
-            crate::component::line_chart::LineChart::new(data, self.timerange)
-                .render(context, buf)
-                .await?;
+        match result.get("default") {
+            Some(Response::Timeseries(data)) => {
+                crate::component::line_chart::LineChart::new(data, self.timerange)
+                    .render(context, buf)
+                    .await?;
+            }
+            Some(Response::Scalar(data)) => {
+                crate::component::scalar_table::ScalarTable::new(data)
+                    .render(context, buf)
+                    .await?;
+            }
+            _ => {}
         }
         buf.push_str("</div>");
         Ok(())
