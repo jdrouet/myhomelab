@@ -20,6 +20,12 @@ static PORT_ITERATOR: AtomicU16 = AtomicU16::new(5000);
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 struct MockSensor;
 
+impl Healthcheck for MockSensor {
+    async fn healthcheck(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
+
 impl Sensor for MockSensor {
     type Cmd = ManagerCommand;
 

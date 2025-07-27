@@ -9,6 +9,7 @@ pub(super) async fn handle<S: ServerState>(State(state): State<S>) -> StatusCode
     let res = tokio::try_join!(
         state.metric_intake().healthcheck(),
         state.metric_query_executor().healthcheck(),
+        state.sensor_manager().healthcheck(),
     );
     match res {
         Ok(_) => StatusCode::NO_CONTENT,

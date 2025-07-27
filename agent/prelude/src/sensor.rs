@@ -1,9 +1,10 @@
+use myhomelab_prelude::Healthcheck;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
 use crate::collector::Collector;
 
-pub trait Sensor: std::fmt::Debug + Send + Sync + 'static {
+pub trait Sensor: std::fmt::Debug + Healthcheck + Send + Sync + 'static {
     type Cmd: Send + Sync;
 
     fn execute(&self, command: Self::Cmd) -> impl Future<Output = anyhow::Result<()>> + Send;
@@ -33,6 +34,16 @@ pub struct BasicTaskSensor {
 impl BasicTaskSensor {
     pub fn new(task: JoinHandle<anyhow::Result<()>>) -> Self {
         Self { task }
+    }
+}
+
+impl Healthcheck for BasicTaskSensor {
+    async fn healthcheck(&self) -> anyhow::Result<()> {
+        if self.task.is_finished() {
+            Err(anyhow::anyhow!("sensor task is dead"))
+        } else {
+            Ok(())
+        }
     }
 }
 

@@ -11,6 +11,7 @@ use myhomelab_agent_prelude::sensor::BuildContext;
 use myhomelab_event::EventLevel;
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
+use myhomelab_prelude::Healthcheck;
 use myhomelab_prelude::time::current_timestamp;
 use tokio::sync::RwLock;
 use tokio::time::Interval;
@@ -337,6 +338,16 @@ pub struct MifloraSensor {
     #[allow(unused)]
     memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>>,
     task: tokio::task::JoinHandle<anyhow::Result<()>>,
+}
+
+impl Healthcheck for MifloraSensor {
+    async fn healthcheck(&self) -> anyhow::Result<()> {
+        if self.task.is_finished() {
+            Err(anyhow::anyhow!("sensor task is dead"))
+        } else {
+            Ok(())
+        }
+    }
 }
 
 impl myhomelab_agent_prelude::sensor::Sensor for MifloraSensor {
