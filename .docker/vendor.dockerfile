@@ -36,9 +36,6 @@ COPY agent/xiaomi/lywsd03mmc-atc/Cargo.toml /code/agent/xiaomi/lywsd03mmc-atc/Ca
 RUN cargo init --lib --name myhomelab-agent-sensor-xiaomi-miflora agent/xiaomi/miflora
 COPY agent/xiaomi/miflora/Cargo.toml /code/agent/xiaomi/miflora/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-client-tui client/tui
-COPY client/tui/Cargo.toml /code/client/tui/Cargo.toml
-
 RUN cargo init --lib --name myhomelab-client-web client/web
 COPY client/web/Cargo.toml /code/client/web/Cargo.toml
 

@@ -24,7 +24,6 @@ COPY agent/prelude /code/agent/prelude
 COPY agent/system /code/agent/system
 COPY agent/xiaomi/lywsd03mmc-atc /code/agent/xiaomi/lywsd03mmc-atc
 COPY agent/xiaomi/miflora /code/agent/xiaomi/miflora
-COPY client/tui /code/client/tui
 COPY client/web /code/client/web
 COPY dashboard /code/dashboard
 COPY event /code/event
