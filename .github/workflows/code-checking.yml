@@ -34,6 +34,7 @@ jobs:
           key: ${{ runner.os }}-code-check-${{ hashFiles('**/Cargo.lock') }}
       - run: cargo check --all-features --tests --workspace
       - run: cargo clippy --all-targets --all-features --tests --workspace
+      - uses: bnjbvr/cargo-machete@main # checks unused dependencies
 
   format:
     runs-on: ubuntu-latest
