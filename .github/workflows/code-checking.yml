@@ -39,7 +39,7 @@ jobs:
   features:
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.ref }}-code-check
+      group: ${{ github.ref }}-features
       cancel-in-progress: true
     steps:
       - run: |
@@ -57,7 +57,7 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-features-${{ hashFiles('**/Cargo.lock') }}
-      - run: cargo hack check --each-feature --tests --all-targets
+      - run: cargo hack check --feature-powerset --tests --all-targets
 
   format:
     runs-on: ubuntu-latest
