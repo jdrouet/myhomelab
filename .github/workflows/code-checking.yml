@@ -36,6 +36,29 @@ jobs:
       - run: cargo clippy --all-targets --all-features --tests --workspace
       - uses: bnjbvr/cargo-machete@main # checks unused dependencies
 
+  features:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.ref }}-code-check
+      cancel-in-progress: true
+    steps:
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y dbus libdbus-1-dev
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-features-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo hack check --each-feature --tests --all-targets
+
   format:
     runs-on: ubuntu-latest
     concurrency:
