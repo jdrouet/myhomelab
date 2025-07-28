@@ -9,4 +9,5 @@ license.workspace = true
 myhomelab-dashboard = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
+myhomelab-sensor-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

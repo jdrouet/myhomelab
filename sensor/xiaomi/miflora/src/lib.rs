@@ -12,7 +12,7 @@ use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::Healthcheck;
 use myhomelab_prelude::time::current_timestamp;
 use myhomelab_sensor_prelude::collector::Collector;
-use myhomelab_sensor_prelude::sensor::BuildContext;
+use myhomelab_sensor_prelude::sensor::{BuildContext, SensorDescriptor};
 use tokio::sync::RwLock;
 use tokio::time::Interval;
 use tokio_stream::StreamExt;
@@ -25,6 +25,11 @@ mod event;
 // MAC address prefix (C4:7C:8D = original)
 
 const DEVICE: &str = "xiaomi-miflora";
+const DESCRIPTOR: SensorDescriptor = SensorDescriptor {
+    id: DEVICE,
+    name: "Xiaomi MiFlora Bluetooth",
+    description: "Bluetooth reader for the Xiaomi MiFlora devices",
+};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct MifloraSensorConfig {
@@ -359,8 +364,8 @@ impl myhomelab_sensor_prelude::sensor::Sensor for MifloraSensor {
             .context("sending action to the action queue")
     }
 
-    fn name(&self) -> &'static str {
-        DEVICE
+    fn descriptor(&self) -> SensorDescriptor {
+        DESCRIPTOR
     }
 
     async fn wait(self) -> anyhow::Result<()> {

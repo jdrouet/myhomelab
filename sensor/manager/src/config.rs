@@ -42,13 +42,16 @@ impl ManagerBuilder for ManagerConfig {
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         let mut inner = BTreeMap::new();
         if let Some(sensor) = self.system.build(ctx).await? {
-            inner.insert(sensor.name(), AnySensor::System(sensor));
+            inner.insert(sensor.descriptor().id, AnySensor::System(sensor));
         }
         if let Some(sensor) = self.xiaomi_lywsd03mmc_atc.build(ctx).await? {
-            inner.insert(sensor.name(), AnySensor::XiaomiLywsd03mmcAtc(sensor));
+            inner.insert(
+                sensor.descriptor().id,
+                AnySensor::XiaomiLywsd03mmcAtc(sensor),
+            );
         }
         if let Some(sensor) = self.xiaomi_miflora.build(ctx).await? {
-            inner.insert(sensor.name(), AnySensor::XiaomiMiflora(sensor));
+            inner.insert(sensor.descriptor().id, AnySensor::XiaomiMiflora(sensor));
         }
         Ok(crate::Manager { inner })
     }

@@ -1,15 +1,16 @@
 use axum::Json;
 use axum::extract::State;
+use myhomelab_adapter_http_shared::sensor::SensorDescriptor as HttpSensorDescriptor;
 use myhomelab_sensor_prelude::manager::Manager;
 use myhomelab_sensor_prelude::sensor::Sensor;
 
 pub(super) async fn handle<S: crate::ServerState>(
     State(state): State<S>,
-) -> Json<Vec<&'static str>> {
+) -> Json<Vec<HttpSensorDescriptor>> {
     let sensors = state
         .sensor_manager()
         .sensors()
-        .map(|sensor| sensor.name())
+        .map(|sensor| HttpSensorDescriptor::from(sensor.descriptor()))
         .collect::<Vec<_>>();
     Json(sensors)
 }

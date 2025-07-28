@@ -7,8 +7,8 @@ use crate::collector::Collector;
 pub trait Sensor: std::fmt::Debug + Healthcheck + Send + Sync + 'static {
     type Cmd: Send + Sync;
 
+    fn descriptor(&self) -> SensorDescriptor;
     fn execute(&self, command: Self::Cmd) -> impl Future<Output = anyhow::Result<()>> + Send;
-    fn name(&self) -> &'static str;
     fn wait(self) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
@@ -21,6 +21,13 @@ pub trait SensorBuilder {
     ) -> impl Future<Output = anyhow::Result<Self::Output>> + Send;
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct SensorDescriptor {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+}
+
 #[derive(Debug)]
 pub struct BuildContext<C: Collector> {
     pub cancel: CancellationToken,
@@ -29,13 +36,13 @@ pub struct BuildContext<C: Collector> {
 
 #[derive(Debug)]
 pub struct BasicTaskSensor {
-    name: &'static str,
+    descriptor: SensorDescriptor,
     task: JoinHandle<anyhow::Result<()>>,
 }
 
 impl BasicTaskSensor {
-    pub fn new(name: &'static str, task: JoinHandle<anyhow::Result<()>>) -> Self {
-        Self { name, task }
+    pub fn new(descriptor: SensorDescriptor, task: JoinHandle<anyhow::Result<()>>) -> Self {
+        Self { descriptor, task }
     }
 }
 
@@ -57,8 +64,8 @@ impl Sensor for BasicTaskSensor {
         Ok(())
     }
 
-    fn name(&self) -> &'static str {
-        self.name
+    fn descriptor(&self) -> SensorDescriptor {
+        self.descriptor
     }
 
     async fn wait(self) -> anyhow::Result<()> {

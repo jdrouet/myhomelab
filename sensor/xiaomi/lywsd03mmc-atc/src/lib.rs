@@ -12,7 +12,9 @@ use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
 use myhomelab_sensor_prelude::collector::Collector;
-use myhomelab_sensor_prelude::sensor::{BasicTaskSensor, BuildContext, SensorBuilder};
+use myhomelab_sensor_prelude::sensor::{
+    BasicTaskSensor, BuildContext, SensorBuilder, SensorDescriptor,
+};
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 
@@ -20,6 +22,11 @@ mod event;
 mod parse;
 
 const DEVICE: &str = "xiaomi-lywsd03mmc-atc";
+const DESCRIPTOR: SensorDescriptor = SensorDescriptor {
+    id: DEVICE,
+    name: "Xiaomi Lywsd03mmc sensor",
+    description: "Bluetooth reader of Xiaomi Lywsd03mmc with ATC firmware",
+};
 const SERVICE_ID: uuid::Uuid = uuid::Uuid::from_u128(488837762788578050050668711589115);
 
 #[derive(Debug, serde::Deserialize)]
@@ -59,7 +66,7 @@ impl SensorBuilder for SensorConfig {
         };
         let task = tokio::spawn(async move { runner.run().await });
 
-        Ok(BasicTaskSensor::new(DEVICE, task))
+        Ok(BasicTaskSensor::new(DESCRIPTOR, task))
     }
 }
 

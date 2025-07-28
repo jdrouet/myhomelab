@@ -30,11 +30,11 @@ impl Sensor for AnySensor {
         }
     }
 
-    fn name(&self) -> &'static str {
+    fn descriptor(&self) -> myhomelab_sensor_prelude::sensor::SensorDescriptor {
         match self {
-            Self::System(inner) => inner.name(),
-            Self::XiaomiLywsd03mmcAtc(inner) => inner.name(),
-            Self::XiaomiMiflora(inner) => inner.name(),
+            Self::System(inner) => inner.descriptor(),
+            Self::XiaomiLywsd03mmcAtc(inner) => inner.descriptor(),
+            Self::XiaomiMiflora(inner) => inner.descriptor(),
         }
     }
 

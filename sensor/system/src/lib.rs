@@ -5,9 +5,15 @@ use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
 use myhomelab_sensor_prelude::collector::Collector;
-use myhomelab_sensor_prelude::sensor::{BasicTaskSensor, BuildContext};
+use myhomelab_sensor_prelude::sensor::{BasicTaskSensor, BuildContext, SensorDescriptor};
 use sysinfo::System;
 use tokio_util::sync::CancellationToken;
+
+const DESCRIPTOR: SensorDescriptor = SensorDescriptor {
+    id: "system",
+    name: "System",
+    description: "Supervise the host metrics",
+};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct SystemSensorConfig {
@@ -40,7 +46,7 @@ impl myhomelab_sensor_prelude::sensor::SensorBuilder for SystemSensorConfig {
             system: sysinfo::System::new_all(),
         };
         let task = tokio::task::spawn(async move { runner.run().await });
-        Ok(BasicTaskSensor::new("system", task))
+        Ok(BasicTaskSensor::new(DESCRIPTOR, task))
     }
 }
 

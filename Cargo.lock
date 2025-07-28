@@ -1307,6 +1307,7 @@ dependencies = [
  "myhomelab-dashboard",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "myhomelab-sensor-prelude",
  "serde",
 ]
 
