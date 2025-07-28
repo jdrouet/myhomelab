@@ -6,16 +6,16 @@ members = [
     "adapter/http/server",
     "adapter/http/shared",
     "adapter/sqlite",
+    "client/web",
+    "domain/dashboard",
+    "domain/event",
+    "domain/metric",
+    "prelude",
     "sensor/manager",
     "sensor/prelude",
     "sensor/system",
     "sensor/xiaomi/lywsd03mmc-atc",
     "sensor/xiaomi/miflora",
-    "client/web",
-    "dashboard",
-    "event",
-    "metric",
-    "prelude",
     "server",
 ]
 
@@ -33,16 +33,16 @@ myhomelab-adapter-http-client = { path = "./adapter/http/client" }
 myhomelab-adapter-http-server = { path = "./adapter/http/server" }
 myhomelab-adapter-http-shared = { path = "./adapter/http/shared" }
 myhomelab-adapter-sqlite = { path = "./adapter/sqlite" }
+myhomelab-client-web = { path = "./client/web" }
+myhomelab-dashboard = { path = "./domain/dashboard" }
+myhomelab-event = { path = "./domain/event" }
+myhomelab-metric = { path = "./domain/metric" }
+myhomelab-prelude = { path = "./prelude" }
 myhomelab-sensor-manager = { path = "./sensor/manager" }
 myhomelab-sensor-prelude = { path = "./sensor/prelude" }
 myhomelab-sensor-system = { path = "./sensor/system" }
 myhomelab-sensor-xiaomi-lywsd03mmc-atc = { path = "./sensor/xiaomi/lywsd03mmc-atc" }
 myhomelab-sensor-xiaomi-miflora = { path = "./sensor/xiaomi/miflora" }
-myhomelab-client-web = { path = "./client/web" }
-myhomelab-dashboard = { path = "./dashboard" }
-myhomelab-event = { path = "./event" }
-myhomelab-metric = { path = "./metric" }
-myhomelab-prelude = { path = "./prelude" }
 serde = { version = "1.0" }
 serde_json = { version = "1.0" }
 serde_qs = { version = "1.0.0-rc.3" }

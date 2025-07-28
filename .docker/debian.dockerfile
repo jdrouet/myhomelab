@@ -19,15 +19,15 @@ COPY adapter/http/client /code/adapter/http/client
 COPY adapter/http/server /code/adapter/http/server
 COPY adapter/http/shared /code/adapter/http/shared
 COPY adapter/sqlite /code/adapter/sqlite
+COPY client/web /code/client/web
+COPY domain/dashboard /code/domain/dashboard
+COPY domain/event /code/domain/event
+COPY domain/metric /code/domain/metric
 COPY sensor/manager /code/sensor/manager
 COPY sensor/prelude /code/sensor/prelude
 COPY sensor/system /code/sensor/system
 COPY sensor/xiaomi/lywsd03mmc-atc /code/sensor/xiaomi/lywsd03mmc-atc
 COPY sensor/xiaomi/miflora /code/sensor/xiaomi/miflora
-COPY client/web /code/client/web
-COPY dashboard /code/dashboard
-COPY event /code/event
-COPY metric /code/metric
 COPY prelude /code/prelude
 COPY server /code/server
 COPY --from=vendor /code/.cargo /code/.cargo

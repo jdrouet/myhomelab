@@ -39,14 +39,14 @@ COPY sensor/xiaomi/miflora/Cargo.toml /code/sensor/xiaomi/miflora/Cargo.toml
 RUN cargo init --lib --name myhomelab-client-web client/web
 COPY client/web/Cargo.toml /code/client/web/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-dashboard dashboard
-COPY dashboard/Cargo.toml /code/dashboard/Cargo.toml
+RUN cargo init --lib --name myhomelab-dashboard domain/dashboard
+COPY domain/dashboard/Cargo.toml /code/domain/dashboard/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-event event
-COPY event/Cargo.toml /code/event/Cargo.toml
+RUN cargo init --lib --name myhomelab-event domain/event
+COPY domain/event/Cargo.toml /code/domain/event/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-metric metric
-COPY metric/Cargo.toml /code/metric/Cargo.toml
+RUN cargo init --lib --name myhomelab-metric domain/metric
+COPY domain/metric/Cargo.toml /code/domain/metric/Cargo.toml
 
 RUN cargo init --lib --name myhomelab-prelude prelude
 COPY prelude/Cargo.toml /code/prelude/Cargo.toml
