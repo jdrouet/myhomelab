@@ -6,13 +6,13 @@ use std::time::{Duration, SystemTime};
 use anyhow::Context;
 use btleplug::api::{Central, CentralEvent, CentralState, Manager, Peripheral, ScanFilter};
 use btleplug::platform::PeripheralId;
-use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::sensor::BuildContext;
 use myhomelab_event::EventLevel;
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::Healthcheck;
 use myhomelab_prelude::time::current_timestamp;
+use myhomelab_sensor_prelude::collector::Collector;
+use myhomelab_sensor_prelude::sensor::BuildContext;
 use tokio::sync::RwLock;
 use tokio::time::Interval;
 use tokio_stream::StreamExt;
@@ -59,7 +59,7 @@ impl Default for MifloraSensorConfig {
     }
 }
 
-impl myhomelab_agent_prelude::sensor::SensorBuilder for MifloraSensorConfig {
+impl myhomelab_sensor_prelude::sensor::SensorBuilder for MifloraSensorConfig {
     type Output = MifloraSensor;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
@@ -350,7 +350,7 @@ impl Healthcheck for MifloraSensor {
     }
 }
 
-impl myhomelab_agent_prelude::sensor::Sensor for MifloraSensor {
+impl myhomelab_sensor_prelude::sensor::Sensor for MifloraSensor {
     type Cmd = MifloraCommand;
 
     async fn execute(&self, command: Self::Cmd) -> anyhow::Result<()> {

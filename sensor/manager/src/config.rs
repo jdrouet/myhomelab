@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
-use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::manager::ManagerBuilder;
-use myhomelab_agent_prelude::sensor::{BuildContext, Sensor, SensorBuilder};
+use myhomelab_sensor_prelude::collector::Collector;
+use myhomelab_sensor_prelude::manager::ManagerBuilder;
+use myhomelab_sensor_prelude::sensor::{BuildContext, Sensor, SensorBuilder};
 
 use crate::sensor::AnySensor;
 
@@ -29,12 +29,11 @@ impl<T: SensorBuilder> ConfigWrapper<T> {
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct ManagerConfig {
     #[serde(default)]
-    system: ConfigWrapper<myhomelab_agent_sensor_system::SystemSensorConfig>,
+    system: ConfigWrapper<myhomelab_sensor_system::SystemSensorConfig>,
     #[serde(default)]
-    xiaomi_lywsd03mmc_atc:
-        ConfigWrapper<myhomelab_agent_sensor_xiaomi_lywsd03mmc_atc::SensorConfig>,
+    xiaomi_lywsd03mmc_atc: ConfigWrapper<myhomelab_sensor_xiaomi_lywsd03mmc_atc::SensorConfig>,
     #[serde(default)]
-    xiaomi_miflora: ConfigWrapper<myhomelab_agent_sensor_xiaomi_miflora::MifloraSensorConfig>,
+    xiaomi_miflora: ConfigWrapper<myhomelab_sensor_xiaomi_miflora::MifloraSensorConfig>,
 }
 
 impl ManagerBuilder for ManagerConfig {

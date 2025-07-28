@@ -4,8 +4,6 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicU16;
 
 use myhomelab_adapter_http_server::ServerState;
-use myhomelab_agent_manager::sensor::AnySensor;
-use myhomelab_agent_prelude::manager::Manager;
 use myhomelab_dashboard::repository::MockDashboardRepo;
 use myhomelab_metric::entity::MetricTags;
 use myhomelab_metric::intake::Intake;
@@ -13,6 +11,8 @@ use myhomelab_metric::mock::MockMetric;
 use myhomelab_metric::query::{Query, QueryExecutor, Request};
 use myhomelab_prelude::Healthcheck;
 use myhomelab_prelude::time::{AbsoluteTimeRange, TimeRange};
+use myhomelab_sensor_manager::sensor::AnySensor;
+use myhomelab_sensor_prelude::manager::Manager;
 use tokio_util::sync::CancellationToken;
 
 static PORT_ITERATOR: AtomicU16 = AtomicU16::new(5000);
@@ -76,7 +76,7 @@ impl ServerState for MockServerState {
 
     fn sensor_manager(
         &self,
-    ) -> &impl myhomelab_agent_prelude::manager::Manager<Sensor = AnySensor> {
+    ) -> &impl myhomelab_sensor_prelude::manager::Manager<Sensor = AnySensor> {
         &self.0.manager
     }
 }

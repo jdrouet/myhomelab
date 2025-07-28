@@ -1,8 +1,8 @@
 use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use myhomelab_agent_prelude::manager::Manager;
-use myhomelab_agent_prelude::sensor::Sensor;
+use myhomelab_sensor_prelude::manager::Manager;
+use myhomelab_sensor_prelude::sensor::Sensor;
 
 pub(super) async fn handle<S: crate::ServerState>(
     State(state): State<S>,

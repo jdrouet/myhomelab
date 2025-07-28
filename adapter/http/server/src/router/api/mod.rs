@@ -1,5 +1,5 @@
 use axum::routing::head;
-use myhomelab_agent_prelude::sensor::Sensor;
+use myhomelab_sensor_prelude::sensor::Sensor;
 
 use crate::ServerState;
 

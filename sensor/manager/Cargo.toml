@@ -1,5 +1,5 @@
 [package]
-name = "myhomelab-agent-manager"
+name = "myhomelab-sensor-manager"
 version = "0.1.0"
 edition = "2024"
 authors.workspace = true
@@ -8,10 +8,10 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 derive_more = { workspace = true, features = ["from"] }
-myhomelab-agent-prelude = { workspace = true }
-myhomelab-agent-sensor-system = { workspace = true }
-myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc = { workspace = true }
-myhomelab-agent-sensor-xiaomi-miflora = { workspace = true }
+myhomelab-sensor-prelude = { workspace = true }
+myhomelab-sensor-system = { workspace = true }
+myhomelab-sensor-xiaomi-lywsd03mmc-atc = { workspace = true }
+myhomelab-sensor-xiaomi-miflora = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

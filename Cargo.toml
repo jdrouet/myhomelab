@@ -6,11 +6,11 @@ members = [
     "adapter/http/server",
     "adapter/http/shared",
     "adapter/sqlite",
-    "agent/manager",
-    "agent/prelude",
-    "agent/system",
-    "agent/xiaomi/lywsd03mmc-atc",
-    "agent/xiaomi/miflora",
+    "sensor/manager",
+    "sensor/prelude",
+    "sensor/system",
+    "sensor/xiaomi/lywsd03mmc-atc",
+    "sensor/xiaomi/miflora",
     "client/web",
     "dashboard",
     "event",
@@ -33,11 +33,11 @@ myhomelab-adapter-http-client = { path = "./adapter/http/client" }
 myhomelab-adapter-http-server = { path = "./adapter/http/server" }
 myhomelab-adapter-http-shared = { path = "./adapter/http/shared" }
 myhomelab-adapter-sqlite = { path = "./adapter/sqlite" }
-myhomelab-agent-manager = { path = "./agent/manager" }
-myhomelab-agent-prelude = { path = "./agent/prelude" }
-myhomelab-agent-sensor-system = { path = "./agent/system" }
-myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc = { path = "./agent/xiaomi/lywsd03mmc-atc" }
-myhomelab-agent-sensor-xiaomi-miflora = { path = "./agent/xiaomi/miflora" }
+myhomelab-sensor-manager = { path = "./sensor/manager" }
+myhomelab-sensor-prelude = { path = "./sensor/prelude" }
+myhomelab-sensor-system = { path = "./sensor/system" }
+myhomelab-sensor-xiaomi-lywsd03mmc-atc = { path = "./sensor/xiaomi/lywsd03mmc-atc" }
+myhomelab-sensor-xiaomi-miflora = { path = "./sensor/xiaomi/miflora" }
 myhomelab-client-web = { path = "./client/web" }
 myhomelab-dashboard = { path = "./dashboard" }
 myhomelab-event = { path = "./event" }

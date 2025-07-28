@@ -1,5 +1,5 @@
 [package]
-name = "myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc"
+name = "myhomelab-sensor-xiaomi-lywsd03mmc-atc"
 version = "0.1.0"
 edition = "2024"
 authors.workspace = true
@@ -12,7 +12,7 @@ lru = { version = "0.16" }
 myhomelab-event = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
-myhomelab-agent-prelude = { workspace = true }
+myhomelab-sensor-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }

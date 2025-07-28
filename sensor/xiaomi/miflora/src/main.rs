@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use myhomelab_agent_prelude::collector::TracingCollector;
-use myhomelab_agent_prelude::sensor::{BuildContext, Sensor, SensorBuilder};
-use myhomelab_agent_sensor_xiaomi_miflora::{MifloraCommand, MifloraSensorConfig};
+use myhomelab_sensor_prelude::collector::TracingCollector;
+use myhomelab_sensor_prelude::sensor::{BuildContext, Sensor, SensorBuilder};
+use myhomelab_sensor_xiaomi_miflora::{MifloraCommand, MifloraSensorConfig};
 use tokio_util::sync::CancellationToken;
 
 #[tokio::main]

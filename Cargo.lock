@@ -1299,12 +1299,12 @@ dependencies = [
  "myhomelab-adapter-dataset",
  "myhomelab-adapter-http-client",
  "myhomelab-adapter-http-shared",
- "myhomelab-agent-manager",
- "myhomelab-agent-prelude",
  "myhomelab-client-web",
  "myhomelab-dashboard",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "myhomelab-sensor-manager",
+ "myhomelab-sensor-prelude",
  "serde",
  "serde_qs",
  "tokio",
@@ -1338,96 +1338,6 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "myhomelab-agent-manager"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "derive_more",
- "myhomelab-agent-prelude",
- "myhomelab-agent-sensor-system",
- "myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc",
- "myhomelab-agent-sensor-xiaomi-miflora",
- "myhomelab-metric",
- "myhomelab-prelude",
- "serde",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tracing",
-]
-
-[[package]]
-name = "myhomelab-agent-prelude"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "derive_more",
- "myhomelab-event",
- "myhomelab-metric",
- "myhomelab-prelude",
- "serde",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tracing",
-]
-
-[[package]]
-name = "myhomelab-agent-sensor-system"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "myhomelab-agent-prelude",
- "myhomelab-metric",
- "myhomelab-prelude",
- "serde",
- "sysinfo",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tracing",
-]
-
-[[package]]
-name = "myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "btleplug",
- "lru",
- "myhomelab-agent-prelude",
- "myhomelab-event",
- "myhomelab-metric",
- "myhomelab-prelude",
- "serde",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "myhomelab-agent-sensor-xiaomi-miflora"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "btleplug",
- "lru",
- "myhomelab-agent-prelude",
- "myhomelab-event",
- "myhomelab-metric",
- "myhomelab-prelude",
- "serde",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "uuid",
 ]
 
 [[package]]
@@ -1488,6 +1398,96 @@ dependencies = [
 ]
 
 [[package]]
+name = "myhomelab-sensor-manager"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "derive_more",
+ "myhomelab-metric",
+ "myhomelab-prelude",
+ "myhomelab-sensor-prelude",
+ "myhomelab-sensor-system",
+ "myhomelab-sensor-xiaomi-lywsd03mmc-atc",
+ "myhomelab-sensor-xiaomi-miflora",
+ "serde",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "myhomelab-sensor-prelude"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "derive_more",
+ "myhomelab-event",
+ "myhomelab-metric",
+ "myhomelab-prelude",
+ "serde",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "myhomelab-sensor-system"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "myhomelab-metric",
+ "myhomelab-prelude",
+ "myhomelab-sensor-prelude",
+ "serde",
+ "sysinfo",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "myhomelab-sensor-xiaomi-lywsd03mmc-atc"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "btleplug",
+ "lru",
+ "myhomelab-event",
+ "myhomelab-metric",
+ "myhomelab-prelude",
+ "myhomelab-sensor-prelude",
+ "serde",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "myhomelab-sensor-xiaomi-miflora"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "btleplug",
+ "lru",
+ "myhomelab-event",
+ "myhomelab-metric",
+ "myhomelab-prelude",
+ "myhomelab-sensor-prelude",
+ "serde",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "myhomelab-server"
 version = "0.1.0"
 dependencies = [
@@ -1496,12 +1496,12 @@ dependencies = [
  "myhomelab-adapter-dataset",
  "myhomelab-adapter-http-server",
  "myhomelab-adapter-sqlite",
- "myhomelab-agent-manager",
- "myhomelab-agent-prelude",
  "myhomelab-dashboard",
  "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
+ "myhomelab-sensor-manager",
+ "myhomelab-sensor-prelude",
  "serde",
  "tokio",
  "tokio-util",

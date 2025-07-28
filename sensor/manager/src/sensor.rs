@@ -1,19 +1,19 @@
 use anyhow::Context;
-use myhomelab_agent_prelude::sensor::Sensor;
 use myhomelab_prelude::Healthcheck;
+use myhomelab_sensor_prelude::sensor::Sensor;
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 #[serde(tag = "sensor")]
 pub enum AnyCommand {
     #[serde(rename = "xiaomi.miflora")]
-    XiaomiMiflora(myhomelab_agent_sensor_xiaomi_miflora::MifloraCommand),
+    XiaomiMiflora(myhomelab_sensor_xiaomi_miflora::MifloraCommand),
 }
 
 #[derive(Debug)]
 pub enum AnySensor {
-    System(myhomelab_agent_sensor_system::SystemSensor),
-    XiaomiLywsd03mmcAtc(myhomelab_agent_sensor_xiaomi_lywsd03mmc_atc::AtcSensor),
-    XiaomiMiflora(myhomelab_agent_sensor_xiaomi_miflora::MifloraSensor),
+    System(myhomelab_sensor_system::SystemSensor),
+    XiaomiLywsd03mmcAtc(myhomelab_sensor_xiaomi_lywsd03mmc_atc::AtcSensor),
+    XiaomiMiflora(myhomelab_sensor_xiaomi_miflora::MifloraSensor),
 }
 
 impl Sensor for AnySensor {

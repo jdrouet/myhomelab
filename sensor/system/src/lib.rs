@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 use std::time::Duration;
 
-use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::sensor::{BasicTaskSensor, BuildContext};
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
+use myhomelab_sensor_prelude::collector::Collector;
+use myhomelab_sensor_prelude::sensor::{BasicTaskSensor, BuildContext};
 use sysinfo::System;
 use tokio_util::sync::CancellationToken;
 
@@ -29,7 +29,7 @@ impl SystemSensorConfig {
     }
 }
 
-impl myhomelab_agent_prelude::sensor::SensorBuilder for SystemSensorConfig {
+impl myhomelab_sensor_prelude::sensor::SensorBuilder for SystemSensorConfig {
     type Output = SystemSensor;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {

@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use axum::Extension;
 use axum::http::StatusCode;
-use myhomelab_agent_prelude::sensor::Sensor;
+use myhomelab_sensor_prelude::sensor::Sensor;
 
 use crate::ServerState;
 

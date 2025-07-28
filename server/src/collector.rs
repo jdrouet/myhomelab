@@ -6,7 +6,7 @@ pub(crate) struct Collector {
     pub(crate) sqlite: Sqlite,
 }
 
-impl myhomelab_agent_prelude::collector::Collector for Collector {
+impl myhomelab_sensor_prelude::collector::Collector for Collector {
     async fn push_metrics<'h>(&self, metrics: &[Metric<'h>]) -> anyhow::Result<()> {
         use myhomelab_metric::intake::Intake;
 

@@ -1,5 +1,5 @@
 [package]
-name = "myhomelab-agent-prelude"
+name = "myhomelab-sensor-system"
 version = "0.1.0"
 edition = "2024"
 authors.workspace = true
@@ -7,11 +7,11 @@ license.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-derive_more = { workspace = true, features = ["from"] }
-myhomelab-event = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
-serde = { workspace = true }
+myhomelab-sensor-prelude = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+sysinfo = { version = "0.36" }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
 tokio-util = { workspace = true }

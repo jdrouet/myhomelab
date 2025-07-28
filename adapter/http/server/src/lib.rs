@@ -1,4 +1,4 @@
-use myhomelab_agent_prelude::sensor::Sensor;
+use myhomelab_sensor_prelude::sensor::Sensor;
 use tokio_util::sync::CancellationToken;
 use tower_http::trace::TraceLayer;
 
@@ -84,5 +84,5 @@ pub trait ServerState: Clone + Send + Sync + 'static {
     fn metric_query_executor(&self) -> &impl myhomelab_metric::query::QueryExecutor;
     fn sensor_manager(
         &self,
-    ) -> &impl myhomelab_agent_prelude::manager::Manager<Sensor = Self::ManagerSensor>;
+    ) -> &impl myhomelab_sensor_prelude::manager::Manager<Sensor = Self::ManagerSensor>;
 }

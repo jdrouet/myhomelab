@@ -4,9 +4,9 @@ use anyhow::Context;
 use myhomelab_adapter_dataset::{AdapterDataset, AdapterDatasetConfig};
 use myhomelab_adapter_http_server::ServerState;
 use myhomelab_adapter_sqlite::{Sqlite, SqliteConfig};
-use myhomelab_agent_manager::sensor::AnySensor;
-use myhomelab_agent_prelude::manager::{Manager, ManagerBuilder};
-use myhomelab_agent_prelude::sensor::BuildContext;
+use myhomelab_sensor_manager::sensor::AnySensor;
+use myhomelab_sensor_prelude::manager::{Manager, ManagerBuilder};
+use myhomelab_sensor_prelude::sensor::BuildContext;
 use tokio_util::sync::CancellationToken;
 
 mod collector;
@@ -14,7 +14,7 @@ mod collector;
 #[derive(Clone, Debug)]
 struct AppState {
     dataset: AdapterDataset,
-    manager: Arc<myhomelab_agent_manager::Manager>,
+    manager: Arc<myhomelab_sensor_manager::Manager>,
     sqlite: Sqlite,
 }
 
@@ -35,7 +35,7 @@ impl ServerState for AppState {
 
     fn sensor_manager(
         &self,
-    ) -> &impl myhomelab_agent_prelude::manager::Manager<Sensor = AnySensor> {
+    ) -> &impl myhomelab_sensor_prelude::manager::Manager<Sensor = AnySensor> {
         self.manager.as_ref()
     }
 }
@@ -81,7 +81,7 @@ struct ServerConfig {
     #[serde(default)]
     http: myhomelab_adapter_http_server::HttpServerConfig,
     #[serde(default)]
-    manager: myhomelab_agent_manager::config::ManagerConfig,
+    manager: myhomelab_sensor_manager::config::ManagerConfig,
 }
 
 impl ServerConfig {

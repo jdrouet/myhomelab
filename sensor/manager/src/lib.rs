@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use myhomelab_agent_prelude::sensor::Sensor;
 use myhomelab_prelude::Healthcheck;
+use myhomelab_sensor_prelude::sensor::Sensor;
 use sensor::AnySensor;
 
 pub mod config;
@@ -21,7 +21,7 @@ impl Healthcheck for Manager {
     }
 }
 
-impl myhomelab_agent_prelude::manager::Manager for Manager {
+impl myhomelab_sensor_prelude::manager::Manager for Manager {
     type Sensor = AnySensor;
 
     fn get_sensor(&self, name: &str) -> Option<&Self::Sensor> {

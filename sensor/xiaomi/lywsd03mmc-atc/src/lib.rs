@@ -8,11 +8,11 @@ use btleplug::api::{
 };
 use btleplug::platform::PeripheralId;
 use lru::LruCache;
-use myhomelab_agent_prelude::collector::Collector;
-use myhomelab_agent_prelude::sensor::{BasicTaskSensor, BuildContext, SensorBuilder};
 use myhomelab_metric::entity::value::MetricValue;
 use myhomelab_metric::entity::{Metric, MetricTags};
 use myhomelab_prelude::time::current_timestamp;
+use myhomelab_sensor_prelude::collector::Collector;
+use myhomelab_sensor_prelude::sensor::{BasicTaskSensor, BuildContext, SensorBuilder};
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 

@@ -21,20 +21,20 @@ COPY adapter/http/shared/Cargo.toml /code/adapter/http/shared/Cargo.toml
 RUN cargo init --lib --name myhomelab-adapter-sqlite adapter/sqlite
 COPY adapter/sqlite/Cargo.toml /code/adapter/sqlite/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-agent-manager agent/manager
-COPY agent/manager/Cargo.toml /code/agent/manager/Cargo.toml
+RUN cargo init --lib --name myhomelab-sensor-manager sensor/manager
+COPY sensor/manager/Cargo.toml /code/sensor/manager/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-agent-prelude agent/prelude
-COPY agent/prelude/Cargo.toml /code/agent/prelude/Cargo.toml
+RUN cargo init --lib --name myhomelab-sensor-prelude sensor/prelude
+COPY sensor/prelude/Cargo.toml /code/sensor/prelude/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-agent-sensor-system agent/system
-COPY agent/system/Cargo.toml /code/agent/system/Cargo.toml
+RUN cargo init --lib --name myhomelab-sensor-system sensor/system
+COPY sensor/system/Cargo.toml /code/sensor/system/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-agent-sensor-xiaomi-lywsd03mmc-atc agent/xiaomi/lywsd03mmc-atc
-COPY agent/xiaomi/lywsd03mmc-atc/Cargo.toml /code/agent/xiaomi/lywsd03mmc-atc/Cargo.toml
+RUN cargo init --lib --name myhomelab-sensor-xiaomi-lywsd03mmc-atc sensor/xiaomi/lywsd03mmc-atc
+COPY sensor/xiaomi/lywsd03mmc-atc/Cargo.toml /code/sensor/xiaomi/lywsd03mmc-atc/Cargo.toml
 
-RUN cargo init --lib --name myhomelab-agent-sensor-xiaomi-miflora agent/xiaomi/miflora
-COPY agent/xiaomi/miflora/Cargo.toml /code/agent/xiaomi/miflora/Cargo.toml
+RUN cargo init --lib --name myhomelab-sensor-xiaomi-miflora sensor/xiaomi/miflora
+COPY sensor/xiaomi/miflora/Cargo.toml /code/sensor/xiaomi/miflora/Cargo.toml
 
 RUN cargo init --lib --name myhomelab-client-web client/web
 COPY client/web/Cargo.toml /code/client/web/Cargo.toml

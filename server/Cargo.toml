@@ -13,8 +13,8 @@ config = { version = "0.15", default-features = false, features = ["toml"] }
 myhomelab-adapter-dataset = { workspace = true }
 myhomelab-adapter-sqlite = { workspace = true }
 myhomelab-adapter-http-server = { workspace = true }
-myhomelab-agent-manager = { workspace = true }
-myhomelab-agent-prelude = { workspace = true }
+myhomelab-sensor-manager = { workspace = true }
+myhomelab-sensor-prelude = { workspace = true }
 myhomelab-dashboard = { workspace = true }
 myhomelab-event = { workspace = true }
 myhomelab-metric = { workspace = true }
