@@ -8,7 +8,6 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 btleplug = { workspace = true }
-lru = { version = "0.16" }
 myhomelab-event = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }

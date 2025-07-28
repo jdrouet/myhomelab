@@ -17,5 +17,4 @@ reqwest = { version = "0.12", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
-serde_qs = { workspace = true, features = ["tracing"] }
 uuid = { workspace = true }

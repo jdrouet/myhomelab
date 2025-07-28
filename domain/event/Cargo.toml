@@ -8,11 +8,10 @@ license.workspace = true
 [features]
 default = ["macros"]
 macros = []
-mocks = ["dep:mockall", "dep:serde_json"]
+mocks = ["dep:mockall"]
 
 [dependencies]
 anyhow = { workspace = true }
 mockall = { workspace = true, optional = true }
 myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true, optional = true }

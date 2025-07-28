@@ -10,9 +10,7 @@ mocks = ["dep:mockall"]
 
 [dependencies]
 anyhow = { workspace = true }
-chrono = { version = "0.4.41", features = ["serde"], default-features = false }
 mockall = { workspace = true, optional = true }
-myhomelab-prelude = { workspace = true }
 myhomelab-metric = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 uuid = { workspace = true, features = ["serde"] }

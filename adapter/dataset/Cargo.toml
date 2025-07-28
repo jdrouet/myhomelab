@@ -8,8 +8,5 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 myhomelab-dashboard = { workspace = true }
-myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive", "rc"] }
-tokio = { workspace = true, features = ["fs"] }
-toml = { version = "0.9" }
 uuid = { workspace = true }
