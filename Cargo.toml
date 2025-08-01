@@ -22,6 +22,7 @@ members = [
 [workspace.package]
 authors = ["Jeremie Drouet <jeremie.drouet@gmail.com>"]
 license = "MIT"
+publish = false
 
 [workspace.dependencies]
 anyhow = { version = "1.0" }
