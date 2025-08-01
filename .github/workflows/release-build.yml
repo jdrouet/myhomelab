@@ -1,0 +1,62 @@
+name: release build
+
+on:
+  push:
+    tags:
+      - "myhomelab-server-v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name to use for release asset upload"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-attach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+      - name: setup buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: building binaries for amd64 and arm64
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: server/debian.Dockerfile
+          target: binary
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: |
+            type=local,dest=target/docker,platform=linux/amd64
+            type=local,dest=target/docker,platform=linux/arm64
+
+      - name: determine tag name and version
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION=$(echo "$TAG" | sed -E 's/^myhomelab-server-v//')
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: rename binaries for release
+        run: |
+          mv target/docker/linux_amd64/myhomelab-server "myhomelab-server_amd64_v${{ steps.tag.outputs.version }}"
+          mv target/docker/linux_arm64/myhomelab-server "myhomelab-server_arm64_v${{ steps.tag.outputs.version }}"
+
+      - name: upload binaries to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: |
+            myhomelab-server_amd64_v${{ steps.tag.outputs.version }}
+            myhomelab-server_arm64_v${{ steps.tag.outputs.version }}
