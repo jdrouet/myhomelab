@@ -1,2 +1,7 @@
 [workspace]
 publish = false
+git_release_enable = false
+
+[[package]]
+name = "myhomelab-server"
+git_release_enable = true
