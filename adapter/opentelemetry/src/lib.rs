@@ -57,8 +57,13 @@ impl OpenTelemetryConfig {
 
 impl OpenTelemetryConfig {
     fn resources(&self) -> Resource {
+        use opentelemetry_semantic_conventions::resource;
+
         Resource::builder()
-            .with_attribute(KeyValue::new("service.name", self.service_name.to_owned()))
+            .with_attribute(KeyValue::new(
+                resource::SERVICE_NAME,
+                self.service_name.to_owned(),
+            ))
             .with_attribute(KeyValue::new(
                 "deployment.environment",
                 self.environment.to_owned(),

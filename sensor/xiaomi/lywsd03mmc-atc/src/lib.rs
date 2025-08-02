@@ -17,6 +17,7 @@ use myhomelab_sensor_prelude::sensor::{
 };
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
+use tracing::Instrument;
 
 mod event;
 mod parse;
@@ -64,7 +65,7 @@ impl SensorBuilder for SensorConfig {
             cancel: ctx.cancel.child_token(),
             collector: ctx.collector.clone(),
         };
-        let task = tokio::spawn(async move { runner.run().await });
+        let task = tokio::spawn(runner.run().instrument(tracing::info_span!("runner")));
 
         Ok(BasicTaskSensor::new(DESCRIPTOR, task))
     }
@@ -132,6 +133,7 @@ impl<C: Collector> SensorRunner<C> {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     async fn push(&mut self, id: PeripheralId, values: impl Iterator<Item = (&'static str, f64)>) {
         let timestamp = current_timestamp();
         let mut tags = MetricTags::default().with_tag("device", DEVICE);
@@ -151,6 +153,7 @@ impl<C: Collector> SensorRunner<C> {
         let _ = self.collector.push_metrics(&metrics).await;
     }
 
+    #[tracing::instrument(skip_all, err)]
     async fn handle_event(&mut self, event: CentralEvent) -> anyhow::Result<()> {
         match event {
             CentralEvent::DeviceDiscovered(id) if !self.cache.contains(&id) => {
@@ -189,6 +192,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, err)]
     async fn scan(&mut self) -> anyhow::Result<()> {
         tracing::info!("starting reader");
         self.adapter.start_scan(ScanFilter::default()).await?;

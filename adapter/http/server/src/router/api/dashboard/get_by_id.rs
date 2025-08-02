@@ -4,6 +4,7 @@ use axum::http::StatusCode;
 use myhomelab_dashboard::entity::Dashboard;
 use myhomelab_dashboard::repository::DashboardRepository;
 
+#[tracing::instrument(skip_all)]
 pub(super) async fn handle<S: crate::ServerState>(
     State(state): State<S>,
     Path(dashboard_id): Path<uuid::Uuid>,

@@ -17,6 +17,7 @@ pub trait Collector: Clone + Send + Sync + 'static {
 pub struct TracingCollector;
 
 impl Collector for TracingCollector {
+    #[tracing::instrument(skip_all, err)]
     async fn push_metrics<'h>(&self, metrics: &[Metric<'h>]) -> anyhow::Result<()> {
         metrics.iter().for_each(|metric| {
             tracing::debug!(
@@ -27,6 +28,7 @@ impl Collector for TracingCollector {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, err)]
     async fn push_event<I>(&self, input: I) -> anyhow::Result<()>
     where
         I: IntakeInput,

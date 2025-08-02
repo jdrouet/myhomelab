@@ -22,3 +22,4 @@ myhomelab-sensor-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal"] }
 tokio-util = { workspace = true }
+tracing = { workspace = true }

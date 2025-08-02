@@ -4,6 +4,7 @@ use myhomelab_adapter_http_shared::sensor::SensorDescriptor as HttpSensorDescrip
 use myhomelab_sensor_prelude::manager::Manager;
 use myhomelab_sensor_prelude::sensor::Sensor;
 
+#[tracing::instrument(skip_all)]
 pub(super) async fn handle<S: crate::ServerState>(
     State(state): State<S>,
 ) -> Json<Vec<HttpSensorDescriptor>> {

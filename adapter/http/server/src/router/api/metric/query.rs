@@ -6,6 +6,7 @@ use axum::http::StatusCode;
 use myhomelab_adapter_http_shared::metric::query::BatchQueryParams;
 use myhomelab_metric::query::{QueryExecutor, Response};
 
+#[tracing::instrument(skip_all)]
 pub(super) async fn handle_batch<S: crate::ServerState>(
     State(state): State<S>,
     Json(params): Json<BatchQueryParams>,

@@ -3,6 +3,7 @@ use myhomelab_metric::entity::Metric;
 use myhomelab_metric::entity::value::MetricValue;
 
 impl myhomelab_metric::intake::Intake for crate::Sqlite {
+    #[tracing::instrument(skip_all, err)]
     async fn ingest<'h>(&self, values: &[Metric<'h, MetricValue>]) -> anyhow::Result<()> {
         let mut count: usize = 0;
         let mut builder: sqlx::QueryBuilder<'_, sqlx::Sqlite> =

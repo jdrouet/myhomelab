@@ -8,6 +8,7 @@ use myhomelab_sensor_prelude::collector::Collector;
 use myhomelab_sensor_prelude::sensor::{BasicTaskSensor, BuildContext, SensorDescriptor};
 use sysinfo::System;
 use tokio_util::sync::CancellationToken;
+use tracing::Instrument;
 
 const DESCRIPTOR: SensorDescriptor = SensorDescriptor {
     id: "system",
@@ -45,7 +46,7 @@ impl myhomelab_sensor_prelude::sensor::SensorBuilder for SystemSensorConfig {
             interval: tokio::time::interval(Duration::from_millis(self.interval)),
             system: sysinfo::System::new_all(),
         };
-        let task = tokio::task::spawn(async move { runner.run().await });
+        let task = tokio::task::spawn(runner.run().instrument(tracing::info_span!("runner")));
         Ok(BasicTaskSensor::new(DESCRIPTOR, task))
     }
 }
@@ -58,6 +59,7 @@ struct SystemRunner<C> {
 }
 
 impl<C: Collector> SystemRunner<C> {
+    #[tracing::instrument(skip_all, err)]
     async fn collect_cpu(&self, host: &str, timestamp: u64) -> anyhow::Result<()> {
         for (index, cpu) in self.system.cpus().iter().enumerate() {
             let tags = MetricTags::default()
@@ -86,6 +88,7 @@ impl<C: Collector> SystemRunner<C> {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, err)]
     async fn collect_memory(&mut self, host: &str, timestamp: u64) -> anyhow::Result<()> {
         let tags = MetricTags::default().with_tag("host", host);
         self.collector

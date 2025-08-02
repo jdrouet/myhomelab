@@ -4,6 +4,7 @@ use axum::http::StatusCode;
 use myhomelab_adapter_http_shared::metric::create::Payload;
 use myhomelab_metric::intake::Intake;
 
+#[tracing::instrument(skip_all)]
 pub(super) async fn handle<S: crate::ServerState>(
     State(state): State<S>,
     Json(payload): Json<Payload<'_>>,

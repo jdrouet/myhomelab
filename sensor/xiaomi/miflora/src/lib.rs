@@ -17,6 +17,7 @@ use tokio::sync::RwLock;
 use tokio::time::Interval;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
+use tracing::Instrument;
 
 pub mod device;
 mod event;
@@ -93,7 +94,7 @@ impl myhomelab_sensor_prelude::sensor::SensorBuilder for MifloraSensorConfig {
             sync_interval: Duration::from_millis(self.sync_interval),
             memory: memory.clone(),
         };
-        let task = tokio::task::spawn(async move { runner.run().await });
+        let task = tokio::task::spawn(runner.run().instrument(tracing::info_span!("runner")));
         Ok(MifloraSensor {
             action_tx,
             memory,
@@ -358,6 +359,7 @@ impl Healthcheck for MifloraSensor {
 impl myhomelab_sensor_prelude::sensor::Sensor for MifloraSensor {
     type Cmd = MifloraCommand;
 
+    #[tracing::instrument(skip(self), err)]
     async fn execute(&self, command: Self::Cmd) -> anyhow::Result<()> {
         self.action_tx
             .send(command.into())

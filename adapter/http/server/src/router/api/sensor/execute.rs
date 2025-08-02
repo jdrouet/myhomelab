@@ -4,6 +4,7 @@ use axum::http::StatusCode;
 use myhomelab_sensor_prelude::manager::Manager;
 use myhomelab_sensor_prelude::sensor::Sensor;
 
+#[tracing::instrument(skip_all, fields(name))]
 pub(super) async fn handle<S: crate::ServerState>(
     State(state): State<S>,
     Path(name): Path<String>,
