@@ -5,6 +5,7 @@ members = [
     "adapter/http/client",
     "adapter/http/server",
     "adapter/http/shared",
+    "adapter/opentelemetry",
     "adapter/sqlite",
     "client/web",
     "domain/dashboard",
@@ -32,6 +33,7 @@ myhomelab-adapter-dataset = { path = "./adapter/dataset" }
 myhomelab-adapter-http-client = { path = "./adapter/http/client" }
 myhomelab-adapter-http-server = { path = "./adapter/http/server" }
 myhomelab-adapter-http-shared = { path = "./adapter/http/shared" }
+myhomelab-adapter-opentelementry = { path = "./adapter/opentelemetry" }
 myhomelab-adapter-sqlite = { path = "./adapter/sqlite" }
 myhomelab-client-web = { path = "./client/web" }
 myhomelab-dashboard = { path = "./domain/dashboard" }

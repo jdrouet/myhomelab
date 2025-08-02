@@ -18,6 +18,9 @@ COPY adapter/http/server/Cargo.toml /code/adapter/http/server/Cargo.toml
 RUN cargo init --lib --name myhomelab-adapter-http-shared adapter/http/shared
 COPY adapter/http/shared/Cargo.toml /code/adapter/http/shared/Cargo.toml
 
+RUN cargo init --lib --name myhomelab-adapter-opentelemetry adapter/opentelemetry
+COPY adapter/opentelemetry/Cargo.toml /code/adapter/opentelemetry/Cargo.toml
+
 RUN cargo init --lib --name myhomelab-adapter-sqlite adapter/sqlite
 COPY adapter/sqlite/Cargo.toml /code/adapter/sqlite/Cargo.toml
 

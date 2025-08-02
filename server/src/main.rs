@@ -8,8 +8,6 @@ use myhomelab_sensor_manager::sensor::AnySensor;
 use myhomelab_sensor_prelude::manager::{Manager, ManagerBuilder};
 use myhomelab_sensor_prelude::sensor::BuildContext;
 use tokio_util::sync::CancellationToken;
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt;
 
 mod collector;
 
@@ -84,6 +82,8 @@ struct ServerConfig {
     http: myhomelab_adapter_http_server::HttpServerConfig,
     #[serde(default)]
     manager: myhomelab_sensor_manager::config::ManagerConfig,
+    #[serde(default)]
+    tracing: myhomelab_adapter_opentelementry::OpenTelemetryConfig,
 }
 
 impl ServerConfig {
@@ -106,21 +106,12 @@ impl ServerConfig {
     }
 }
 
-fn ansi_enabled() -> bool {
-    let Ok(var) = std::env::var("RUST_LOG_ANSI") else {
-        return true;
-    };
-    var.parse::<bool>().unwrap_or(true)
-}
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::from_default_env())
-        .with(tracing_subscriber::fmt::layer().with_ansi(ansi_enabled()))
-        .init();
-
     let server_config = ServerConfig::build(std::env::args().nth(1))?;
+
+    server_config.tracing.setup()?;
+
     let sqlite = server_config.adapters.sqlite.build().await?;
     sqlite.prepare().await?;
 

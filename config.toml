@@ -7,6 +7,9 @@ enabled = true
 [manager.xiaomi_miflora]
 enabled = true
 
+[tracing]
+ansi = false
+
 [[dataset.dashboards]]
 id = "c6fadbea-4e0d-423f-8451-dbbc20dd1fa1"
 title = "Host system"

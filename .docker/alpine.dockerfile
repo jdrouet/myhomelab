@@ -26,6 +26,7 @@ COPY adapter/dataset /code/adapter/dataset
 COPY adapter/http/client /code/adapter/http/client
 COPY adapter/http/server /code/adapter/http/server
 COPY adapter/http/shared /code/adapter/http/shared
+COPY adapter/opentelemetry /code/adapter/opentelemetry
 COPY adapter/sqlite /code/adapter/sqlite
 COPY client/web /code/client/web
 COPY domain/dashboard /code/domain/dashboard
