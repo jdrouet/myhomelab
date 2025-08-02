@@ -8,12 +8,10 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 opentelemetry = { version = "0.30.0" }
-opentelemetry-http = "0.30.0"
 opentelemetry-otlp = { version = "0.30.0", features = ["grpc-tonic"] }
 opentelemetry-semantic-conventions = "0.30.0"
 opentelemetry_sdk = { version = "0.30.0", features = ["rt-tokio"] }
 serde = { workspace = true, features = ["derive"] }
-tracing = "0.1.41"
 tracing-opentelemetry = "0.31.0"
 tracing-subscriber = { version = "0.3.19", features = [
     "env-filter",

@@ -3,9 +3,11 @@ use std::borrow::Cow;
 use opentelemetry::trace::TracerProvider;
 use opentelemetry::{InstrumentationScope, KeyValue};
 use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::{Resource, trace::BatchSpanProcessor};
+use opentelemetry_sdk::Resource;
+use opentelemetry_sdk::trace::BatchSpanProcessor;
 use tracing_opentelemetry::OpenTelemetryLayer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct OpenTelemetryConfig {

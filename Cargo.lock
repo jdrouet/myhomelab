@@ -1348,12 +1348,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "opentelemetry",
- "opentelemetry-http",
  "opentelemetry-otlp",
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk",
  "serde",
- "tracing",
  "tracing-opentelemetry",
  "tracing-subscriber",
 ]
