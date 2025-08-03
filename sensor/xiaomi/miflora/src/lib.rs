@@ -159,18 +159,15 @@ impl<C: Collector> MifloraRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
-    async fn handle_action(&self, action: Action) -> anyhow::Result<()> {
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self))]
+    async fn handle_action(&self, action: Action) {
         match action {
             Action::Synchronize {
                 force,
                 peripheral_id,
             } => {
-                if self
-                    .handle_synchronize(force, peripheral_id.clone())
-                    .await
-                    .is_err()
-                {
+                if let Err(err) = self.handle_synchronize(force, peripheral_id.clone()).await {
+                    tracing::error!(message = "unable to synchronize peripheral", error = ?err);
                     let _ = self.action_tx.send(Action::Synchronize {
                         force,
                         peripheral_id,
@@ -178,10 +175,11 @@ impl<C: Collector> MifloraRunner<C> {
                 }
             }
             Action::SynchronizeAll { force } => {
-                let _ = self.handle_synchronize_all(force).await;
+                if let Err(err) = self.handle_synchronize_all(force).await {
+                    tracing::error!(message = "unable to synchronize all peripherals", error = ?err);
+                }
             }
         }
-        Ok(())
     }
 
     #[tracing::instrument(skip(self), err)]
@@ -322,7 +320,7 @@ impl<C: Collector> MifloraRunner<C> {
                     }
                 }
                 Some(action) = self.action_rx.recv() => {
-                    let _ = self.handle_action(action).await;
+                    self.handle_action(action).await;
                 }
                 _ = self.cancel.cancelled() => {
                     tracing::trace!("cancellation requested");
