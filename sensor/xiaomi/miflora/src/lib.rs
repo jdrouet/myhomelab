@@ -25,6 +25,8 @@ mod event;
 // Device name (e.g. Flower care)
 // MAC address prefix (C4:7C:8D = original)
 
+const RUNNER_NAMESPACE: &str = "xiaomi_miflora::runner";
+
 const DEVICE: &str = "xiaomi-miflora";
 const DESCRIPTOR: SensorDescriptor = SensorDescriptor {
     id: DEVICE,
@@ -115,7 +117,7 @@ struct MifloraRunner<C: Collector> {
 }
 
 impl<C: Collector> MifloraRunner<C> {
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
     async fn handle_discovered(&self, id: &PeripheralId) -> anyhow::Result<()> {
         if self.memory.read().await.contains_key(id) {
             tracing::trace!("known peripheral, skipping");
@@ -157,6 +159,7 @@ impl<C: Collector> MifloraRunner<C> {
         Ok(())
     }
 
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
     async fn handle_action(&self, action: Action) -> anyhow::Result<()> {
         match action {
             Action::Synchronize {
@@ -282,7 +285,12 @@ impl<C: Collector> MifloraRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
+    async fn handle_tick(&self) -> anyhow::Result<()> {
+        self.handle_synchronize_all(false).await
+    }
+
+    #[tracing::instrument(target = RUNNER_NAMESPACE, skip(self), err)]
     async fn scan(&mut self) -> anyhow::Result<()> {
         self.adapter
             .start_scan(ScanFilter::default())
@@ -321,7 +329,7 @@ impl<C: Collector> MifloraRunner<C> {
                     // nothing to do, the loop will abort
                 }
                 _ = self.check_interval.tick() => {
-                    let _ = self.handle_synchronize_all(false).await;
+                    let _ = self.handle_tick().await;
                 }
             }
         }

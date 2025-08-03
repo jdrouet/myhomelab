@@ -30,6 +30,9 @@ const DESCRIPTOR: SensorDescriptor = SensorDescriptor {
     name: "Xiaomi Lywsd03mmc sensor",
     description: "Bluetooth reader of Xiaomi Lywsd03mmc with ATC firmware",
 };
+
+const RUNNER_NAMESPACE: &str = "xiaomi_lywsd03mmc_atc::runner";
+
 const SERVICE_ID: uuid::Uuid = uuid::Uuid::from_u128(488837762788578050050668711589115);
 
 #[derive(Debug, serde::Deserialize)]
@@ -154,7 +157,7 @@ impl<C: Collector> SensorRunner<C> {
         let _ = self.collector.push_metrics(&metrics).await;
     }
 
-    #[tracing::instrument(parent = None, skip(self), err)]
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
     async fn handle_discovered(&mut self, id: PeripheralId) -> anyhow::Result<()> {
         let peripheral = self.adapter.peripheral(&id).await?;
         peripheral.discover_services().await?;
@@ -173,7 +176,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(parent = None, skip(self), err)]
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
     async fn handle_advertisement(
         &mut self,
         id: PeripheralId,
@@ -208,7 +211,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(target = RUNNER_NAMESPACE, skip_all)]
     async fn scan(&mut self) -> anyhow::Result<()> {
         tracing::info!("starting reader");
         self.adapter.start_scan(ScanFilter::default()).await?;
@@ -228,7 +231,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(target = RUNNER_NAMESPACE, skip_all)]
     async fn run(mut self) -> anyhow::Result<()> {
         tracing::info!("starting");
         while !self.cancel.is_cancelled() {
