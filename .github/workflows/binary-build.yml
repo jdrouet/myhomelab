@@ -21,28 +21,22 @@ jobs:
       - name: setup buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: building binaries for amd64 and arm64
+      - name: building binaries for arm64
         uses: docker/build-push-action@v6
         with:
           context: .
           file: server/debian.Dockerfile
           target: binary
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: |
-            type=local,dest=target/docker,platform=linux/amd64
-            type=local,dest=target/docker,platform=linux/arm64
+          outputs: type=local,dest=target/docker
 
       - name: rename binaries for artifact upload
-        run: |
-          mv target/docker/linux_amd64/myhomelab-server myhomelab-server_amd64
-          mv target/docker/linux_arm64/myhomelab-server myhomelab-server_arm64
+        run: mv target/docker/myhomelab-server myhomelab-server_arm64
 
       - name: upload binaries as workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: myhomelab-server-binaries
-          path: |
-            myhomelab-server_amd64
-            myhomelab-server_arm64
+          name: myhomelab-server-arm64
+          path: myhomelab-server_arm64
