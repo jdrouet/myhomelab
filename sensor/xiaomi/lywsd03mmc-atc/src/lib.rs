@@ -133,7 +133,6 @@ impl<C: Collector> SensorRunner<C> {
         }
     }
 
-    #[tracing::instrument(skip_all)]
     async fn push(&mut self, id: PeripheralId, values: impl Iterator<Item = (&'static str, f64)>) {
         let timestamp = current_timestamp();
         let mut tags = MetricTags::default().with_tag("device", DEVICE);
@@ -153,7 +152,6 @@ impl<C: Collector> SensorRunner<C> {
         let _ = self.collector.push_metrics(&metrics).await;
     }
 
-    #[tracing::instrument(skip_all, err)]
     async fn handle_event(&mut self, event: CentralEvent) -> anyhow::Result<()> {
         match event {
             CentralEvent::DeviceDiscovered(id) if !self.cache.contains(&id) => {
@@ -192,7 +190,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(skip_all)]
     async fn scan(&mut self) -> anyhow::Result<()> {
         tracing::info!("starting reader");
         self.adapter.start_scan(ScanFilter::default()).await?;
@@ -212,6 +210,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all)]
     async fn run(mut self) -> anyhow::Result<()> {
         tracing::info!("starting");
         while !self.cancel.is_cancelled() {
