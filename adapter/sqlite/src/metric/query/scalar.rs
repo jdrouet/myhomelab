@@ -17,7 +17,7 @@ impl<'r> FromRow<'r, sqlx::sqlite::SqliteRow> for Wrapper<ScalarResponse> {
     }
 }
 
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(skip_all, err(Debug))]
 pub(super) async fn fetch<'a, E: sqlx::Executor<'a, Database = sqlx::Sqlite>>(
     executor: E,
     query: &Query,

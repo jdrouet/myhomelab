@@ -13,7 +13,7 @@ pub struct Manager {
 }
 
 impl Healthcheck for Manager {
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err(Debug))]
     async fn healthcheck(&self) -> anyhow::Result<()> {
         for sensor in self.inner.values() {
             sensor.healthcheck().await?;
@@ -33,7 +33,7 @@ impl myhomelab_sensor_prelude::manager::Manager for Manager {
         self.inner.values()
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(skip_all, err(Debug))]
     async fn wait(self) -> anyhow::Result<()>
     where
         Self: Sized,

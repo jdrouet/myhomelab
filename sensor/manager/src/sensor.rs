@@ -19,7 +19,7 @@ pub enum AnySensor {
 impl Sensor for AnySensor {
     type Cmd = AnyCommand;
 
-    #[tracing::instrument(skip_all, fields(sensor.name = self.descriptor().name), err)]
+    #[tracing::instrument(skip_all, fields(sensor.name = self.descriptor().name), err(Debug))]
     async fn execute(&self, command: Self::Cmd) -> anyhow::Result<()> {
         match (self, command) {
             (Self::XiaomiMiflora(sensor), AnyCommand::XiaomiMiflora(cmd)) => sensor
@@ -38,7 +38,7 @@ impl Sensor for AnySensor {
         }
     }
 
-    #[tracing::instrument(skip_all, fields(sensor.name = self.descriptor().name), err)]
+    #[tracing::instrument(skip_all, fields(sensor.name = self.descriptor().name), err(Debug))]
     async fn wait(self) -> anyhow::Result<()> {
         match self {
             Self::System(inner) => inner.wait().await,
@@ -49,7 +49,7 @@ impl Sensor for AnySensor {
 }
 
 impl Healthcheck for AnySensor {
-    #[tracing::instrument(skip(self), fields(sensor.name = self.descriptor().name), err)]
+    #[tracing::instrument(skip(self), fields(sensor.name = self.descriptor().name), err(Debug))]
     async fn healthcheck(&self) -> anyhow::Result<()> {
         match self {
             Self::System(inner) => inner.healthcheck().await.context("system sensor failed"),

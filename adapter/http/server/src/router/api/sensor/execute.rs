@@ -21,6 +21,6 @@ where
         tracing::debug!(message = "execution triggered", name = %name);
         return StatusCode::CREATED;
     };
-    tracing::error!(message = "unable to execute command", error = %err);
+    tracing::error!(message = "unable to execute command", error = ?err);
     StatusCode::INTERNAL_SERVER_ERROR
 }

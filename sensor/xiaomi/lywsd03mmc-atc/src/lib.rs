@@ -157,7 +157,7 @@ impl<C: Collector> SensorRunner<C> {
         let _ = self.collector.push_metrics(&metrics).await;
     }
 
-    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err(Debug))]
     async fn handle_discovered(&mut self, id: PeripheralId) -> anyhow::Result<()> {
         let peripheral = self.adapter.peripheral(&id).await?;
         peripheral.discover_services().await?;
@@ -176,7 +176,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self, service_data), err(Debug))]
     async fn handle_advertisement(
         &mut self,
         id: PeripheralId,
@@ -211,7 +211,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(target = RUNNER_NAMESPACE, skip_all)]
+    #[tracing::instrument(target = RUNNER_NAMESPACE, skip_all, err(Debug))]
     async fn scan(&mut self) -> anyhow::Result<()> {
         tracing::info!("starting reader");
         self.adapter.start_scan(ScanFilter::default()).await?;
@@ -231,7 +231,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(target = RUNNER_NAMESPACE, skip_all)]
+    #[tracing::instrument(target = RUNNER_NAMESPACE, skip_all, err(Debug))]
     async fn run(mut self) -> anyhow::Result<()> {
         tracing::info!("starting");
         while !self.cancel.is_cancelled() {

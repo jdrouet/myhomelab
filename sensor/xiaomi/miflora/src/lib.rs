@@ -117,7 +117,7 @@ struct MifloraRunner<C: Collector> {
 }
 
 impl<C: Collector> MifloraRunner<C> {
-    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err(Debug))]
     async fn handle_discovered(&self, id: &PeripheralId) -> anyhow::Result<()> {
         if self.memory.read().await.contains_key(id) {
             tracing::trace!("known peripheral, skipping");
@@ -182,7 +182,7 @@ impl<C: Collector> MifloraRunner<C> {
         }
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err(Debug))]
     async fn handle_synchronize_all(&self, force: bool) -> anyhow::Result<()> {
         let peripheral_ids = self.memory.read().await.keys().cloned().collect::<Vec<_>>();
         for peripheral_id in peripheral_ids {
@@ -194,7 +194,7 @@ impl<C: Collector> MifloraRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err(Debug))]
     async fn handle_synchronize(&self, force: bool, id: PeripheralId) -> anyhow::Result<()> {
         let device = self
             .memory
@@ -283,12 +283,12 @@ impl<C: Collector> MifloraRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err)]
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err(Debug))]
     async fn handle_tick(&self) -> anyhow::Result<()> {
         self.handle_synchronize_all(false).await
     }
 
-    #[tracing::instrument(target = RUNNER_NAMESPACE, skip(self), err)]
+    #[tracing::instrument(target = RUNNER_NAMESPACE, skip(self), err(Debug))]
     async fn scan(&mut self) -> anyhow::Result<()> {
         self.adapter
             .start_scan(ScanFilter::default())
@@ -366,7 +366,7 @@ impl Healthcheck for MifloraSensor {
 impl myhomelab_sensor_prelude::sensor::Sensor for MifloraSensor {
     type Cmd = MifloraCommand;
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err(Debug))]
     async fn execute(&self, command: Self::Cmd) -> anyhow::Result<()> {
         self.action_tx
             .send(command.into())

@@ -59,7 +59,7 @@ struct SystemRunner<C> {
 }
 
 impl<C: Collector> SystemRunner<C> {
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(skip_all, err(Debug))]
     async fn collect_cpu(&self, host: &str, timestamp: u64) -> anyhow::Result<()> {
         for (index, cpu) in self.system.cpus().iter().enumerate() {
             let tags = MetricTags::default()
@@ -88,7 +88,7 @@ impl<C: Collector> SystemRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(skip_all, err(Debug))]
     async fn collect_memory(&mut self, host: &str, timestamp: u64) -> anyhow::Result<()> {
         let tags = MetricTags::default().with_tag("host", host);
         self.collector
@@ -122,7 +122,7 @@ impl<C: Collector> SystemRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self, host), err)]
+    #[tracing::instrument(skip(self, host), err(Debug))]
     async fn collect(&mut self, host: &str) -> anyhow::Result<()> {
         self.system.refresh_all();
         let now = current_timestamp();

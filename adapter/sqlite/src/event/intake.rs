@@ -4,7 +4,7 @@ use sqlx::types::Json;
 use crate::Sqlite;
 
 impl Intake for Sqlite {
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(skip_all, err(Debug))]
     async fn ingest<I>(&self, input: I) -> anyhow::Result<()>
     where
         I: IntakeInput,

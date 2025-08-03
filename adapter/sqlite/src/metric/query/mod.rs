@@ -8,7 +8,7 @@ mod shared;
 mod timeseries;
 
 impl QueryExecutor for crate::Sqlite {
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(skip_all, err(Debug))]
     async fn execute(
         &self,
         requests: HashMap<Box<str>, Request>,
