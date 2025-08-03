@@ -359,6 +359,7 @@ impl Healthcheck for MifloraSensor {
         if self.task.is_finished() {
             Err(anyhow::anyhow!("sensor task is dead"))
         } else {
+            tracing::debug!("task is still running");
             Ok(())
         }
     }
