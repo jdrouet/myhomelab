@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::num::NonZeroUsize;
 use std::sync::Arc;
 
@@ -18,6 +19,7 @@ use myhomelab_sensor_prelude::sensor::{
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
+use uuid::Uuid;
 
 mod event;
 mod parse;
@@ -152,38 +154,54 @@ impl<C: Collector> SensorRunner<C> {
         let _ = self.collector.push_metrics(&metrics).await;
     }
 
+    #[tracing::instrument(skip(self), err)]
+    async fn handle_discovered(&mut self, id: PeripheralId) -> anyhow::Result<()> {
+        let peripheral = self.adapter.peripheral(&id).await?;
+        peripheral.discover_services().await?;
+        if peripheral
+            .services()
+            .iter()
+            .any(|srv| srv.uuid == SERVICE_ID)
+        {
+            if let Some(properties) = peripheral.properties().await? {
+                let device = Arc::new(Device::from(properties));
+                let event = crate::event::DeviceDiscoveredEvent::new(device.clone());
+                self.collector.push_event(event).await?;
+                self.cache.push(id, device);
+            }
+        }
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn handle_advertisement(
+        &mut self,
+        id: PeripheralId,
+        service_data: HashMap<Uuid, Vec<u8>>,
+    ) -> anyhow::Result<()> {
+        if let Some(data) = service_data.get(&SERVICE_ID) {
+            let mut values = Vec::with_capacity(3);
+            if let Some(battery) = parse::read_battery(data) {
+                values.push(("device.battery", battery as f64));
+            }
+            if let Some(temperature) = parse::read_temperature(data) {
+                values.push(("measurement.temperature", temperature as f64));
+            }
+            if let Some(humidity) = parse::read_humidity(data) {
+                values.push(("measurement.humidity", humidity as f64));
+            }
+            self.push(id, values.into_iter()).await;
+        }
+        Ok(())
+    }
+
     async fn handle_event(&mut self, event: CentralEvent) -> anyhow::Result<()> {
         match event {
             CentralEvent::DeviceDiscovered(id) if !self.cache.contains(&id) => {
-                let peripheral = self.adapter.peripheral(&id).await?;
-                peripheral.discover_services().await?;
-                if peripheral
-                    .services()
-                    .iter()
-                    .any(|srv| srv.uuid == SERVICE_ID)
-                {
-                    if let Some(properties) = peripheral.properties().await? {
-                        let device = Arc::new(Device::from(properties));
-                        let event = crate::event::DeviceDiscoveredEvent::new(device.clone());
-                        self.collector.push_event(event).await?;
-                        self.cache.push(id, device);
-                    }
-                }
+                self.handle_discovered(id).await?;
             }
             CentralEvent::ServiceDataAdvertisement { id, service_data } => {
-                if let Some(data) = service_data.get(&SERVICE_ID) {
-                    let mut values = Vec::with_capacity(3);
-                    if let Some(battery) = parse::read_battery(data) {
-                        values.push(("device.battery", battery as f64));
-                    }
-                    if let Some(temperature) = parse::read_temperature(data) {
-                        values.push(("measurement.temperature", temperature as f64));
-                    }
-                    if let Some(humidity) = parse::read_humidity(data) {
-                        values.push(("measurement.humidity", humidity as f64));
-                    }
-                    self.push(id, values.into_iter()).await;
-                }
+                self.handle_advertisement(id, service_data).await?;
             }
             _ => {}
         }
