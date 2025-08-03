@@ -1,9 +1,7 @@
 name: binary build
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
 
 permissions:
   contents: write
