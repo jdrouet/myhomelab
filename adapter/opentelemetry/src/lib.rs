@@ -6,6 +6,7 @@ use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::Resource;
 use opentelemetry_sdk::trace::BatchSpanProcessor;
 use tracing_opentelemetry::OpenTelemetryLayer;
+use tracing_subscriber::Layer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -89,15 +90,15 @@ impl OpenTelemetryConfig {
     }
 
     fn setup_tracing(&self) -> anyhow::Result<()> {
-        let exporter = opentelemetry_otlp::SpanExporter::builder()
+        let span_exporter = opentelemetry_otlp::SpanExporter::builder()
             .with_tonic()
             .with_protocol(opentelemetry_otlp::Protocol::Grpc)
             .with_endpoint(self.endpoint.to_owned())
             .build()?;
 
-        let span_processor = BatchSpanProcessor::builder(exporter).build();
+        let span_processor = BatchSpanProcessor::builder(span_exporter).build();
 
-        let provider = opentelemetry_sdk::trace::TracerProviderBuilder::default()
+        let tracer_provider = opentelemetry_sdk::trace::TracerProviderBuilder::default()
             .with_span_processor(span_processor)
             .with_resource(self.resources())
             .build();
@@ -107,15 +108,31 @@ impl OpenTelemetryConfig {
             .with_schema_url(opentelemetry_semantic_conventions::SCHEMA_URL)
             .with_attributes(None)
             .build();
-        let tracer = provider.tracer_with_scope(scope);
+        let tracer = tracer_provider.tracer_with_scope(scope);
 
-        opentelemetry::global::set_tracer_provider(provider);
+        opentelemetry::global::set_tracer_provider(tracer_provider);
 
         let telemetry = OpenTelemetryLayer::new(tracer);
+
+        let log_exporter = opentelemetry_otlp::LogExporter::builder()
+            .with_tonic()
+            .with_protocol(opentelemetry_otlp::Protocol::Grpc)
+            .with_endpoint(self.endpoint.to_owned())
+            .build()?;
+
+        let log_provider = opentelemetry_sdk::logs::SdkLoggerProvider::builder()
+            .with_resource(self.resources())
+            .with_batch_exporter(log_exporter)
+            .build();
+
+        let otel_layer =
+            opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge::new(&log_provider)
+                .with_filter(otel_filter());
+
         tracing_subscriber::registry()
-            .with(telemetry)
-            .with(tracing_subscriber::EnvFilter::from_default_env())
-            .with(tracing_subscriber::fmt::layer())
+            .with(telemetry.with_filter(otel_filter()))
+            .with(otel_layer.with_filter(otel_filter()))
+            .with(tracing_subscriber::fmt::layer().with_filter(otel_filter()))
             .try_init()?;
         Ok(())
     }
@@ -137,4 +154,15 @@ impl OpenTelemetryConfig {
         }
         Ok(())
     }
+}
+
+fn otel_filter() -> tracing_subscriber::EnvFilter {
+    tracing_subscriber::EnvFilter::from_default_env()
+        .add_directive("h2=off".parse().unwrap())
+        .add_directive("hyper_util=off".parse().unwrap())
+        .add_directive("opentelemetry=off".parse().unwrap())
+        .add_directive("reqwest=off".parse().unwrap())
+        .add_directive("tonic=off".parse().unwrap())
+        .add_directive("tower=off".parse().unwrap())
+        .add_directive("hyper_util=off".parse().unwrap())
 }
