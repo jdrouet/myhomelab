@@ -154,7 +154,7 @@ impl<C: Collector> SensorRunner<C> {
         let _ = self.collector.push_metrics(&metrics).await;
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(parent = None, skip(self), err)]
     async fn handle_discovered(&mut self, id: PeripheralId) -> anyhow::Result<()> {
         let peripheral = self.adapter.peripheral(&id).await?;
         peripheral.discover_services().await?;
@@ -173,7 +173,7 @@ impl<C: Collector> SensorRunner<C> {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(parent = None, skip(self), err)]
     async fn handle_advertisement(
         &mut self,
         id: PeripheralId,

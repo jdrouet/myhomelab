@@ -18,9 +18,10 @@ impl myhomelab_metric::intake::Intake for crate::Sqlite {
         if count > 0 {
             builder
                 .build()
-                .execute(&self.0)
+                .execute(&self.pool)
                 .await
                 .context("saving metrics")?;
+            tracing::debug!(message = "inserted metrics", count);
         }
         Ok(())
     }

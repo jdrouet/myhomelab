@@ -17,7 +17,7 @@ impl SqliteConfig {
                 .max_connections(1)
                 .connect(":memory:")
                 .await
-                .map(Sqlite),
+                .map(Sqlite::from),
             Some(other) => sqlx::sqlite::SqlitePoolOptions::new()
                 .connect_with(
                     sqlx::sqlite::SqliteConnectOptions::new()
@@ -25,17 +25,25 @@ impl SqliteConfig {
                         .filename(other),
                 )
                 .await
-                .map(Sqlite),
+                .map(Sqlite::from),
         }
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct Sqlite(sqlx::SqlitePool);
+pub struct Sqlite {
+    pool: sqlx::SqlitePool,
+}
+
+impl From<sqlx::SqlitePool> for Sqlite {
+    fn from(pool: sqlx::SqlitePool) -> Self {
+        Self { pool }
+    }
+}
 
 impl AsRef<sqlx::SqlitePool> for Sqlite {
     fn as_ref(&self) -> &sqlx::SqlitePool {
-        &self.0
+        &self.pool
     }
 }
 
