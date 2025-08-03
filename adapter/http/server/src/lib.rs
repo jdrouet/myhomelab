@@ -1,8 +1,8 @@
 use myhomelab_sensor_prelude::sensor::Sensor;
 use tokio_util::sync::CancellationToken;
-use tower_http::trace::TraceLayer;
 
 mod router;
+mod trace;
 
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct HttpServerConfig {
@@ -64,7 +64,7 @@ where
             state,
         } = self;
         let app = crate::router::create::<S>()
-            .layer(TraceLayer::new_for_http())
+            .layer(trace::layer())
             .with_state(state);
         tracing::debug!("binding socket");
         let listener = tokio::net::TcpListener::bind(address).await?;
