@@ -29,8 +29,6 @@ impl<T: SensorBuilder> ConfigWrapper<T> {
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct ManagerConfig {
     #[serde(default)]
-    system: ConfigWrapper<myhomelab_sensor_system::SystemSensorConfig>,
-    #[serde(default)]
     xiaomi_lywsd03mmc_atc: ConfigWrapper<myhomelab_sensor_xiaomi_lywsd03mmc_atc::SensorConfig>,
     #[serde(default)]
     xiaomi_miflora: ConfigWrapper<myhomelab_sensor_xiaomi_miflora::MifloraSensorConfig>,
@@ -41,9 +39,6 @@ impl ManagerBuilder for ManagerConfig {
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
         let mut inner = BTreeMap::new();
-        if let Some(sensor) = self.system.build(ctx).await? {
-            inner.insert(sensor.descriptor().id, AnySensor::System(sensor));
-        }
         if let Some(sensor) = self.xiaomi_lywsd03mmc_atc.build(ctx).await? {
             inner.insert(
                 sensor.descriptor().id,

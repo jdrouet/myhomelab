@@ -1,23 +1,22 @@
 [workspace]
 resolver = "3"
 members = [
-    "adapter/dataset",
-    "adapter/http/client",
-    "adapter/http/server",
-    "adapter/http/shared",
-    "adapter/opentelemetry",
-    "adapter/sqlite",
-    "client/web",
-    "domain/dashboard",
-    "domain/event",
-    "domain/metric",
-    "prelude",
-    "sensor/manager",
-    "sensor/prelude",
-    "sensor/system",
-    "sensor/xiaomi/lywsd03mmc-atc",
-    "sensor/xiaomi/miflora",
-    "server",
+  "adapter/dataset",
+  "adapter/http/client",
+  "adapter/http/server",
+  "adapter/http/shared",
+  "adapter/opentelemetry",
+  "adapter/sqlite",
+  "client/web",
+  "domain/dashboard",
+  "domain/event",
+  "domain/metric",
+  "prelude",
+  "sensor/manager",
+  "sensor/prelude",
+  "sensor/xiaomi/lywsd03mmc-atc",
+  "sensor/xiaomi/miflora",
+  "server",
 ]
 
 [workspace.package]
@@ -42,7 +41,6 @@ myhomelab-metric = { path = "./domain/metric" }
 myhomelab-prelude = { path = "./prelude" }
 myhomelab-sensor-manager = { path = "./sensor/manager" }
 myhomelab-sensor-prelude = { path = "./sensor/prelude" }
-myhomelab-sensor-system = { path = "./sensor/system" }
 myhomelab-sensor-xiaomi-lywsd03mmc-atc = { path = "./sensor/xiaomi/lywsd03mmc-atc" }
 myhomelab-sensor-xiaomi-miflora = { path = "./sensor/xiaomi/miflora" }
 serde = { version = "1.0" }

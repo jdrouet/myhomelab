@@ -1434,7 +1434,6 @@ dependencies = [
  "anyhow",
  "myhomelab-prelude",
  "myhomelab-sensor-prelude",
- "myhomelab-sensor-system",
  "myhomelab-sensor-xiaomi-lywsd03mmc-atc",
  "myhomelab-sensor-xiaomi-miflora",
  "serde",
@@ -1449,21 +1448,6 @@ dependencies = [
  "myhomelab-event",
  "myhomelab-metric",
  "myhomelab-prelude",
- "tokio",
- "tokio-util",
- "tracing",
-]
-
-[[package]]
-name = "myhomelab-sensor-system"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "myhomelab-metric",
- "myhomelab-prelude",
- "myhomelab-sensor-prelude",
- "serde",
- "sysinfo",
  "tokio",
  "tokio-util",
  "tracing",
@@ -1526,15 +1510,6 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
-]
-
-[[package]]
-name = "ntapi"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8a3895c6391c39d7fe7ebc444a87eb2991b2a0bc718fdabd071eec617fc68e4"
-dependencies = [
- "winapi",
 ]
 
 [[package]]
@@ -1622,15 +1597,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "objc2-core-foundation"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c10c2894a6fed806ade6027bcd50662746363a9589d3ec9d9bef30a4e4bc166"
-dependencies = [
- "bitflags",
-]
-
-[[package]]
 name = "objc2-encode"
 version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1646,16 +1612,6 @@ dependencies = [
  "block2",
  "libc",
  "objc2",
-]
-
-[[package]]
-name = "objc2-io-kit"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71c1c64d6120e51cd86033f67176b1cb66780c2efe34dec55176f77befd93c0a"
-dependencies = [
- "libc",
- "objc2-core-foundation",
 ]
 
 [[package]]
@@ -2768,20 +2724,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "sysinfo"
-version = "0.36.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "252800745060e7b9ffb7b2badbd8b31cfa4aa2e61af879d0a3bf2a317c20217d"
-dependencies = [
- "libc",
- "memchr",
- "ntapi",
- "objc2-core-foundation",
- "objc2-io-kit",
- "windows",
 ]
 
 [[package]]
