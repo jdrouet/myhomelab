@@ -1,10 +1,8 @@
 name: security audit
 
 on:
-  push:
-    paths:
-      - "**/Cargo.toml"
-      - "**/Cargo.lock"
+  schedule:
+    - cron: "0 0 * * *" # Every day at midnight UTC
 
 jobs:
   security_audit:
