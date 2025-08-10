@@ -8,11 +8,11 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 axum = { version = "0.8", default-features = false, features = [
-    "tokio",
-    "json",
-    "http1",
-    "query",
-    "matched-path",
+  "tokio",
+  "json",
+  "http1",
+  "query",
+  "matched-path",
 ] }
 myhomelab-adapter-http-shared = { workspace = true }
 myhomelab-sensor-prelude = { workspace = true }

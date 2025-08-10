@@ -13,11 +13,11 @@ myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 sqlx = { version = "0.8", default-features = false, features = [
-    "json",
-    "macros",
-    "migrate",
-    "runtime-tokio",
-    "sqlite",
+  "json",
+  "macros",
+  "migrate",
+  "runtime-tokio",
+  "sqlite",
 ] }
 tracing = { workspace = true }
 

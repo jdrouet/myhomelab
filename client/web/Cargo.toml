@@ -14,8 +14,8 @@ myhomelab-dashboard = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 plotters = { version = "0.3", default-features = false, features = [
-    "line_series",
-    "svg_backend",
+  "line_series",
+  "svg_backend",
 ] }
 uuid = { workspace = true, features = ["v4"] }
 

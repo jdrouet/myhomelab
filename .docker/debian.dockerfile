@@ -5,8 +5,8 @@ FROM ./vendor AS vendor
 FROM rust:1-bookworm AS base
 
 RUN apt-get update \
-    && apt-get install -y dbus libdbus-1-dev \
-    && rm -rf /var/lib/apt/lists/*
+  && apt-get install -y dbus libdbus-1-dev \
+  && rm -rf /var/lib/apt/lists/*
 
 ENV USER=root
 

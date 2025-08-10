@@ -12,9 +12,9 @@ myhomelab-dashboard = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
 reqwest = { version = "0.12", default-features = false, features = [
-    "charset",
-    "http2",
-    "json",
-    "rustls-tls",
+  "charset",
+  "http2",
+  "json",
+  "rustls-tls",
 ] }
 uuid = { workspace = true }

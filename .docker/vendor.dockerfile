@@ -7,22 +7,22 @@ WORKDIR /code
 RUN cargo init
 
 RUN cargo init --lib --name myhomelab-adapter-dataset adapter/dataset --vcs none \
-    && cargo init --lib --name myhomelab-adapter-http-client adapter/http/client --vcs none \
-    && cargo init --lib --name myhomelab-adapter-http-server adapter/http/server --vcs none \
-    && cargo init --lib --name myhomelab-adapter-http-shared adapter/http/shared --vcs none \
-    && cargo init --lib --name myhomelab-adapter-opentelemetry adapter/opentelemetry --vcs none \
-    && cargo init --lib --name myhomelab-adapter-sqlite adapter/sqlite --vcs none \
-    && cargo init --lib --name myhomelab-sensor-manager sensor/manager --vcs none \
-    && cargo init --lib --name myhomelab-sensor-prelude sensor/prelude --vcs none \
-    && cargo init --lib --name myhomelab-sensor-system sensor/system --vcs none \
-    && cargo init --lib --name myhomelab-sensor-xiaomi-lywsd03mmc-atc sensor/xiaomi/lywsd03mmc-atc --vcs none \
-    && cargo init --lib --name myhomelab-sensor-xiaomi-miflora sensor/xiaomi/miflora --vcs none \
-    && cargo init --lib --name myhomelab-client-web client/web --vcs none \
-    && cargo init --lib --name myhomelab-dashboard domain/dashboard --vcs none \
-    && cargo init --lib --name myhomelab-event domain/event --vcs none \
-    && cargo init --lib --name myhomelab-metric domain/metric --vcs none \
-    && cargo init --lib --name myhomelab-prelude prelude --vcs none \
-    && cargo init --lib --name myhomelab-server server --vcs none
+  && cargo init --lib --name myhomelab-adapter-http-client adapter/http/client --vcs none \
+  && cargo init --lib --name myhomelab-adapter-http-server adapter/http/server --vcs none \
+  && cargo init --lib --name myhomelab-adapter-http-shared adapter/http/shared --vcs none \
+  && cargo init --lib --name myhomelab-adapter-opentelemetry adapter/opentelemetry --vcs none \
+  && cargo init --lib --name myhomelab-adapter-sqlite adapter/sqlite --vcs none \
+  && cargo init --lib --name myhomelab-sensor-manager sensor/manager --vcs none \
+  && cargo init --lib --name myhomelab-sensor-prelude sensor/prelude --vcs none \
+  && cargo init --lib --name myhomelab-sensor-system sensor/system --vcs none \
+  && cargo init --lib --name myhomelab-sensor-xiaomi-lywsd03mmc-atc sensor/xiaomi/lywsd03mmc-atc --vcs none \
+  && cargo init --lib --name myhomelab-sensor-xiaomi-miflora sensor/xiaomi/miflora --vcs none \
+  && cargo init --lib --name myhomelab-client-web client/web --vcs none \
+  && cargo init --lib --name myhomelab-dashboard domain/dashboard --vcs none \
+  && cargo init --lib --name myhomelab-event domain/event --vcs none \
+  && cargo init --lib --name myhomelab-metric domain/metric --vcs none \
+  && cargo init --lib --name myhomelab-prelude prelude --vcs none \
+  && cargo init --lib --name myhomelab-server server --vcs none
 
 COPY Cargo.toml /code/Cargo.toml
 COPY Cargo.lock /code/Cargo.lock
@@ -46,6 +46,6 @@ COPY server/Cargo.toml /code/server/Cargo.toml
 
 # https://docs.docker.com/engine/reference/builder/#run---mounttypecache
 RUN --mount=type=cache,target=$CARGO_HOME/git,sharing=locked \
-    --mount=type=cache,target=$CARGO_HOME/registry,sharing=locked \
-    mkdir -p /code/.cargo \
-    && cargo vendor >> /code/.cargo/config.toml
+  --mount=type=cache,target=$CARGO_HOME/registry,sharing=locked \
+  mkdir -p /code/.cargo \
+  && cargo vendor >> /code/.cargo/config.toml
