@@ -94,3 +94,10 @@ jobs:
         with:
           components: rustfmt
       - run: cargo fmt --all --check
+
+  editorconfig:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: editorconfig-checker/action-editorconfig-checker@main
+      - run: editorconfig-checker
