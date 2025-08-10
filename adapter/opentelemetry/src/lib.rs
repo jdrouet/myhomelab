@@ -63,11 +63,11 @@ impl OpenTelemetryConfig {
         Resource::builder()
             .with_attribute(KeyValue::new(
                 resource::SERVICE_NAME,
-                self.service_name.to_owned(),
+                self.service_name.to_string(),
             ))
             .with_attribute(KeyValue::new(
                 "deployment.environment",
-                self.environment.to_owned(),
+                self.environment.to_string(),
             ))
             .build()
     }
@@ -76,7 +76,7 @@ impl OpenTelemetryConfig {
         let exporter = opentelemetry_otlp::MetricExporter::builder()
             .with_tonic()
             .with_protocol(opentelemetry_otlp::Protocol::Grpc)
-            .with_endpoint(self.endpoint.to_owned())
+            .with_endpoint(self.endpoint.to_string())
             .build()?;
 
         let provider = opentelemetry_sdk::metrics::MeterProviderBuilder::default()
@@ -93,7 +93,7 @@ impl OpenTelemetryConfig {
         let span_exporter = opentelemetry_otlp::SpanExporter::builder()
             .with_tonic()
             .with_protocol(opentelemetry_otlp::Protocol::Grpc)
-            .with_endpoint(self.endpoint.to_owned())
+            .with_endpoint(self.endpoint.to_string())
             .build()?;
 
         let span_processor = BatchSpanProcessor::builder(span_exporter).build();
@@ -117,7 +117,7 @@ impl OpenTelemetryConfig {
         let log_exporter = opentelemetry_otlp::LogExporter::builder()
             .with_tonic()
             .with_protocol(opentelemetry_otlp::Protocol::Grpc)
-            .with_endpoint(self.endpoint.to_owned())
+            .with_endpoint(self.endpoint.to_string())
             .build()?;
 
         let log_provider = opentelemetry_sdk::logs::SdkLoggerProvider::builder()

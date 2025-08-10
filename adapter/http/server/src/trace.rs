@@ -38,11 +38,7 @@ impl<B> OnResponse<B> for OnResponseWithStatus {
         self.0.on_response(response, latency, span);
         span.record(
             "http.status_code",
-            &tracing::field::display(response.status().as_u16()),
-        );
-        span.record(
-            "otel.status_code",
-            &tracing::field::display(response.status().as_u16()),
+            tracing::field::display(response.status().as_u16()),
         );
     }
 }
