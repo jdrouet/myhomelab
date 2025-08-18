@@ -25,7 +25,6 @@ license = "MIT"
 
 [workspace.dependencies]
 anyhow = { version = "1.0" }
-btleplug = { version = "0.11" }
 derive_more = { version = "2.0", default-features = false }
 mockall = { version = "0.13" }
 myhomelab-adapter-dataset = { path = "./adapter/dataset" }

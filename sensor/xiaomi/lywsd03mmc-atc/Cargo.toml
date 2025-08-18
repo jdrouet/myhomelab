@@ -7,8 +7,8 @@ license.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-btleplug = { workspace = true }
 lru = { version = "0.16" }
+futures = { version = "0.3" }
 myhomelab-event = { workspace = true }
 myhomelab-metric = { workspace = true }
 myhomelab-prelude = { workspace = true }
@@ -19,3 +19,6 @@ tokio-stream = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
+
+[target.'cfg(linux)'.dependencies]
+bluer = { version = '0.17', features = ["bluetoothd"] }

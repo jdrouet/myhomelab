@@ -14,7 +14,6 @@ RUN cargo init --lib --name myhomelab-adapter-dataset adapter/dataset --vcs none
   && cargo init --lib --name myhomelab-adapter-sqlite adapter/sqlite --vcs none \
   && cargo init --lib --name myhomelab-sensor-manager sensor/manager --vcs none \
   && cargo init --lib --name myhomelab-sensor-prelude sensor/prelude --vcs none \
-  && cargo init --lib --name myhomelab-sensor-system sensor/system --vcs none \
   && cargo init --lib --name myhomelab-sensor-xiaomi-lywsd03mmc-atc sensor/xiaomi/lywsd03mmc-atc --vcs none \
   && cargo init --lib --name myhomelab-sensor-xiaomi-miflora sensor/xiaomi/miflora --vcs none \
   && cargo init --lib --name myhomelab-client-web client/web --vcs none \
@@ -34,7 +33,6 @@ COPY adapter/opentelemetry/Cargo.toml /code/adapter/opentelemetry/Cargo.toml
 COPY adapter/sqlite/Cargo.toml /code/adapter/sqlite/Cargo.toml
 COPY sensor/manager/Cargo.toml /code/sensor/manager/Cargo.toml
 COPY sensor/prelude/Cargo.toml /code/sensor/prelude/Cargo.toml
-COPY sensor/system/Cargo.toml /code/sensor/system/Cargo.toml
 COPY sensor/xiaomi/lywsd03mmc-atc/Cargo.toml /code/sensor/xiaomi/lywsd03mmc-atc/Cargo.toml
 COPY sensor/xiaomi/miflora/Cargo.toml /code/sensor/xiaomi/miflora/Cargo.toml
 COPY client/web/Cargo.toml /code/client/web/Cargo.toml

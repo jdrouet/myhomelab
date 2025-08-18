@@ -35,7 +35,6 @@ COPY domain/metric /code/domain/metric
 COPY prelude /code/prelude
 COPY sensor/manager /code/sensor/manager
 COPY sensor/prelude /code/sensor/prelude
-COPY sensor/system /code/sensor/system
 COPY sensor/xiaomi/lywsd03mmc-atc /code/sensor/xiaomi/lywsd03mmc-atc
 COPY sensor/xiaomi/miflora /code/sensor/xiaomi/miflora
 COPY server /code/server

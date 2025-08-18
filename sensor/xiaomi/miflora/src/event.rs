@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use btleplug::api::BDAddr;
+use bluer::Address;
 use myhomelab_event::EventLevel;
 use myhomelab_prelude::time::current_timestamp;
 
@@ -8,7 +8,7 @@ const EVENT_SOURCE: myhomelab_event::EventSource = myhomelab_event::EventSource:
     name: Cow::Borrowed(crate::DEVICE),
 };
 
-fn serialize_address<S>(address: &BDAddr, serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_address<S>(address: &Address, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
@@ -19,7 +19,7 @@ where
 #[derive(Debug, serde::Serialize)]
 pub(crate) struct DeviceAttributes {
     #[serde(serialize_with = "serialize_address")]
-    address: BDAddr,
+    address: Address,
 }
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ pub(crate) struct DeviceEvent {
 }
 
 impl DeviceEvent {
-    pub fn new(address: BDAddr, level: EventLevel, message: &'static str) -> Self {
+    pub fn new(address: Address, level: EventLevel, message: &'static str) -> Self {
         Self {
             attrs: DeviceAttributes { address },
             level,

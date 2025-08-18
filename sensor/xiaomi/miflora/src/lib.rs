@@ -1,16 +1,10 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
 use anyhow::Context;
-use btleplug::api::{Central, CentralEvent, CentralState, Manager, Peripheral, ScanFilter};
-use btleplug::platform::PeripheralId;
-use myhomelab_event::EventLevel;
-use myhomelab_metric::entity::value::MetricValue;
-use myhomelab_metric::entity::{Metric, MetricTags};
+use bluer::{AdapterEvent, Address, DiscoveryFilter};
 use myhomelab_prelude::Healthcheck;
-use myhomelab_prelude::time::current_timestamp;
 use myhomelab_sensor_prelude::collector::Collector;
 use myhomelab_sensor_prelude::sensor::{BuildContext, SensorDescriptor};
 use tokio::sync::RwLock;
@@ -18,6 +12,8 @@ use tokio::time::Interval;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
+
+use crate::device::Miflora;
 
 pub mod device;
 mod event;
@@ -67,25 +63,41 @@ impl Default for MifloraSensorConfig {
     }
 }
 
+#[cfg(not(linux))]
 impl myhomelab_sensor_prelude::sensor::SensorBuilder for MifloraSensorConfig {
     type Output = MifloraSensor;
 
     async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
-        let manager = btleplug::platform::Manager::new()
+        let (action_tx, action_rx) = tokio::sync::mpsc::unbounded_channel();
+
+        let memory: Arc<RwLock<HashMap<Address, DeviceHistory>>> = Default::default();
+        let cancel = ctx.cancel.child_token();
+        let task = tokio::task::spawn(async move {
+            cancel.cancelled().await;
+            Ok(())
+        });
+        Ok(MifloraSensor {
+            action_tx,
+            memory,
+            task,
+        })
+    }
+}
+
+#[cfg(linux)]
+impl myhomelab_sensor_prelude::sensor::SensorBuilder for MifloraSensorConfig {
+    type Output = MifloraSensor;
+
+    async fn build<C: Collector>(&self, ctx: &BuildContext<C>) -> anyhow::Result<Self::Output> {
+        let session = bluer::Session::new().await.context("creating session")?;
+        let adapter = session
+            .default_adapter()
             .await
-            .context("getting bluetooth manager")?;
-        let adapters = manager
-            .adapters()
-            .await
-            .context("getting bluetooth adapters")?;
-        let adapter = adapters
-            .into_iter()
-            .nth(0)
-            .ok_or_else(|| anyhow::anyhow!("no bluetooth adapter found"))?;
+            .context("getting default adapter")?;
 
         let (action_tx, action_rx) = tokio::sync::mpsc::unbounded_channel();
 
-        let memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>> = Default::default();
+        let memory: Arc<RwLock<HashMap<Address, DeviceHistory>>> = Default::default();
         let runner = MifloraRunner {
             action_tx: action_tx.clone(),
             action_rx,
@@ -108,219 +120,127 @@ impl myhomelab_sensor_prelude::sensor::SensorBuilder for MifloraSensorConfig {
 struct MifloraRunner<C: Collector> {
     action_tx: tokio::sync::mpsc::UnboundedSender<Action>,
     action_rx: tokio::sync::mpsc::UnboundedReceiver<Action>,
-    adapter: btleplug::platform::Adapter,
+    adapter: bluer::Adapter,
     cancel: CancellationToken,
     collector: C,
     check_interval: Interval,
     sync_interval: Duration,
-    memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>>,
+    memory: Arc<RwLock<HashMap<Address, DeviceHistory>>>,
 }
 
 impl<C: Collector> MifloraRunner<C> {
-    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err(Debug))]
-    async fn handle_discovered(&self, id: &PeripheralId) -> anyhow::Result<()> {
-        if self.memory.read().await.contains_key(id) {
-            tracing::trace!("known peripheral, skipping");
-            return Ok(());
-        }
-        let peripheral = self
-            .adapter
-            .peripheral(id)
-            .await
-            .context("accessing peripheral")?;
-        let props = peripheral
-            .properties()
-            .await
-            .context("reading properties")?;
-        let Some(name) = props.and_then(|props| props.local_name) else {
-            tracing::trace!("peripheral has no name");
-            return Ok(());
-        };
-        if name == "Flower care" {
-            let mut memory = self.memory.write().await;
-            if memory.insert(id.clone(), Default::default()).is_none() {
-                tracing::debug!("discovered new device");
-
-                let address = peripheral.address();
-                self.collector
-                    .push_event(event::DeviceEvent::new(
-                        address,
-                        EventLevel::Info,
-                        "device discovered",
-                    ))
-                    .await?;
-
-                let _ = self.action_tx.send(Action::Synchronize {
-                    force: true,
-                    peripheral_id: id.clone(),
-                });
-            }
-        }
-        Ok(())
-    }
-
-    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self))]
-    async fn handle_action(&self, action: Action) {
-        match action {
-            Action::Synchronize {
-                force,
-                peripheral_id,
-            } => {
-                if let Err(err) = self.handle_synchronize(force, peripheral_id.clone()).await {
-                    tracing::error!(message = "unable to synchronize peripheral", error = ?err);
-                    let _ = self.action_tx.send(Action::Synchronize {
-                        force,
-                        peripheral_id,
-                    });
-                }
-            }
-            Action::SynchronizeAll { force } => {
-                if let Err(err) = self.handle_synchronize_all(force).await {
-                    tracing::error!(message = "unable to synchronize all peripherals", error = ?err);
-                }
-            }
-        }
-    }
-
-    #[tracing::instrument(skip(self), err(Debug))]
-    async fn handle_synchronize_all(&self, force: bool) -> anyhow::Result<()> {
-        let peripheral_ids = self.memory.read().await.keys().cloned().collect::<Vec<_>>();
-        for peripheral_id in peripheral_ids {
-            let _ = self.action_tx.send(Action::Synchronize {
-                force,
-                peripheral_id,
-            });
-        }
-        Ok(())
-    }
-
-    #[tracing::instrument(skip(self), err(Debug))]
-    async fn handle_synchronize(&self, force: bool, id: PeripheralId) -> anyhow::Result<()> {
-        let device = self
-            .memory
+    async fn should_sync(&self, address: Address) -> bool {
+        self.memory
             .read()
             .await
-            .get(&id)
-            .cloned()
-            .unwrap_or_default();
-        if !force && !device.should_sync(self.sync_interval) {
-            tracing::debug!("no need to synchronize device, skipping");
-            return Ok(());
-        }
-        let peripheral = match self.adapter.peripheral(&id).await {
-            Ok(inner) => inner,
-            Err(btleplug::Error::DeviceNotFound) => {
-                return Ok(());
-            }
-            Err(other) => {
-                return Err(anyhow::Error::from(other).context("getting peripheral"));
-            }
-        };
-        peripheral.connect().await.context("connecting")?;
-        let device = crate::device::MiFloraDevice::new(&peripheral)
-            .await
-            .context("creating device")?;
+            .get(&address)
+            .map_or(true, |history| history.should_sync(self.sync_interval))
+    }
 
-        let now = current_timestamp();
-        let battery = device
-            .read_battery()
-            .await
-            .context("reading battery level")?;
-        let data = device
-            .read_realtime_data()
-            .await
-            .context("reading realtime data")?;
-
-        peripheral.disconnect().await.context("disconnecting")?;
-
-        let tags = MetricTags::default()
-            .with_tag("device", DEVICE)
-            .maybe_with_tag("name", device.name())
-            .with_tag("address", device.address());
-        let _ = self
-            .collector
-            .push_metrics(&[
-                Metric {
-                    name: "device.battery".into(),
-                    tags: Cow::Borrowed(&tags),
-                    timestamp: now,
-                    value: MetricValue::gauge(battery as f64),
-                },
-                Metric {
-                    name: "measurement.temperature".into(),
-                    tags: Cow::Borrowed(&tags),
-                    timestamp: now,
-                    value: MetricValue::gauge(data.temperature),
-                },
-                Metric {
-                    name: "measurement.moisture".into(),
-                    tags: Cow::Borrowed(&tags),
-                    timestamp: now,
-                    value: MetricValue::gauge(data.moisture as f64),
-                },
-                Metric {
-                    name: "measurement.light".into(),
-                    tags: Cow::Borrowed(&tags),
-                    timestamp: now,
-                    value: MetricValue::gauge(data.light as f64),
-                },
-                Metric {
-                    name: "measurement.conductivity".into(),
-                    tags: Cow::Borrowed(&tags),
-                    timestamp: now,
-                    value: MetricValue::gauge(data.conductivity as f64),
-                },
-            ])
-            .await;
-
+    async fn mark_synced(&self, address: Address) {
         self.memory
             .write()
             .await
-            .entry(peripheral.id())
+            .entry(address)
             .or_default()
-            .synced();
+            .failed();
+    }
 
+    async fn mark_failed(&self, address: Address) {
+        self.memory
+            .write()
+            .await
+            .entry(address)
+            .or_default()
+            .failed();
+    }
+}
+
+impl<C: Collector> MifloraRunner<C> {
+    async fn try_handle_read(&self, device: Miflora) -> anyhow::Result<()> {
+        device.connect().await?;
+        let system = device.read_system().await?;
+        let values = device.read_realtime_values().await?;
+        device.disconnect().await?;
+        tracing::info!(message = "data handled", ?system, ?values);
         Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err(Debug))]
+    async fn handle_device_change(&self, address: Address) -> anyhow::Result<()> {
+        if !self.should_sync(address).await {
+            return Ok(());
+        }
+
+        let device = self.adapter.device(address).context("getting device")?;
+        if crate::device::is_miflora_device(&device)
+            .await
+            .context("checking if miflora device")?
+        {
+            self.action_tx.send(Action::Synchronize {
+                force: true,
+                address,
+            })?;
+        }
+
+        let Some(device) = crate::device::Miflora::try_from_device(device).await? else {
+            return Ok(());
+        };
+
+        let res = self.try_handle_read(device).await;
+        if res.is_ok() {
+            self.mark_synced(address).await;
+        } else {
+            self.mark_failed(address).await;
+        }
+
+        res
     }
 
     #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip(self), err(Debug))]
     async fn handle_tick(&self) -> anyhow::Result<()> {
-        self.handle_synchronize_all(false).await
+        // self.handle_synchronize_all(false).await
+        Ok(())
+    }
+
+    #[tracing::instrument(parent = None, target = RUNNER_NAMESPACE, skip_all)]
+    async fn handle_event(&self, event: AdapterEvent) -> anyhow::Result<()> {
+        match event {
+            AdapterEvent::DeviceAdded(address) => {
+                self.handle_device_change(address).await?;
+            }
+            AdapterEvent::DeviceRemoved(address) => {
+                tracing::debug!(message = "device removed", %address);
+            }
+            AdapterEvent::PropertyChanged(property) => {
+                tracing::debug!(message = "adapter property changed", ?property);
+            }
+        }
+        Ok(())
     }
 
     #[tracing::instrument(target = RUNNER_NAMESPACE, skip(self), err(Debug))]
     async fn scan(&mut self) -> anyhow::Result<()> {
         self.adapter
-            .start_scan(ScanFilter::default())
-            .await
-            .context("starting scan")?;
+            .set_discovery_filter(DiscoveryFilter {
+                transport: bluer::DiscoveryTransport::Le,
+                ..Default::default()
+            })
+            .await?;
         let mut events = self
             .adapter
-            .events()
+            .discover_devices_with_changes()
             .await
             .context("accessing bluetooth events")?;
         while !self.cancel.is_cancelled() {
             tokio::select! {
                 maybe_event = events.next() => {
-                    match maybe_event {
-                        Some(CentralEvent::DeviceDiscovered(id)) => {
-                            let _ = self.handle_discovered(&id).await;
-                        }
-                        Some(CentralEvent::StateUpdate(CentralState::PoweredOff)) => {
-                            tracing::warn!("peripheral powered off");
-                        }
-                        Some(CentralEvent::StateUpdate(CentralState::PoweredOn)) => {
-                            tracing::info!("peripheral powered on");
-                        }
-                        Some(_) => {},
-                        None => {
-                            tracing::warn!("event stream closed");
-                            break;
-                        }
+                    if let Some(event) = maybe_event {
+                        let _ = self.handle_event(event).await;
                     }
                 }
                 Some(action) = self.action_rx.recv() => {
-                    self.handle_action(action).await;
+                    // self.handle_action(action).await;
                 }
                 _ = self.cancel.cancelled() => {
                     tracing::trace!("cancellation requested");
@@ -336,6 +256,10 @@ impl<C: Collector> MifloraRunner<C> {
 
     async fn run(mut self) -> anyhow::Result<()> {
         tracing::info!("starting");
+        self.adapter
+            .set_powered(true)
+            .await
+            .context("unable to power adapter")?;
         while !self.cancel.is_cancelled() {
             self.scan().await?;
         }
@@ -347,8 +271,7 @@ impl<C: Collector> MifloraRunner<C> {
 #[derive(Debug)]
 pub struct MifloraSensor {
     action_tx: tokio::sync::mpsc::UnboundedSender<Action>,
-    #[allow(unused)]
-    memory: Arc<RwLock<HashMap<PeripheralId, DeviceHistory>>>,
+    memory: Arc<RwLock<HashMap<Address, DeviceHistory>>>,
     task: tokio::task::JoinHandle<anyhow::Result<()>>,
 }
 
@@ -391,28 +314,45 @@ pub enum MifloraCommand {
 #[derive(Clone, Debug, Default)]
 struct DeviceHistory {
     last_sync: Option<SystemTime>,
+    count_failure: u8,
+    last_failure: Option<SystemTime>,
 }
 
 impl DeviceHistory {
+    fn failed(&mut self) {
+        self.count_failure = self.count_failure.saturating_add(1);
+        self.last_failure = Some(SystemTime::now());
+    }
+
     fn should_sync(&self, sync_interval: Duration) -> bool {
-        self.last_sync
-            .is_none_or(|last| last + sync_interval < SystemTime::now())
+        let now = SystemTime::now();
+        if let Some(last) = self.last_failure {
+            let error_interval = Duration::from_secs(((self.count_failure + 1) as u64) * 10);
+            if last + error_interval >= now {
+                tracing::trace!("waiting due to last failures");
+                return false;
+            }
+        }
+        if let Some(last) = self.last_sync {
+            if last + sync_interval >= now {
+                tracing::trace!("waiting due to last sync");
+                return false;
+            }
+        }
+        true
     }
 
     fn synced(&mut self) {
+        self.count_failure = 0;
+        self.last_failure = None;
         self.last_sync = Some(SystemTime::now());
     }
 }
 
 #[derive(Clone, Debug)]
 enum Action {
-    Synchronize {
-        force: bool,
-        peripheral_id: PeripheralId,
-    },
-    SynchronizeAll {
-        force: bool,
-    },
+    Synchronize { force: bool, address: Address },
+    SynchronizeAll { force: bool },
 }
 
 impl From<MifloraCommand> for Action {
@@ -421,4 +361,21 @@ impl From<MifloraCommand> for Action {
             MifloraCommand::SynchronizeAll => Action::SynchronizeAll { force: true },
         }
     }
+}
+
+const DEVICE_UUID_PREFIX: u32 = 0xfe95;
+
+async fn is_miflora_device(device: &bluer::Device) -> anyhow::Result<bool> {
+    let Some(service_data) = device
+        .service_data()
+        .await
+        .context("getting service data")?
+    else {
+        return Ok(false);
+    };
+
+    Ok(service_data.iter().any(|(uuid, _data)| {
+        let (id, _, _, _) = uuid.as_fields();
+        id == DEVICE_UUID_PREFIX
+    }))
 }
