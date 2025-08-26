@@ -1,0 +1,14 @@
+[Unit]
+Description=myhomelab service
+After=bluetooth.service
+Requires=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/myhomelab
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=-/etc/default/myhomelab
+
+[Install]
+WantedBy=multi-user.target
