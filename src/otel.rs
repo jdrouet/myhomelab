@@ -4,7 +4,7 @@ use opentelemetry::{InstrumentationScope, KeyValue, trace::TracerProvider};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{Resource, trace::BatchSpanProcessor};
 use tracing_opentelemetry::OpenTelemetryLayer;
-use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug)]
 pub struct OtelConfig {
@@ -126,9 +126,10 @@ impl OtelConfig {
             opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge::new(&log_provider);
 
         tracing_subscriber::registry()
-            .with(telemetry.with_filter(self.inner_filter()))
-            .with(otel_layer.with_filter(self.inner_filter()))
-            .with(tracing_subscriber::fmt::layer().with_filter(self.inner_filter()))
+            .with(self.inner_filter())
+            .with(telemetry)
+            .with(otel_layer)
+            .with(tracing_subscriber::fmt::layer())
             .try_init()?;
 
         Ok(())

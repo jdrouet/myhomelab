@@ -1,10 +1,13 @@
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use anyhow::Context;
 use bluer::AdapterEvent;
 use opentelemetry::KeyValue;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
+use uuid::Uuid;
+
+mod xiaomi_lywsd03mmc_atc;
 
 #[derive(Debug)]
 pub(crate) struct BluetoothConfig {}
@@ -41,6 +44,12 @@ impl BluetoothConfig {
                 .u64_gauge("bluetooth.devices")
                 .with_description("Number of discovered devices")
                 .build(),
+            device_rssi: meter
+                .i64_gauge("bluetooth.device.rssi")
+                .with_description("Received Signal Strength Indicator")
+                .build(),
+            //
+            xiaomi_lywsd03mmc_atc: Default::default(),
         })
     }
 }
@@ -51,11 +60,13 @@ pub(crate) struct BluetoothCollector {
     cancel_token: CancellationToken,
     events_counter: opentelemetry::metrics::Counter<u64>,
     device_counter: opentelemetry::metrics::Gauge<u64>,
+    device_rssi: opentelemetry::metrics::Gauge<i64>,
+    //
+    xiaomi_lywsd03mmc_atc: xiaomi_lywsd03mmc_atc::XiaomiLywsd03mmcAtcCollector,
 }
 
 impl BluetoothCollector {
-    #[tracing::instrument(parent = None, skip(self), err(Debug))]
-    async fn handle_event(&self, event: AdapterEvent) -> anyhow::Result<()> {
+    fn track_event(&self, event: &AdapterEvent) {
         match event {
             AdapterEvent::DeviceAdded(address) => {
                 self.events_counter.add(
@@ -79,6 +90,22 @@ impl BluetoothCollector {
                 self.events_counter
                     .add(1, &[KeyValue::new("kind", "property-changed")]);
             }
+        }
+    }
+
+    #[tracing::instrument(parent = None, skip(self), err(Debug))]
+    async fn handle_event(&self, event: AdapterEvent) -> anyhow::Result<()> {
+        self.track_event(&event);
+        let AdapterEvent::DeviceAdded(address) = event else {
+            return Ok(());
+        };
+        let device = self.adapter.device(address)?;
+        let device = DiscoveredDevice::try_from(device).await?;
+        if let Some(rssi) = device.rssi {
+            self.device_rssi.record(rssi as i64, &device.attributes);
+        }
+        if self.xiaomi_lywsd03mmc_atc.collect(&device)? {
+            return Ok(());
         }
         Ok(())
     }
@@ -123,5 +150,33 @@ impl BluetoothCollector {
             }
         }
         Ok(())
+    }
+}
+
+pub struct DiscoveredDevice {
+    // pub inner: bluer::Device,
+    pub rssi: Option<i16>,
+    pub service_data: HashMap<Uuid, Vec<u8>>,
+    pub attributes: Vec<KeyValue>,
+}
+
+impl DiscoveredDevice {
+    pub async fn try_from(device: bluer::Device) -> bluer::Result<Self> {
+        let name = device.name().await?;
+        let service_data = device.service_data().await?;
+        let rssi = device.rssi().await?;
+
+        let mut attributes = Vec::with_capacity(3);
+        attributes.push(KeyValue::new("address", device.address().to_string()));
+        if let Some(ref name) = name {
+            attributes.push(KeyValue::new("name", name.clone()));
+        }
+
+        Ok(Self {
+            rssi,
+            service_data: service_data.unwrap_or_default(),
+            attributes,
+            // inner: device,
+        })
     }
 }
