@@ -31,25 +31,27 @@ impl Default for XiaomiLywsd03mmcAtcCollector {
 }
 
 impl XiaomiLywsd03mmcAtcCollector {
-    pub fn collect(
+    pub async fn collect(
         &self,
-        device: super::DiscoveredDevice,
-    ) -> anyhow::Result<Option<super::DiscoveredDevice>> {
-        let Some(data) = device.service_data.get(&SERVICE_ID) else {
-            return Ok(Some(device));
+        device: &bluer::Device,
+        attributes: &[opentelemetry::KeyValue],
+    ) -> anyhow::Result<bool> {
+        let data = device.service_data().await?;
+        let Some(data) = data.and_then(|mut data| data.remove(&SERVICE_ID)) else {
+            return Ok(false);
         };
 
         if let Some(value) = read_temperature(&data) {
-            self.temperature.record(value, &device.attributes);
+            self.temperature.record(value, attributes);
         }
         if let Some(value) = read_humidity(&data) {
-            self.humidity.record(value, &device.attributes);
+            self.humidity.record(value, attributes);
         }
         if let Some(value) = read_battery(&data) {
-            self.battery.record(value, &device.attributes);
+            self.battery.record(value, attributes);
         }
 
-        Ok(None)
+        Ok(true)
     }
 }
 

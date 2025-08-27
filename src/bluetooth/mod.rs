@@ -1,14 +1,10 @@
-use std::{
-    collections::{HashMap, HashSet},
-    time::Duration,
-};
+use std::time::Duration;
 
 use anyhow::Context;
 use bluer::AdapterEvent;
 use opentelemetry::KeyValue;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
-use uuid::Uuid;
 
 mod xiaomi_lywsd03mmc_atc;
 mod xiaomi_miflora;
@@ -101,12 +97,16 @@ impl BluetoothCollector {
 
     #[tracing::instrument(
         parent = None,
-        skip(self),
+        skip_all,
         fields(
             network.peer.address = self.adapter.name(),
             network.protocol.name = "bluetooth",
-            otel.status_code = tracing::field::Empty,
+            ble.address = tracing::field::Empty,
+            ble.icon = tracing::field::Empty,
+            ble.name = tracing::field::Empty,
+            ble.rssi = tracing::field::Empty,
             resource.name = "bluetooth/handle_event",
+            otel.status_code = tracing::field::Empty,
             span.kind = "server",
         ),
         err(Debug),
@@ -118,16 +118,33 @@ impl BluetoothCollector {
             span.record("otel.status_code", "OK");
             return Ok(());
         };
+        span.record("ble.address", address.to_string());
+
         let device = self.adapter.device(address)?;
-        let device = DiscoveredDevice::try_from(device).await?;
-        if let Some(rssi) = device.rssi {
-            self.device_rssi.record(rssi as i64, &device.attributes);
+        // collecting attributes
+        let mut attributes = Vec::with_capacity(2);
+        attributes.push(KeyValue::new("address", address.to_string()));
+        if let Ok(Some(name)) = device.name().await {
+            span.record("ble.name", name.as_str());
+            attributes.push(KeyValue::new("name", name));
         }
-        let Some(device) = self.xiaomi_lywsd03mmc_atc.collect(device)? else {
+        if let Ok(Some(rssi)) = device.rssi().await {
+            span.record("ble.rssi", rssi);
+            self.device_rssi.record(rssi as i64, &attributes);
+        }
+        if let Ok(Some(icon)) = device.icon().await {
+            span.record("ble.icon", icon);
+        }
+        // dispatching devices
+        if self
+            .xiaomi_lywsd03mmc_atc
+            .collect(&device, &attributes)
+            .await?
+        {
             span.record("otel.status_code", "OK");
             return Ok(());
         };
-        let Some(_device) = self.xiaomi_miflora.collect(device).await? else {
+        if self.xiaomi_miflora.collect(&device, &attributes).await? {
             span.record("otel.status_code", "OK");
             return Ok(());
         };
@@ -182,39 +199,5 @@ impl BluetoothCollector {
             }
         }
         Ok(())
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct DiscoveredDevice {
-    // pub inner: bluer::Device,
-    // pub name: Option<String>,
-    pub rssi: Option<i16>,
-    pub uuids: HashSet<Uuid>,
-    pub service_data: HashMap<Uuid, Vec<u8>>,
-    pub attributes: Vec<KeyValue>,
-}
-
-impl DiscoveredDevice {
-    pub async fn try_from(device: bluer::Device) -> bluer::Result<Self> {
-        let name = device.name().await?;
-        let uuids = device.uuids().await?;
-        let service_data = device.service_data().await?;
-        let rssi = device.rssi().await?;
-
-        let mut attributes = Vec::with_capacity(3);
-        attributes.push(KeyValue::new("address", device.address().to_string()));
-        if let Some(ref name) = name {
-            attributes.push(KeyValue::new("name", name.clone()));
-        }
-
-        Ok(Self {
-            // name,
-            rssi,
-            uuids: uuids.unwrap_or_default(),
-            service_data: service_data.unwrap_or_default(),
-            attributes,
-            // inner: device,
-        })
     }
 }
