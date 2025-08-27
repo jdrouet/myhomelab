@@ -6,12 +6,12 @@ use uuid::Uuid;
 
 use crate::bluetooth::DiscoveredDevice;
 
-const SERVICE_ID: Uuid = Uuid::from_u128(0x120400001000800000805f9b34fb);
+const SERVICE_ID: Uuid = Uuid::from_u128(0x0000fe95_0000_1000_8000_00805f9b34fb);
 
 #[derive(Debug)]
 struct Sender {
     inner: tokio::sync::mpsc::Sender<DiscoveredDevice>,
-    attributes: [KeyValue; 4],
+    attributes: [KeyValue; 1],
     sent: Counter<u64>,
     error: Counter<u64>,
 }
@@ -21,12 +21,7 @@ impl Sender {
     fn new(meter: &Meter, inner: tokio::sync::mpsc::Sender<DiscoveredDevice>) -> Self {
         Self {
             inner,
-            attributes: [
-                KeyValue::new("messaging.client.id", "xiaomi-miflora-collector"),
-                KeyValue::new("messaging.consumer.group.name", "xiaomi-miflora"),
-                KeyValue::new("messaging.destination.name", "xiaomi-miflora-runner"),
-                KeyValue::new("messaging.system", "mpsc"),
-            ],
+            attributes: [KeyValue::new("topic", "xiaomi-miflora")],
             sent: meter
                 .u64_counter("queue.events.sent")
                 .with_description("Number of events sent in the queue")
@@ -43,16 +38,9 @@ impl Sender {
         if let Err(err) = self.inner.send(event).await {
             self.error.add(1, &self.attributes);
             tracing::error!(
+                message = "unable to send discovered device",
                 error.type = "send-error",
                 error.message = err.to_string(),
-                message = "unable to send discovered device",
-                messaging.batch.message_count = 1,
-                messaging.client.id = "xiaomi-miflora-collector",
-                messaging.consumer.group.name = "xiaomi-miflora",
-                messaging.destination.name = "xiaomi-miflora-runner",
-                messaging.operation.name = "send",
-                messaging.operation.type = "send",
-                messaging.system = "mpsc",
             );
         }
     }
@@ -61,7 +49,7 @@ impl Sender {
 #[derive(Debug)]
 struct Receiver {
     inner: tokio::sync::mpsc::Receiver<DiscoveredDevice>,
-    attributes: [KeyValue; 4],
+    attributes: [KeyValue; 1],
     received: Counter<u64>,
 }
 
@@ -70,12 +58,7 @@ impl Receiver {
     fn new(meter: &Meter, inner: tokio::sync::mpsc::Receiver<DiscoveredDevice>) -> Self {
         Self {
             inner,
-            attributes: [
-                KeyValue::new("messaging.client.id", "xiaomi-miflora-collector"),
-                KeyValue::new("messaging.consumer.group.name", "xiaomi-miflora"),
-                KeyValue::new("messaging.destination.name", "xiaomi-miflora-runner"),
-                KeyValue::new("messaging.system", "mpsc"),
-            ],
+            attributes: [KeyValue::new("topic", "xiaomi-miflora")],
             received: meter
                 .u64_counter("queue.events.received")
                 .with_description("Number of events received from the queue")
@@ -146,7 +129,7 @@ impl XiaomiMifloraCollector {
         &self,
         device: super::DiscoveredDevice,
     ) -> anyhow::Result<Option<super::DiscoveredDevice>> {
-        let Some(_) = device.service_data.get(&SERVICE_ID) else {
+        if !device.uuids.contains(&SERVICE_ID) {
             return Ok(Some(device));
         };
 

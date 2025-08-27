@@ -1,4 +1,7 @@
-use std::{collections::HashMap, time::Duration};
+use std::{
+    collections::{HashMap, HashSet},
+    time::Duration,
+};
 
 use anyhow::Context;
 use bluer::AdapterEvent;
@@ -185,7 +188,9 @@ impl BluetoothCollector {
 #[derive(Clone, Debug)]
 pub struct DiscoveredDevice {
     // pub inner: bluer::Device,
+    // pub name: Option<String>,
     pub rssi: Option<i16>,
+    pub uuids: HashSet<Uuid>,
     pub service_data: HashMap<Uuid, Vec<u8>>,
     pub attributes: Vec<KeyValue>,
 }
@@ -193,6 +198,7 @@ pub struct DiscoveredDevice {
 impl DiscoveredDevice {
     pub async fn try_from(device: bluer::Device) -> bluer::Result<Self> {
         let name = device.name().await?;
+        let uuids = device.uuids().await?;
         let service_data = device.service_data().await?;
         let rssi = device.rssi().await?;
 
@@ -203,7 +209,9 @@ impl DiscoveredDevice {
         }
 
         Ok(Self {
+            // name,
             rssi,
+            uuids: uuids.unwrap_or_default(),
             service_data: service_data.unwrap_or_default(),
             attributes,
             // inner: device,
