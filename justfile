@@ -8,6 +8,7 @@ run-devenv: build-devenv
         -v $(pwd)/.git:/code/.git:ro \
         -v $(pwd)/src:/code/src \
         -v $(pwd)/systemd:/code/systemd \
+        -v $(pwd)/LICENSE:/code/LICENSE \
         -v $(pwd)/.gitignore:/code/.gitignore \
         -v $(pwd)/Cargo.toml:/code/Cargo.toml \
         -v $(pwd)/target/devenv:/code/target \

@@ -8,6 +8,7 @@ use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
 mod xiaomi_lywsd03mmc_atc;
+mod xiaomi_miflora;
 
 #[derive(Debug)]
 pub(crate) struct BluetoothConfig {}
@@ -50,6 +51,7 @@ impl BluetoothConfig {
                 .build(),
             //
             xiaomi_lywsd03mmc_atc: Default::default(),
+            xiaomi_miflora: Default::default(),
         })
     }
 }
@@ -63,6 +65,7 @@ pub(crate) struct BluetoothCollector {
     device_rssi: opentelemetry::metrics::Gauge<i64>,
     //
     xiaomi_lywsd03mmc_atc: xiaomi_lywsd03mmc_atc::XiaomiLywsd03mmcAtcCollector,
+    xiaomi_miflora: xiaomi_miflora::XiaomiMifloraCollector,
 }
 
 impl BluetoothCollector {
@@ -93,10 +96,23 @@ impl BluetoothCollector {
         }
     }
 
-    #[tracing::instrument(parent = None, skip(self), err(Debug))]
+    #[tracing::instrument(
+        parent = None,
+        skip(self),
+        fields(
+            network.peer.address = self.adapter.name(),
+            network.protocol.name = "bluetooth",
+            otel.status_code = tracing::field::Empty,
+            resource.name = "bluetooth/handle_event",
+            span.kind = "server",
+        ),
+        err(Debug),
+    )]
     async fn handle_event(&self, event: AdapterEvent) -> anyhow::Result<()> {
         self.track_event(&event);
+        let span = tracing::Span::current();
         let AdapterEvent::DeviceAdded(address) = event else {
+            span.record("otel.status_code", "OK");
             return Ok(());
         };
         let device = self.adapter.device(address)?;
@@ -104,13 +120,26 @@ impl BluetoothCollector {
         if let Some(rssi) = device.rssi {
             self.device_rssi.record(rssi as i64, &device.attributes);
         }
-        if self.xiaomi_lywsd03mmc_atc.collect(&device)? {
+        let Some(device) = self.xiaomi_lywsd03mmc_atc.collect(device)? else {
+            span.record("otel.status_code", "OK");
             return Ok(());
-        }
+        };
+        let Some(_device) = self.xiaomi_miflora.collect(device).await? else {
+            span.record("otel.status_code", "OK");
+            return Ok(());
+        };
+        tracing::trace!(message = "unsupported device");
         Ok(())
     }
 
-    #[tracing::instrument(parent = None, skip(self), err(Debug))]
+    #[tracing::instrument(
+        parent = None,
+        skip(self),
+        fields(
+            resource.name = "bluetooth/handle_heartbeat",
+        ),
+        err(Debug),
+    )]
     async fn handle_heartbeat(&self) -> anyhow::Result<()> {
         let addresses = self.adapter.device_addresses().await?;
         self.device_counter.record(addresses.len() as u64, &[]);
@@ -153,6 +182,7 @@ impl BluetoothCollector {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct DiscoveredDevice {
     // pub inner: bluer::Device,
     pub rssi: Option<i16>,

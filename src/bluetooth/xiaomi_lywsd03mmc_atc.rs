@@ -31,9 +31,12 @@ impl Default for XiaomiLywsd03mmcAtcCollector {
 }
 
 impl XiaomiLywsd03mmcAtcCollector {
-    pub fn collect(&self, device: &super::DiscoveredDevice) -> anyhow::Result<bool> {
+    pub fn collect(
+        &self,
+        device: super::DiscoveredDevice,
+    ) -> anyhow::Result<Option<super::DiscoveredDevice>> {
         let Some(data) = device.service_data.get(&SERVICE_ID) else {
-            return Ok(false);
+            return Ok(Some(device));
         };
 
         if let Some(value) = read_temperature(&data) {
@@ -46,7 +49,7 @@ impl XiaomiLywsd03mmcAtcCollector {
             self.battery.record(value, &device.attributes);
         }
 
-        Ok(true)
+        Ok(None)
     }
 }
 
