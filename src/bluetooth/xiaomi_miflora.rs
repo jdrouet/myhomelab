@@ -185,13 +185,10 @@ impl Default for XiaomiMifloraCollector {
                 .build(),
             moisture: meter
                 .f64_gauge("measurement.moisture")
-                .with_unit("%")
+                .with_unit("percent")
                 .build(),
-            conductivity: meter
-                .f64_gauge("measurement.conductivity")
-                .with_unit("µS/cm")
-                .build(),
-            battery: meter.f64_gauge("system.battery").with_unit("%").build(),
+            conductivity: meter.f64_gauge("measurement.conductivity").build(),
+            battery: meter.f64_gauge("system.battery").with_unit("percent").build(),
         };
         let task = tokio::spawn(runner.run());
 
