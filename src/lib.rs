@@ -1,5 +1,6 @@
 use tokio_util::sync::CancellationToken;
 
+#[cfg(feature = "bluetooth")]
 mod bluetooth;
 mod otel;
 
@@ -9,6 +10,7 @@ pub trait Configurable: Sized {
 
 pub struct ApplicationConfig {
     otel: crate::otel::OtelConfig,
+    #[cfg(feature = "bluetooth")]
     bluetooth: crate::bluetooth::BluetoothConfig,
 }
 
@@ -16,6 +18,7 @@ impl Configurable for ApplicationConfig {
     fn from_env() -> anyhow::Result<Self> {
         Ok(Self {
             otel: crate::otel::OtelConfig::from_env()?,
+            #[cfg(feature = "bluetooth")]
             bluetooth: crate::bluetooth::BluetoothConfig::from_env()?,
         })
     }
@@ -28,6 +31,7 @@ impl ApplicationConfig {
         let cancel_token = CancellationToken::new();
 
         Ok(Application {
+            #[cfg(feature = "bluetooth")]
             bluetooth: self.bluetooth.build(cancel_token.child_token()).await?,
             cancel_token,
         })
@@ -35,6 +39,7 @@ impl ApplicationConfig {
 }
 
 pub struct Application {
+    #[cfg(feature = "bluetooth")]
     bluetooth: crate::bluetooth::BluetoothCollector,
     cancel_token: CancellationToken,
 }
@@ -44,6 +49,7 @@ impl Application {
     pub async fn run(self) -> anyhow::Result<()> {
         tracing::info!("starting");
         tokio::spawn(shutdown_signal(self.cancel_token));
+        #[cfg(feature = "bluetooth")]
         self.bluetooth.run().await?;
         Ok(())
     }
