@@ -1,0 +1,43 @@
+name: common
+
+on:
+  merge_group:
+    types: [checks_requested]
+  workflow_call:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - run: cargo fmt --all --check
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          apt-get update -y
+          apt-get install -y dbus libdbus-1-dev
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - run: cargo check --tests --workspace
+      - run: cargo clippy --all-targets --all-features --tests
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
