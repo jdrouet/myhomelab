@@ -111,17 +111,17 @@ impl XiaomiMifloraRunner {
     ) -> anyhow::Result<()> {
         let span = tracing::Span::current();
         let address = device.address();
-        if let Some(last) = self.last_check.get(&address) {
-            if *last + CHECK_INTERVAL > SystemTime::now() {
-                tracing::trace!(
-                    message = "device checked recently, skipping",
-                    address = %address,
-                    last = ?last,
-                    interval = ?CHECK_INTERVAL,
-                );
-                span.record("otel.status_code", "OK");
-                return Ok(());
-            }
+        if let Some(last) = self.last_check.get(&address)
+            && *last + CHECK_INTERVAL > SystemTime::now()
+        {
+            tracing::trace!(
+                message = "device checked recently, skipping",
+                address = %address,
+                last = ?last,
+                interval = ?CHECK_INTERVAL,
+            );
+            span.record("otel.status_code", "OK");
+            return Ok(());
         }
 
         device.connect().await?;
@@ -209,7 +209,7 @@ impl XiaomiMifloraCollector {
         attributes: &[opentelemetry::KeyValue],
     ) -> anyhow::Result<bool> {
         let uuids = device.uuids().await?;
-        if !uuids.map_or(false, |set| set.contains(&SERVICE_ID)) {
+        if !uuids.is_some_and(|set| set.contains(&SERVICE_ID)) {
             return Ok(false);
         };
 
