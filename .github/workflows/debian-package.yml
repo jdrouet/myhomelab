@@ -1,0 +1,27 @@
+name: debian package
+
+on:
+  merge_group:
+    types: [checks_requested]
+  workflow_call:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - run: |
+          docker build \
+            --file .docker/debian.dockerfile \
+            --platform linux/arm64 \
+            --output type=local,dest=target/debian \
+            --target deb-package .
