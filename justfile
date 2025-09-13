@@ -1,3 +1,10 @@
+build-deb:
+    docker build \
+        --tag myhomelab-deb \
+        --file .docker/debian.dockerfile \
+        --output type=local,dest=target/debian \
+        --target deb-package .
+
 build-devenv:
     docker build -t myhomelab-devenv -f .docker/devenv.dockerfile .
 
