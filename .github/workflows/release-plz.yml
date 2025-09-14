@@ -41,10 +41,10 @@ jobs:
     outputs:
       myhomelab_tag: ${{ steps.values.outputs.myhomelab_tag }}
 
-  trigger-build-releases:
-    needs:
-      - release-tags
-    if: ${{ needs.release-tags.outputs.myhomelab_tag != 'null' }}
-    uses: ./.github/workflows/debian-package.yml
-    with:
-      release_tag: ${{ needs.release-tags.outputs.myhomelab_tag }}
+  # trigger-build-releases:
+  #   needs:
+  #     - release-tags
+  #   if: ${{ needs.release-tags.outputs.myhomelab_tag != 'null' }}
+  #   uses: ./.github/workflows/debian-package.yml
+  #   with:
+  #     release_tag: ${{ needs.release-tags.outputs.myhomelab_tag }}
