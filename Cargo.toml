@@ -2,7 +2,7 @@
 name = "myhomelab"
 description = "Rust application to monitor things around home"
 license-file = "LICENSE"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 
 [features]
