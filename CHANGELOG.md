@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1](https://github.com/jdrouet/myhomelab/compare/v0.1.0...v0.1.1) - 2025-09-14
+
+### Fixed
+
+- skip if releases is empty
+
+### Other
+
+- *(deps)* Bump uuid from 1.18.0 to 1.18.1 ([#24](https://github.com/jdrouet/myhomelab/pull/24))
+- release v0.1.0 ([#25](https://github.com/jdrouet/myhomelab/pull/25))
+
 ## [0.1.0](https://github.com/jdrouet/myhomelab/releases/tag/v0.1.0) - 2025-09-14
 
 ### Added
