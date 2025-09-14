@@ -29,7 +29,7 @@ tracing-subscriber = { version = "0.3", features = [
     "fmt",
     "registry",
 ] }
-uuid = { version = "1.17" }
+uuid = { version = "1.18" }
 
 [package.metadata.deb]
 maintainer = "Jeremie Drouet <jeremie.drouet@gmail.com>"
