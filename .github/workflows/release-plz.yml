@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - release-plz
-    if: ${{ needs.release-plz.outputs.releases != '[]' }}
+    if: ${{ needs.release-plz.outputs.releases != '[]' && needs.release-plz.outputs.releases != '' }}
     steps:
       - name: parsing release-plz-output
         id: values
