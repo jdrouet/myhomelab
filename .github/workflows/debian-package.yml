@@ -1,13 +1,18 @@
 name: debian package
 
 on:
-  merge_group:
-    types: [checks_requested]
   workflow_call:
-  pull_request:
-  push:
-    branches:
-      - main
+    inputs:
+      release_tag:
+        description: "Release tag to use"
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag to use"
+        required: true
+        type: string
 
 env:
   RUSTFLAGS: "-Dwarnings"
@@ -29,3 +34,12 @@ jobs:
             --platform linux/arm64 \
             --output type=local,dest=target/debian \
             --target deb-package .
+
+      - name: upload the artifacts
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          fail_on_unmatched_files: true
+          files: "target/debian/myhomelab_*"
+          tag_name: ${{ inputs.release_tag }}
