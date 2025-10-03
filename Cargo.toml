@@ -12,7 +12,7 @@ bluetooth = ["dep:bluer"]
 anyhow = { version = "1" }
 bluer = { version = "0.17", features = ["bluetoothd"], optional = true }
 opentelemetry = { version = "0.30" }
-opentelemetry-appender-tracing = { version = "0.30", features = [
+opentelemetry-appender-tracing = { version = "0.31", features = [
     "experimental_metadata_attributes",
     "experimental_use_tracing_span_context",
 ] }
